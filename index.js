@@ -54,6 +54,15 @@ app.use('/api-docs', basicAuth({
   challenge: true // Causes browsers to show a login dialog
 }), swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// configure Express to serve static files 
+app.use(express.static('public'));
+
+// Catch-all route for undefined routes
+app.get('*', (req, res) => {
+  res.status(404).sendFile('public/error.html', { root: __dirname });
+});
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
