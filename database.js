@@ -7,13 +7,15 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 const insertUser = async (user) => {
     const { username, email, passwordHash } = user;
     const insertQuery = `INSERT INTO mra_users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *`;
-   console.log(insertQuery);
-   console.log(pool);
+    console.log(pool);
     try {
       const result = await pool.query(insertQuery, [username, email, passwordHash]);
       return result.rows[0]; // Returns the inserted user
