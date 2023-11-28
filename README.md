@@ -14,6 +14,6 @@ heroku config:set DB_HOST=XXX --app mra-authentication
 heroku config:set DB_NAME=XXX --app mra-authentication
 heroku config:set DB_PASSWORD=XXX --app mra-authentication
 heroku config:set DB_PORT=5432 --app mra-authentication
-heroku config:set BASE_URL=http://auth.myreport.app --app mra-authentication
+heroku config:set BASE_URL=https://auth.myreport.app --app mra-authentication
 heroku config:set PORT=443 --app mra-authentication
 ```
