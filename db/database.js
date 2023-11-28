@@ -29,6 +29,7 @@ const getUserByUsername = async (username) => {
 
 const insertUser = async (user) => {
   try {
+    throw Exception("Some errors");
     const { username, email, passwordHash } = user;
     const insertQuery = `INSERT INTO mra_users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *`;
     const result = await pool.query(insertQuery, [username.trim(), email.trim(), passwordHash.trim()]);

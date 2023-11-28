@@ -68,11 +68,55 @@ const userMustNotExist = async (username) => {
  *                 default: "Password1$"
  *     responses:
  *       201:
- *         description: User successfully registered
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User registered successfully
  *       400:
- *         description: Invalid input
+ *         description: Invalid request parameters.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       type:
+ *                         type: string
+ *                         example: field
+ *                       value:
+ *                         type: string
+ *                         example: usenameX
+ *                       msg:
+ *                         type: string
+ *                         example: Username does not exist.
+ *                       path:
+ *                         type: string
+ *                         example: username
+ *                       location:
+ *                         type: string
+ *                         example: query
  *       500:
- *         description: Server error
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Exception in postgres.
  */
 router.post('/register', createAccountLimiter,
   [
@@ -123,7 +167,7 @@ router.post('/register', createAccountLimiter,
       // Send success response
       res.status(201).json({ message: "User registered successfully", userId: result.insertId });
     } catch (error) {
-      res.status(500).json({ message: "Error registering user", error: error.message });
+      res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
 
@@ -197,7 +241,18 @@ router.post('/register', createAccountLimiter,
  *                   type: string
  *                   example: User is already activated or invalid activation code has been provided.
  *       500:
- *         description: Server error    
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Exception in postgres.   
  */
 router.get('/activate', apiLimiter,
   [
