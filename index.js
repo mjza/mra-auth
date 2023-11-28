@@ -2,6 +2,7 @@ require('dotenv').config({
   path: `.env.${process.env.NODE_ENV || 'development'}`
 });
 
+const helmet = require('helmet');
 const express = require('express');
 const basicAuth = require('express-basic-auth');
 const swaggerUi = require('swagger-ui-express');
@@ -11,6 +12,25 @@ const app = express();
 
 // Middleware for parsing JSON
 app.use(express.json());
+
+// Basic Helmet usage
+app.use(helmet());
+// Content Security Policy (CSP)
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  })
+);
+// X-Content-Type-Options
+app.use(helmet.noSniff());
+// X-Frame-Options
+app.use(helmet.frameguard({ action: 'deny' }));
+
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
