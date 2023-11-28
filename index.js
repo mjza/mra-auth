@@ -30,22 +30,23 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Basic Helmet usage
-app.use(helmet());
-// Content Security Policy (CSP)
+app.use(helmet()); // It sets up Helmet with its default configuration. Helmet, by default, includes a set of middlewares that set HTTP headers for basic security protections. 
+
+// Content Security Policy (CSP), which helps prevent attacks like Cross-Site Scripting (XSS) and data injection.
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
+      defaultSrc: ["'self'"], // It  restricts all content sources to the same origin by default. This means that by default, your page can only load content (like scripts, images, CSS, etc.) from its own origin.
+      scriptSrc: ["'self'"],  // It specifies where scripts can be loaded from. Here, it allows scripts from the same origin.
+      objectSrc: ["'none'"],  // It prevents the page from loading plugins (like Flash, Java applets).
+      upgradeInsecureRequests: [], // It will upgrade all HTTP requests to HTTPS in browsers that support this directive.
     },
   })
 );
 // X-Content-Type-Options
-app.use(helmet.noSniff());
+app.use(helmet.noSniff()); // It prevents browsers from trying to guess (“sniff”) the MIME type, which can have security implications. It forces the browser to use the type provided in the Content-Type header.
 // X-Frame-Options
-app.use(helmet.frameguard({ action: 'deny' }));
+app.use(helmet.frameguard({ action: 'deny' })); // It instructs the browser to prevent any framing of the site, which can help protect against clickjacking attacks.
 
 
 // Import routes
@@ -59,7 +60,7 @@ const swaggerDefinition = {
   info: {
     title: 'Express Auth API',
     version: '1.0.0',
-    description: 'A simple CRUD Auth API application',
+    description: 'A CRUD Auth API application',
   },
   servers: [
     {
