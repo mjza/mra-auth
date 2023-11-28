@@ -27,11 +27,14 @@ const router = express.Router();
  *             properties:
  *               username:
  *                 type: string
+ *                 default: "usename1"
  *               email:
  *                 type: string
  *                 format: email
+ *                 default: "username1@xyz.com"
  *               password:
  *                 type: string
+ *                 default: "Password1$"
  *     responses:
  *       201:
  *         description: User successfully registered

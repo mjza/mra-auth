@@ -1,9 +1,10 @@
 require('dotenv').config({
   path: `.env.${process.env.NODE_ENV || 'development'}`
 });
-
-const helmet = require('helmet');
+const localhost = 'http://localhost:3000';
 const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
 const basicAuth = require('express-basic-auth');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJSDoc = require('swagger-jsdoc');
@@ -12,6 +13,21 @@ const app = express();
 
 // Middleware for parsing JSON
 app.use(express.json());
+
+// This will enable CORS for all routes
+const allowedOrigins = [process.env.BASE_URL || localhost, 'https://myreportapp.com'];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // Basic Helmet usage
 app.use(helmet());
@@ -47,7 +63,7 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: process.env.BASE_URL || 'https://localhost:3000',
+      url: process.env.BASE_URL || localhost,
       description: 'Development server',
     },
   ],
@@ -63,10 +79,15 @@ const options = {
 // Initialize swagger-jsdoc
 const swaggerSpec = swaggerJSDoc(options);
 
+if (typeof process.env.DOC_USER === 'undefined' || typeof process.env.DOC_PASS === 'undefined') {
+  console.error('Environment variable DOC_USER or DOC_PASS is not defined.');
+  // Handle the error appropriately, e.g., exit the process or throw an error
+  process.exit(1); // Exits the application with an error code
+}
+
 // Basic auth credentials for accessing Swaggar
-const users = {
-  'admin': 'mjzA626$'
-};
+const users = {};
+users[process.env.DOC_USER] = process.env.DOC_PASS;
 
 // Use swaggerUi to serve swagger docs
 app.use('/api-docs', basicAuth({
@@ -82,7 +103,7 @@ app.get('*', (req, res) => {
   res.status(404).sendFile('public/error.html', { root: __dirname });
 });
 
-
+// running the server 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
