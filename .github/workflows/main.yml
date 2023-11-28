@@ -7,6 +7,11 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      DOC_USER: ${{ secrets.DOC_USER }}
+      DOC_PASS: ${{ secrets.DOC_PASS }}
+      NODE_ENV: ${{ secrets.NODE_ENV }}
+
     strategy:
       matrix:
         node-version: [20.x]
@@ -17,6 +22,6 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm ci
+    - run: npm install
     - run: npm run test
 
