@@ -51,7 +51,7 @@ jobs:
       if: steps.check-status.outcome == 'success' && steps.heroku.outputs.version
       uses: actions/github-script@v7
       with:
-        github-token: ${{ github.token }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           await github.rest.git.createRef({
             owner: context.repo.owner,
