@@ -12,7 +12,7 @@ jobs:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
     - name: Install Heroku CLI
       id: install-heroku-cli
@@ -46,16 +46,10 @@ jobs:
         HEROKU_VERSION=$(heroku releases -a $HEROKU_APP_NAME | sed -n '2p' | awk '{print $1}')
         echo "Heroku Version: $HEROKU_VERSION"
         echo "::set-output name=version::$HEROKU_VERSION"
-        # Write the version to the environment file
-        #echo "HEROKU_VERSION=$HEROKU_VERSION" >> $GITHUB_ENV
-    
-    - name: Verify Heroku Version Environment Variable
-      run: |
-        echo "Heroku Version from env: $GITHUB_TOKEN"
 
     - name: Tag the commit
       if: steps.check-status.outcome == 'success' && steps.heroku.outputs.version
-      uses: actions/github-script@v7
+      uses: actions/github-script@v4
       with:
         github-token: ${{secrets.PAT_GITHUB}}
         script: |
