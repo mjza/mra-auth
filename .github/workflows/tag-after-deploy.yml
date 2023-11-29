@@ -1,0 +1,40 @@
+name: Tag After Heroku Deployment
+
+on:
+    workflow_dispatch:
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Check Deployment and Get Version from Heroku
+      id: heroku
+      run: |
+        # Install Heroku CLI
+        curl https://cli-assets.heroku.com/install.sh | sh
+  
+        # Log in to Heroku
+        heroku login -i -a $HEROKU_APP_NAME --apikey ${{ secrets.HEROKU_API_KEY }}
+  
+        # Retrieve the version number
+        # This is an example and will depend on how you have set up your version tracking
+        HEROKU_VERSION=$(heroku releases -a $HEROKU_APP_NAME | sed -n '2p' | awk '{print $1}')
+        echo "::set-output name=version::$HEROKU_VERSION"
+      env:
+        HEROKU_APP_NAME: mra-authentication
+ 
+
+    - name: Tag the commit
+      if: steps.heroku.outputs.version
+      uses: actions/github-script@v4
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          github.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: 'refs/tags/${{ steps.heroku.outputs.version }}',
+            sha: context.sha
+          })
