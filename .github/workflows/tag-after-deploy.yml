@@ -53,7 +53,8 @@ jobs:
       with:
         github-token: ${{secrets.PAT_GITHUB}}
         script: |
-          github.git.createRef({
+          const octokit = github.getOctokit(token);
+          await octokit.rest.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
             ref: 'refs/tags/${{ steps.heroku.outputs.version }}',
