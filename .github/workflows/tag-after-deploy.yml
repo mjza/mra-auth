@@ -48,17 +48,17 @@ jobs:
         
         # Write the version to the environment file
         echo "HEROKU_VERSION=$HEROKU_VERSION" >> $GITHUB_ENV
-
+        echo "Heroku Version: ${{ env.HEROKU_VERSION }}"
+        
     - name: Tag the commit
       if: steps.check-status.outcome == 'success' && env.HEROKU_VERSION
       uses: actions/github-script@v7
       with:
         github-token: ${{secrets.PAT_GITHUB}}
         script: |
-          const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
-          await octokit.rest.git.createRef({
+          github.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
             ref: 'refs/tags/${{ env.HEROKU_VERSION }}',
             sha: context.sha
-          });
+          })
