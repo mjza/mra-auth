@@ -45,7 +45,7 @@ jobs:
         # Retrieve the version number
         HEROKU_VERSION=$(heroku releases -a $HEROKU_APP_NAME | sed -n '2p' | awk '{print $1}')
         echo "Heroku Version: $HEROKU_VERSION"
-        
+        echo "::set-output name=version::$HEROKU_VERSION"
         # Write the version to the environment file
         echo "HEROKU_VERSION=$HEROKU_VERSION" >> $GITHUB_ENV
     
@@ -62,6 +62,6 @@ jobs:
           github.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            ref: 'refs/tags/${{ env.HEROKU_VERSION }}',
+            ref: 'refs/tags/${{ e steps.heroku.outputs.version }}',
             sha: context.sha
           })
