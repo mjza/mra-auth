@@ -47,11 +47,11 @@ jobs:
         echo "Heroku Version: $HEROKU_VERSION"
         echo "::set-output name=version::$HEROKU_VERSION"
         # Write the version to the environment file
-        echo "HEROKU_VERSION=$HEROKU_VERSION" >> $GITHUB_ENV
+        #echo "HEROKU_VERSION=$HEROKU_VERSION" >> $GITHUB_ENV
     
     - name: Verify Heroku Version Environment Variable
       run: |
-        echo "Heroku Version from env: $HEROKU_VERSION"
+        echo "Heroku Version from env: $GITHUB_TOKEN"
 
     - name: Tag the commit
       if: steps.check-status.outcome == 'success' && steps.heroku.outputs.version
