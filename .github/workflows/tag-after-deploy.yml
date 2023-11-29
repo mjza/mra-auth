@@ -27,7 +27,7 @@ jobs:
       if: steps.heroku.outputs.version
       uses: actions/github-script@v4
       with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
+        github-token: ${{secrets.PAT_GITHUB}}
         script: |
           github.git.createRef({
             owner: context.repo.owner,
