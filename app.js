@@ -65,8 +65,13 @@ const swaggerDefinition = {
     servers: [
         {
             url: process.env.BASE_URL || localhost,
-            description: 'Development server',
+            description: 'Authentication microservices',
         },
+    ],
+    tags: [
+        { name: '1st', description: 'Registeration' },
+        { name: '2nd', description: 'Activation'},
+        // ... add other tags alphabetically ... 
     ],
 };
 
@@ -83,7 +88,8 @@ const swaggerSpec = swaggerJSDoc(options);
 if (typeof process.env.DOC_USER === 'undefined' || typeof process.env.DOC_PASS === 'undefined') {
     console.error('Environment variable DOC_USER or DOC_PASS is not defined.');
     // Handle the error appropriately, e.g., exit the process or throw an error
-    process.exit(1); // Exits the application with an error code
+    if(process.env.NODE_ENV !== 'test')
+        process.exit(1); // Exits the application with an error code
 }
 
 // Basic auth credentials for accessing Swaggar

@@ -27,7 +27,7 @@ const userMustNotExist = async (username) => {
  *   post:
  *     summary: Register a new user
  *     description: Create a new user in the system.
- *     tags: [Users]
+ *     tags: [1st]
  *     requestBody:
  *       required: true
  *       content:

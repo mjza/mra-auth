@@ -28,7 +28,7 @@ const userMustExist = async (username) => {
  *   get:
  *     summary: Activate a user account
  *     description: This endpoint is used for activating a user account with a username and activation code.
- *     tags: [Users]
+ *     tags: [2nd]
  *     parameters:
  *       - in: query
  *         name: username
