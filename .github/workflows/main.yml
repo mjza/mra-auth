@@ -5,10 +5,14 @@ on: [push, pull_request]
 jobs:
   build:
 
+    # Set environment variable from secret
     env:
-      DOC_USER: ${{ secrets.DOC_USER }}
-      DOC_PASS: ${{ secrets.DOC_PASS }}
-      NODE_ENV: ${{ secrets.NODE_ENV }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
 
     runs-on: ubuntu-latest  
 
@@ -23,11 +27,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-
-    # Set environment variable from secret
-    - name: Set Environment Variables
-      run: echo "SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}" >> $GITHUB_ENV
-
+        
     - name: Install dependencies
       run: npm install
 
