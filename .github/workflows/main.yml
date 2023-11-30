@@ -4,15 +4,25 @@ on: [push, pull_request]
 
 jobs:
   build:
-
-    # Set environment variable from secret
+    
     env:
+      NODE_ENV: 'test'
+      # Set environment variable from secret
       DB_USER: ${{ secrets.DB_USER }}
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_NAME: ${{ secrets.DB_NAME }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_PORT: ${{ secrets.DB_PORT }}
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+      # Setting an environment variable with the value of a configuration variable
+      BASE_URL: ${{ vars.BASE_URL }}
+      PORT: ${{ vars.PORT }}
+      DOC_USER: ${{ vars.DOC_USER }}
+      DOC_PASS: ${{ vars.DOC_PASS }}
+      COMPANY_LOGO_URL: ${{ vars.COMPANY_LOGO_URL }}
+      COMPANY_NAME: ${{ vars.COMPANY_NAME }}
+      COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}
+      COMPANY_PHONENUMBER: ${{ vars.COMPANY_PHONENUMBER }}
 
     runs-on: ubuntu-latest  
 
@@ -27,7 +37,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        
+
     - name: Install dependencies
       run: npm install
 
