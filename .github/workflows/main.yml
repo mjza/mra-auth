@@ -42,4 +42,4 @@ jobs:
       run: npm install
 
     - name: Run tests on GitHub
-      run: npm test
+      run: npm run gtest
