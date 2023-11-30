@@ -41,5 +41,5 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Run tests
-      run: npm gtest
+    - name: Run tests on GitHub
+      run: npm run gtest
