@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=development node index.js",
-    "ltest": "cross-env NODE_ENV=development jest",
-    "gtest": "jest"
+    "ltest": "cross-env NODE_ENV=development jest --detectOpenHandles",
+    "gtest": "jest --detectOpenHandles"
   },
   "keywords": [],
   "author": "",

@@ -42,9 +42,14 @@ describe('POST /register', () => {
     expect(response.body.errors).toBeDefined();
   });
 
-  // Clean up after tests
+  // Clean up after each tests
   afterEach(async () => {
     await db.deleteUserByUsername('testuser');
+  });
+
+  // Ensure the pool is closed after all tests
+  afterAll(async () => {
+    await db.closePool(); 
   });
 
 });

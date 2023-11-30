@@ -75,9 +75,14 @@ const activeUser = async (user) => {
   }
 };
 
+const closePool = async () => {
+  await pool.end();
+};
+
 module.exports = {
   deleteUserByUsername,
   getUserByUsername,
   insertUser,
-  activeUser
+  activeUser,
+  closePool
 };
