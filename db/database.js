@@ -7,10 +7,27 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
-  ssl: process.env.NODE_ENV === 'development' ? false : {
+  ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false
-  }
+  } : false
 });
+
+
+const deleteUserByUsername = async (username) => {
+  try {
+    const query = 'DELETE FROM mra_users WHERE username = $1 RETURNING *'; // SQL query to delete user
+    const { rows } = await pool.query(query, [username.trim()]);
+
+    if (rows.length === 0) {
+      return null; // User not found or not deleted
+    }
+
+    return rows[0]; // Return the deleted user data
+  } catch (err) {
+    throw err; // Rethrow the error for the caller to handle
+  }
+};
+
 
 const getUserByUsername = async (username) => {
   try {
@@ -59,6 +76,7 @@ const activeUser = async (user) => {
 };
 
 module.exports = {
+  deleteUserByUsername,
   getUserByUsername,
   insertUser,
   activeUser

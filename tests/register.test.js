@@ -1,10 +1,6 @@
 const request = require('supertest');
 const app = require('../app');
-const bcrypt = require('bcrypt');
-
-// Mock database operations
-const db = require('../db/database'); // Adjust the path to your database file
-jest.mock('../db/database');
+const db = require('../db/database');
 
 describe('POST /register', () => {
   it('should return 201 for successful registration', async () => {
@@ -14,15 +10,21 @@ describe('POST /register', () => {
       password: 'Password123!'
     };
 
-    // Mock insertUser function to mimic database operation
-    db.insertUser.mockResolvedValue({ insertId: 1 });
-
     const response = await request(app)
       .post('/register')
       .send(mockUser);
 
     expect(response.statusCode).toBe(201);
-    expect(response.body).toEqual({ message: "User registered successfully", userId: 1 });
+
+    expect(response.body).toEqual({ 
+      message: "User registered successfully", 
+      userId: expect.any(Number) 
+    });
+
+    // Test to verify if user is actually in the database
+    // Use your database querying method here to check
+    const userInDb = await db.getUserByUsername(mockUser.username);
+    expect(userInDb).toBeDefined();
   });
 
   it('should return 400 for invalid data', async () => {
@@ -38,6 +40,11 @@ describe('POST /register', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.body.errors).toBeDefined();
+  });
+
+  // Clean up after tests
+  afterEach(async () => {
+    await db.deleteUserByUsername('testuser');
   });
 
 });

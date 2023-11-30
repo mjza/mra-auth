@@ -3,7 +3,7 @@ const path = require('path');
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-async function sendEmail(email, subject, htmlContent) {
+const sendEmail = async (email, subject, htmlContent) => {
     const msg = {
         to: email,
         from: 'noreply@reportcycle.com',
@@ -18,7 +18,7 @@ async function sendEmail(email, subject, htmlContent) {
         console.error('Error sending email to ' + email, error);
         throw error; // Or handle it as per your application's error handling policy
     }
-}
+};
 
 const sendVerificationEmail = async (username, userEmail, activationLink) => {
     // Read the template file
@@ -42,7 +42,7 @@ const sendVerificationEmail = async (username, userEmail, activationLink) => {
 
     // Send the email
     try {
-        sendEmail(userEmail, 'Verify Your Email', emailTemplate);
+        await sendEmail(userEmail, 'Verify Your Email', emailTemplate);
         console.log('Verification email sent successfully for ' + username);
     } catch (error) {
         console.error('Error sending verification email', error);
@@ -63,7 +63,7 @@ const sendResetPasswordEmail = async (userEmail, resetToken) => {
 
     // Send the email
     try {
-        sendEmail(userEmail, 'Reset Your Password', emailTemplate);
+        await sendEmail(userEmail, 'Reset Your Password', emailTemplate);
         console.log('Reset password email sent successfully for ' + userEmail);
     } catch (error) {
         console.error('Error sending reset password email', error);

@@ -61,6 +61,9 @@ const userMustNotExist = async (username) => {
  *                 message:
  *                   type: string
  *                   example: User registered successfully
+ *                 userId:
+ *                   type: integer
+ *                   example: 1
  *       400:
  *         description: Invalid request parameters.
  *         content:
@@ -137,8 +140,6 @@ router.post('/register', createAccountLimiter,
     try {
       const { username, email, password } = req.body;
 
-      // Validate the input
-
       // Hash the password
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(password, salt);
@@ -149,7 +150,7 @@ router.post('/register', createAccountLimiter,
       const result = await db.insertUser(newUser);
       // Send verification email, the activation link might have different target URL
       var activationLink = `${process.env.BASE_URL}/activate?username=${result.username}&activationCode=${result.activation_code}&redirectURL=`;
-      sendVerificationEmail(result.username, result.email, activationLink);
+      await sendVerificationEmail(result.username, result.email, activationLink);
       // Send success response
       res.status(201).json({ message: "User registered successfully", userId: result.user_id });
     } catch (error) {
