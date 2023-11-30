@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Activation Email</title>
+    <style>
+        /* Add your CSS styling here */
+    </style>
+</head>
+<body>
+    <div style="background-color:#ffffff;color:#202123;padding:27px 20px 0 15px">
+        <p style="text-align:left;margin:0">
+            <img src="{{companyLogoUrl}}" alt="Company Logo" width="560" height="168" title="{{companyLogoUrl}}" style="width:140px;height:auto;border:0;line-height:100%;outline:none;text-decoration:none" class="CToWUd" data-bit="iit">
+        </p>
+    </div>
+    <div style="background-color:#ffffff;color:#353740;padding:40px 20px;text-align:left;line-height:1.5">
+      <h1 style="color:#202123;font-size:32px;line-height:40px;margin:0 0 20px"><span class="il">Verify</span> your email address</h1>
+      <h2>Dear {{username}},</h2>
+      <p style="font-size:16px;line-height:24px">
+        Welcome to {{companyName}}!
+      </p>
+      <p style="font-size:16px;line-height:24px">
+        To continue setting up your {{companyName}} account, please <span class="il">verify</span> that this is your email address by clicking the link below:
+      </p>
+      
+      <p style="margin:24px 0 0;text-align:left">
+        <a href="{{activationLink}}" style="display:inline-block;text-decoration:none;background:#10a37f;border-radius:3px;color:white;font-family:Helvetica,sans-serif;font-size:16px;line-height:24px;font-weight:400;padding:12px 20px 11px;margin:0px" target="_blank">
+            <span class="il">Verify</span> your email address
+        </a>
+      </p>
+    </div>
+    <div style="text-align:left;background:#ffffff;color:#6e6e80;padding:0 20px 20px;font-size:13px;line-height:1.4">
+        <p style="margin:0">
+            This link will expire in 5 days. If you did not make this request, please disregard this email. For help, contact us through our <a href="https://reportcycle.com/contact" target="_blank" data-saferedirecturl="">Help center</a>.
+        </p>
+    </div>
+    <footer style="text-align:left;background:#ffffff;color:#353740;padding:0 20px 20px;font-size:12px;line-height:1.2">
+        <p>{{companyAddress}}</p>
+        <p>{{companyPhonenumber}}</p>
+        <p>&copy; {{currentYear}} {{companyName}}. All rights reserved.</p>
+    </footer>
+</body>
+</html>
+
+
+
+    

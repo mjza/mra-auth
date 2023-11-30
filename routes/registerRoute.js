@@ -3,6 +3,7 @@ const { query, body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcrypt');
 const db = require('../db/database');
+const { sendVerificationEmail } = require('../emails/emailService');
 
 const router = express.Router();
 
@@ -146,9 +147,11 @@ router.post('/register', createAccountLimiter,
       const newUser = { username, email, passwordHash };
       // The insertUser function is hypothetical. Replace it with your actual database logic.
       const result = await db.insertUser(newUser);
-
+      // Send verification email, the activation link might have different target URL
+      var activationLink = `${process.env.BASE_URL}/activate?username=${result.username}&activationCode=${result.activation_code}&redirectURL=`;
+      sendVerificationEmail(result.username, result.email, activationLink);
       // Send success response
-      res.status(201).json({ message: "User registered successfully", userId: result.insertId });
+      res.status(201).json({ message: "User registered successfully", userId: result.user_id });
     } catch (error) {
       res.status(500).json({ message: "Internal server error", error: error.message });
     }
