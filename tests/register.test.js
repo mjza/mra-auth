@@ -7,7 +7,8 @@ describe('POST /register', () => {
     const mockUser = {
       username: 'testuser',
       email: 'test@example.com',
-      password: 'Password123!'
+      password: 'Password123!',
+      loginRedirectURL: ""
     };
 
     const response = await request(app)

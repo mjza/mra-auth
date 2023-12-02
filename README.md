@@ -27,3 +27,7 @@ openssl req -x509 -newkey rsa:4096 -keyout localhost.key -out localhost.crt -day
 
 ```
 
+## Generate a 256-bit (32-byte) random key and print it in hexadecimal format
+```bash 
+openssl rand -hex 32
+```

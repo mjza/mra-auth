@@ -9,10 +9,11 @@
     "gtest": "jest --detectOpenHandles"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Mahdi Jaberzadeh Ansari",
+  "license": "Copyright 2023 ReportCycle Inc.",
   "dependencies": {
     "@sendgrid/mail": "^7.7.0",
+    "axios": "^1.6.2",
     "basic-auth": "^2.0.1",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",

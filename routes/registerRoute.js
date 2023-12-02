@@ -1,26 +1,13 @@
 const express = require('express');
 const { query, body, validationResult } = require('express-validator');
-const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const db = require('../db/database');
 const { sendVerificationEmail } = require('../emails/emailService');
+const { userMustNotExist } = require('../utils/validations'); 
+const { createAccountLimiter } = require('../utils/rateLimit'); 
 
 const router = express.Router();
-
-// Rate limiter for user creation
-const createAccountLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // limit each IP to 5 requests per windowMs
-  message: 'Too many accounts created from this IP, please try again after an hour'
-});
-
-const userMustNotExist = async (username) => {
-  // Database logic to check if the user exists
-  const user = await db.getUserByUsername(username);
-  if (user) {
-    return Promise.reject('Username already exists.');
-  }
-};
 
 /**
  * @swagger
@@ -50,6 +37,9 @@ const userMustNotExist = async (username) => {
  *               password:
  *                 type: string
  *                 default: "Password1$"
+ *               loginRedirectURL:
+ *                 type: string   
+ *                 default: "http://localhost:3000/login"
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -148,9 +138,30 @@ router.post('/register', createAccountLimiter,
       const newUser = { username, email, passwordHash };
       // The insertUser function is hypothetical. Replace it with your actual database logic.
       const result = await db.insertUser(newUser);
-      // Send verification email, the activation link might have different target URL
-      var activationLink = `${process.env.BASE_URL}/activate?username=${result.username}&activationCode=${result.activation_code}&redirectURL=`;
+
+      // Optional login redirect URL
+      const loginRedirectURL = req.body.loginRedirectURL || '';
+
+      // Create the activation object
+      const activationObject = {
+        activationCode: result.activation_code,
+        redirectURL: loginRedirectURL,
+      };
+
+      // Encrypt the activation object using a secret key
+      const secretKeyHex = process.env.SECRET_KEY; 
+      const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
+      const iv = crypto.randomBytes(16);
+      const cipher = crypto.createCipheriv('aes-256-cbc', secretKeyBuffer, iv);
+      let encryptedActivationObject = cipher.update(JSON.stringify(activationObject), 'utf8', 'hex');
+      encryptedActivationObject += cipher.final('hex');
+
+      // Create the activation link
+      const activationLink = `${process.env.BASE_URL}/activate?username=${result.username}&token=${iv.toString('hex')}&data=${encryptedActivationObject}`;
+
+      // Send verification email
       await sendVerificationEmail(result.username, result.email, activationLink);
+      
       // Send success response
       res.status(201).json({ message: "User registered successfully", userId: result.user_id });
     } catch (error) {
