@@ -45,6 +45,24 @@ const getUserByUsername = async (username) => {
   }
 };
 
+const getUserByUsernameOrEmail = async (usernameOrEmail) => {
+  try {
+    const query = `
+    (SELECT * FROM ${userTable} WHERE username = $1) 
+     UNION 
+    (SELECT * FROM ${userTable} WHERE email = $2)`;
+    const { rows } = await pool.query(query, [usernameOrEmail.trim(), usernameOrEmail.trim()]);
+
+    if (rows.length === 0) {
+      return null; // User not found
+    }
+
+    return rows; // Return the user data
+  } catch (err) {
+    throw err; // Rethrow the error for the caller to handle
+  }
+};
+
 const insertUser = async (user) => {
   try {
     const { username, email, passwordHash } = user;
@@ -115,6 +133,7 @@ const closePool = async () => {
 module.exports = {
   deleteUserByUsername,
   getUserByUsername,
+  getUserByUsernameOrEmail,
   insertUser,
   isInactiveUser,
   activeUser,

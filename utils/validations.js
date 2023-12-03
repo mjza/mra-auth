@@ -36,5 +36,4 @@ const isValidUrl = (inputUrl) => {
     }
 };
 
-
 module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl };

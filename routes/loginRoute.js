@@ -1,21 +1,152 @@
 const express = require('express');
-const { query, body, validationResult } = require('express-validator');
-const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const db = require('../db/database');
-
 const router = express.Router();
 
-// Login route
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Login a user
+ *     description: Authenticate a user by username or email and password.
+ *     tags: [3rd]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - usernameOrEmail
+ *               - password
+ *             properties:
+ *               usernameOrEmail:
+ *                 type: string
+ *                 description: Username or Email of the user
+ *                 example: "username1 or username1@xyz.com"
+ *               password:
+ *                 type: string
+ *                 description: Password of the user
+ *                 example: "Password1$"
+ *     responses:
+ *       200:
+ *         description: User logged in successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *       401:
+ *         description: Unauthorized - Invalid username/email or password.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Username or password is incorrect
+ *       400:
+ *         description: Invalid request parameters.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       msg:
+ *                         type: string
+ *                         example: Invalid field
+ *                       param:
+ *                         type: string
+ *                         example: usernameOrEmail
+ *                       location:
+ *                         type: string
+ *                         example: body
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ *                 error:
+ *                   type: string
+ *                   example: Exception in server processing.
+ */
+
 router.post('/login', [
-  body('email').isEmail().withMessage('Invalid email address.'),
-  body('password').exists().withMessage('Password is required.')
-], (req, res) => {
+  body('usernameOrEmail')
+    .exists().withMessage('Username or email address is required.')
+    .custom((value) => {
+      if (value.includes('@')) {
+        // Validate as email
+        return body('usernameOrEmail')
+          .isEmail()
+          .withMessage('Invalid email address.')
+          .isLength({ min: 5, max: 255 })
+          .withMessage('Email must be between 5 and 255 characters.');
+      } else {
+        // Validate as username
+        return body('usernameOrEmail')
+          .isLength({ min: 5, max: 30 })
+          .withMessage('Username must be between 5 and 30 characters.');
+      }
+    }),
+  body('password')
+    .exists()
+    .withMessage('Password is required.')
+    .isLength({ max: 30 })
+    .withMessage('Password must be maximum 30 characters.')
+], async (req, res) => {
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
+  const { usernameOrEmail, password } = req.body;
+
+  try {
+    const users = await db.getUserByUsernameOrEmail(usernameOrEmail);
+
+    if (!users || users.length === 0) {
+      return res.status(401).json({ message: 'Username or password is incorrect'});
+    }
+
+    // Iterate over users and check password
+    for (const user of users) {
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+
+      if (isMatch) {
+        const secretKeyHex = process.env.SECRET_KEY;
+        const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
+
+        // Generate JWT Token for the matched user
+        const token = jwt.sign({ userId: user.user_id }, secretKeyBuffer, { expiresIn: '1d' });
+
+        return res.json({ token });
+      }
+    }
+
+    // If no user matches
+    return res.status(401).json({ message: 'Username or password is incorrect'});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
 });
 
 module.exports = router;

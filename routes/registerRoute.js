@@ -103,23 +103,18 @@ router.post('/register', createAccountLimiter,
       .custom(userMustNotExist),
     body('email')
       .isEmail()
-      .withMessage('Invalid email address.'),
-    body('email')
+      .withMessage('Invalid email address.')
       .isLength({ min: 5, max: 255 })
       .withMessage('Email must be between 5 and 255 characters.'),
     body('password')
       .isLength({ min: 8, max: 30 })
-      .withMessage('Password must be between 8 and 30 characters.'),
-    body('password')
+      .withMessage('Password must be between 8 and 30 characters.')
       .matches(/[A-Z]/)
-      .withMessage('Password must contain at least one uppercase letter'),
-    body('password')
+      .withMessage('Password must contain at least one uppercase letter')
       .matches(/[a-z]/)
-      .withMessage('Password must contain at least one lowercase letter'),
-    body('password')
+      .withMessage('Password must contain at least one lowercase letter')
       .matches(/\d/)
-      .withMessage('Password must contain at least one digit'),
-    body('password')
+      .withMessage('Password must contain at least one digit')
       .matches(/[!@#$%^&*(),.?":{}|<>]/)
       .withMessage('Password must contain at least one symbol')
   ], async (req, res) => {
