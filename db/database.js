@@ -14,6 +14,7 @@ const pool = new Pool({
 
 const usersTable = process.env.USERS_TABLE;
 const userDetailsTable = process.env.USER_DETAILS_TABLE;
+const genderTypesTable = process.env.GENDER_TYPES_TABLE;
 
 const deleteUserByUsername = async (username) => {
   const query = `DELETE FROM ${usersTable} WHERE username = $1 RETURNING *`; // SQL query to delete user
@@ -113,9 +114,14 @@ async function getUserDetails(userId) {
 
 async function createUserDetails(userDetails) {
   const query = `
+  WITH updated AS (
     INSERT INTO ${userDetailsTable} (user_id, first_name, middle_name, last_name, gender_id, date_of_birth, profile_picture_url, profile_picture_thumbnail_url, updator)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    RETURNING user_id, first_name, middle_name, last_name, gender_id, TO_CHAR(date_of_birth, 'YYYY-MM-DD') as date_of_birth, profile_picture_url, profile_picture_thumbnail_url;
+    RETURNING user_id, first_name, middle_name, last_name, gender_id, TO_CHAR(date_of_birth, 'YYYY-MM-DD') as date_of_birth, profile_picture_url, profile_picture_thumbnail_url
+    )
+  SELECT u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url
+  FROM updated u
+  INNER JOIN ${genderTypesTable} g ON u.gender_id = g.gender_id;
   `;
   const values = [userDetails.userId, userDetails.firstName, userDetails.middleName, userDetails.lastName, userDetails.genderId, userDetails.dateOfBirth, userDetails.profilePictureUrl, userDetails.profilePictureThumbnailUrl, userDetails.userId];
   const { rows } = await pool.query(query, values);
@@ -124,10 +130,15 @@ async function createUserDetails(userDetails) {
 
 async function updateUserDetails(userId, userDetails) {
   const query = `
+  WITH updated AS (
     UPDATE ${userDetailsTable}
     SET first_name = $1, middle_name = $2, last_name = $3, gender_id = $4, date_of_birth = $5, profile_picture_url = $6, profile_picture_thumbnail_url = $7, updator = $8, updated_at = NOW()
     WHERE user_id = $9
-    RETURNING first_name, middle_name, last_name, gender_id, TO_CHAR(date_of_birth, 'YYYY-MM-DD') as date_of_birth, profile_picture_url, profile_picture_thumbnail_url;
+    RETURNING first_name, middle_name, last_name, gender_id, TO_CHAR(date_of_birth, 'YYYY-MM-DD') as date_of_birth, profile_picture_url, profile_picture_thumbnail_url
+    )
+  SELECT u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url
+  FROM updated u
+  INNER JOIN ${genderTypesTable} g ON u.gender_id = g.gender_id;  
   `;
   const values = [userDetails.firstName, userDetails.middleName, userDetails.lastName, userDetails.genderId, userDetails.dateOfBirth, userDetails.profilePictureUrl, userDetails.profilePictureThumbnailUrl, userId, userId];
   const { rows } = await pool.query(query, values);
