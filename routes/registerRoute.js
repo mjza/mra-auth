@@ -1,5 +1,5 @@
 const express = require('express');
-const { query, body, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const db = require('../db/database');
@@ -29,7 +29,7 @@ const router = express.Router();
  *             properties:
  *               username:
  *                 type: string
- *                 default: "usename1"
+ *                 default: "username1"
  *               email:
  *                 type: string
  *                 format: email
@@ -71,7 +71,7 @@ const router = express.Router();
  *                         example: field
  *                       value:
  *                         type: string
- *                         example: usenameX
+ *                         example: usernameX
  *                       msg:
  *                         type: string
  *                         example: Username does not exist.

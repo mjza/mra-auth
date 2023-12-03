@@ -21,7 +21,7 @@ const router = express.Router();
  *         description: Username of the user to be activated.
  *         schema:
  *           type: string
- *           default: "usename1"
+ *           default: "username1"
  *       - in: query
  *         name: token
  *         required: true
@@ -81,7 +81,7 @@ const router = express.Router();
  *                         example: field
  *                       value:
  *                         type: string
- *                         example: usenameX
+ *                         example: usernameX
  *                       msg:
  *                         type: string
  *                         example: Username does not exist.

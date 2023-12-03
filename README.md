@@ -9,6 +9,7 @@ Update its content accordingly with respect to your system.
 For production, change the `XXX` in the following list accordingly and run the following commands:
 
 ```bash
+heroku config:set TZ=UTC --app mra-authentication
 heroku config:set DB_USER=XXX --app mra-authentication
 heroku config:set DB_HOST=XXX --app mra-authentication
 heroku config:set DB_NAME=XXX --app mra-authentication

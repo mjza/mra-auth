@@ -7,6 +7,7 @@ jobs:
     
     env:
       NODE_ENV: 'test'
+      TZ: 'UTC'
       # Set environment variable from secret
       DB_USER: ${{ secrets.DB_USER }}
       DB_HOST: ${{ secrets.DB_HOST }}
@@ -24,7 +25,8 @@ jobs:
       COMPANY_NAME: ${{ vars.COMPANY_NAME }}
       COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}
       COMPANY_PHONENUMBER: ${{ vars.COMPANY_PHONENUMBER }}
-      USER_TABLE: ${{ vars.USER_TABLE }}
+      USERS_TABLE: ${{ vars.USERS_TABLE }}
+      USER_DETAILS_TABLE: ${{ vars.USER_DETAILS_TABLE }}
 
     runs-on: ubuntu-latest  
 

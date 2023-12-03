@@ -68,10 +68,20 @@ const swaggerDefinition = {
             description: 'Authentication microservices',
         },
     ],
+    components: {
+        securitySchemes: {
+            bearerAuth: {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'JWT',
+            },
+        },
+    },
     tags: [
         { name: '1st', description: 'Registeration' },
         { name: '2nd', description: 'Activation'},
         { name: '3rd', description: 'Login'},
+        { name: '4th', description: 'User Details'},
         // ... add other tags alphabetically ... 
     ],
 };

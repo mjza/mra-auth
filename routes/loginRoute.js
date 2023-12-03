@@ -123,26 +123,50 @@ router.post('/login', [
     const users = await db.getUserByUsernameOrEmail(usernameOrEmail);
 
     if (!users || users.length === 0) {
-      return res.status(401).json({ message: 'Username or password is incorrect'});
+      return res.status(401).json({ message: 'Username or password is incorrect' });
     }
 
+    let found = false, confirmed = true, deleted = false, suspended = false;
     // Iterate over users and check password
     for (const user of users) {
       const isMatch = await bcrypt.compare(password, user.password_hash);
 
       if (isMatch) {
+
+        found = true;
+
+        if (!user.confirmation_at) {
+          confirmed = false;
+          continue;
+        } else if (user.deleted_at) {
+          deleted = true;
+          continue;
+        } else if (user.suspended_at) {
+          suspended = true;
+          continue;
+        }
+
         const secretKeyHex = process.env.SECRET_KEY;
         const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
 
         // Generate JWT Token for the matched user
-        const token = jwt.sign({ userId: user.user_id }, secretKeyBuffer, { expiresIn: '1d' });
+        const token = jwt.sign({ userId: user.user_id, username: user.username, email: user.email }, secretKeyBuffer, { expiresIn: '1d' });
 
         return res.json({ token });
       }
     }
 
-    // If no user matches
-    return res.status(401).json({ message: 'Username or password is incorrect'});
+    if(!found){// If no user matches
+      return res.status(401).json({ message: 'Username or password is incorrect' });
+    } else if (!confirmed) {
+      return res.status(409).json({ message: 'You must first confirm your email address.' });
+    } else if (deleted) {
+      return res.status(404).json({ message: 'User has been deleted.' });
+    } else if (suspended) {
+      return res.status(403).json({ message: 'User has been suspended.' });
+    }
+
+    throw new Exception("The login method has a logical error.");
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error", error: error.message });
