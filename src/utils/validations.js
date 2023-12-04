@@ -2,6 +2,14 @@ const db = require('../db/database');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 
+/**
+ * Checks if a user does not exist in the database.
+ * If the user exists, it rejects the promise with a specific message.
+ *
+ * @async
+ * @param {string} username - The username to check in the database.
+ * @returns {Promise<void>} A promise that resolves if the user does not exist, or rejects if the user exists.
+ */
 const userMustNotExist = async (username) => {
     // Database logic to check if the user exists
     const user = await db.getUserByUsername(username);
@@ -10,6 +18,14 @@ const userMustNotExist = async (username) => {
     }
 };
 
+/**
+ * Checks if a user exists in the database.
+ * If the user does not exist, it rejects the promise with a specific message.
+ *
+ * @async
+ * @param {string} username - The username to check in the database.
+ * @returns {Promise<void>} A promise that resolves if the user exists, or rejects if the user does not exist.
+ */
 const userMustExist = async (username) => {
     // Database logic to check if the user exists
     const user = await db.getUserByUsername(username);
@@ -18,6 +34,13 @@ const userMustExist = async (username) => {
     }
 };
 
+/**
+ * Tests if a given URL is accessible by making a HEAD request.
+ *
+ * @async
+ * @param {string} url - The URL to test for accessibility.
+ * @returns {Promise<boolean>} True if the URL is accessible, false otherwise.
+ */
 const testUrlAccessibility = async function (url) {
     try {
         // Use axios to make a HEAD request to the URL
@@ -28,6 +51,12 @@ const testUrlAccessibility = async function (url) {
     }
 };
 
+/**
+ * Validates whether the given input is a well-formed URL.
+ *
+ * @param {string} inputUrl - The URL to validate.
+ * @returns {boolean} True if the input is a valid URL, false otherwise.
+ */
 const isValidUrl = (inputUrl) => {
     try {
         const parsedUrl = new URL(inputUrl);
@@ -37,6 +66,15 @@ const isValidUrl = (inputUrl) => {
     }
 };
 
+/**
+ * Middleware to authenticate a JWT token present in the request header.
+ * It verifies the token and adds the user information to the request if the token is valid.
+ * Sends a 401 or 403 response if the token is not provided or invalid, respectively.
+ *
+ * @param {Object} req - The request object from Express.js.
+ * @param {Object} res - The response object from Express.js.
+ * @param {function} next - The next middleware function in the Express.js route.
+ */
 const authenticateToken = (req, res, next) => {
   // Get the token from the request header
   const authHeader = req.headers['authorization'];
@@ -58,6 +96,5 @@ const authenticateToken = (req, res, next) => {
     next(); // Proceed to the next middleware or route handler
   });
 };
-
 
 module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken };

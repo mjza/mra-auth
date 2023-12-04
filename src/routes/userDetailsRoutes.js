@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const { authenticateToken } = require('../utils/validations'); 
-const {toLowerCamelCase} = require('../utils/converters');
+const {toLowerCamelCase, encryptObjectItems, decryptObjectItems} = require('../utils/converters');
 const db = require('../db/database');
 const router = express.Router();
 
@@ -93,9 +93,9 @@ router.get('/user_details', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'User details not found'});
     }
 
-    return res.json(toLowerCamelCase(userDetails));
+    return res.json(decryptObjectItems(toLowerCamelCase(userDetails)));
   } catch (error) {
-    console.error(err);
+    console.error(error);
     return res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
@@ -208,8 +208,8 @@ router.post('/user_details', authenticateToken, async (req, res) => {
   }
 
   try {
-    const createdUserDetails = await db.createUserDetails(userDetails);
-    return res.status(201).json(toLowerCamelCase(createdUserDetails));
+    const createdUserDetails = await db.createUserDetails(encryptObjectItems(userDetails));
+    return res.status(201).json(decryptObjectItems(toLowerCamelCase(createdUserDetails)));
   } catch (error) {
     console.error(error);
 
@@ -372,13 +372,13 @@ router.put('/user_details/:userId',
   }
 
   try {
-    const updatedUserDetails = await db.updateUserDetails(userId, userDetails);
+    const updatedUserDetails = await db.updateUserDetails(userId, encryptObjectItems(userDetails));
 
     if(!updatedUserDetails){
       return res.status(404).json({ message: "There is no record for this user in the user details table." });
     }
 
-    return res.status(200).json(toLowerCamelCase(updatedUserDetails));
+    return res.status(200).json(decryptObjectItems(toLowerCamelCase(updatedUserDetails)));
   } catch (error) {
     console.error(error);
 

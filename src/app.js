@@ -89,8 +89,8 @@ const swaggerDefinition = {
 // Options for the swagger docs
 const options = {
     swaggerDefinition,
-    // Paths to files containing Swagger annotations
-    apis: ['./routes/*.js'],
+    // Absolute paths to files containing Swagger annotations
+    apis: ['src/routes/*.js'],
 };
 
 // Initialize swagger-jsdoc

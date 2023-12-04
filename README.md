@@ -32,3 +32,8 @@ openssl req -x509 -newkey rsa:4096 -keyout localhost.key -out localhost.crt -day
 ```bash 
 openssl rand -hex 32
 ```
+
+## Generate documentations using JSDoc
+```bash
+npm run generate-docs
+```

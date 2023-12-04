@@ -3,6 +3,15 @@ const path = require('path');
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+/**
+ * Sends an email using SendGrid's email service.
+ * 
+ * @async
+ * @param {string} email - The recipient's email address.
+ * @param {string} subject - The subject line of the email.
+ * @param {string} htmlContent - The HTML content of the email.
+ * @throws Will throw an error if the email fails to send.
+ */
 const sendEmail = async (email, subject, htmlContent) => {
     const msg = {
         to: email,
@@ -20,6 +29,16 @@ const sendEmail = async (email, subject, htmlContent) => {
     }
 };
 
+/**
+ * Sends a verification email to a new user.
+ * The email content is generated using a HTML template file.
+ * 
+ * @async
+ * @param {string} username - The username of the user.
+ * @param {string} userEmail - The email address of the user.
+ * @param {string} activationLink - The link the user needs to click to verify their email.
+ * @throws Will throw an error if the email fails to send.
+ */
 const sendVerificationEmail = async (username, userEmail, activationLink) => {
     // Read the template file
     const templatePath = path.join(__dirname, './verificationEmailTemplate.html');
@@ -50,6 +69,15 @@ const sendVerificationEmail = async (username, userEmail, activationLink) => {
     }
 };
 
+/**
+ * Sends a password reset email to a user.
+ * The email content is generated using a HTML template file and includes a password reset link.
+ * 
+ * @async
+ * @param {string} userEmail - The email address of the user.
+ * @param {string} resetToken - The password reset token to be included in the reset link.
+ * @throws Will throw an error if the email fails to send.
+ */
 const sendResetPasswordEmail = async (userEmail, resetToken) => {
     // Read the template file
     const templatePath = path.join(__dirname, './resetPasswordEmailTemplate.html');
