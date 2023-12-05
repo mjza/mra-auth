@@ -1,6 +1,7 @@
 const db = require('../db/database');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
+const { Agent } = require('https');
 
 /**
  * Checks if a user does not exist in the database.
@@ -43,8 +44,10 @@ const userMustExist = async (username) => {
  */
 const testUrlAccessibility = async function (url) {
     try {
+        // Create a new instance of the HTTPS agent with keepAlive set to false
+        const httpsAgent = new Agent({ keepAlive: false });
         // Use axios to make a HEAD request to the URL
-        await axios.head(url);
+        await axios.head(url, { httpsAgent} );
         return true; // URL is accessible
     } catch (error) {
         return false; // URL is not accessible
@@ -75,7 +78,7 @@ const isValidUrl = (inputUrl) => {
  * @param {Object} res - The response object from Express.js.
  * @param {function} next - The next middleware function in the Express.js route.
  */
-const authenticateToken = (req, res, next) => {
+const authenticateToken = (req, res, next) => {  
   // Get the token from the request header
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
