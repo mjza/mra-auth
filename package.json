@@ -7,7 +7,7 @@
     "start": "cross-env NODE_ENV=development node src/index.js",
     "local-test": "cross-env NODE_ENV=development jest --detectOpenHandles",
     "github-test": "jest --detectOpenHandles",
-    "generate-docs": "jsdoc -c jsdoc.json"
+    "generate-docs": "jsdoc -c config/jsdoc.json"
   },
   "keywords": [],
   "author": "Mahdi Jaberzadeh Ansari",
@@ -36,6 +36,7 @@
     "supertest": "^6.3.3"
   },
   "jest": {
+    "setupFiles": ["<rootDir>/config/jest.setup.js"],
     "testMatch": [
       "**/tests/**/*.js"
     ]
