@@ -1,11 +1,15 @@
-process.env.SECRET_KEY = '0a06bb4c1e6d2b8f62ec71166d8997f588b3b3b1c313bbf14fcdfc9ba882827c';
-const { toLowerCamelCase, encrypt, decrypt, encryptObjectItems, decryptObjectItems } = require('../utils/converters');
-
 // Mock environment setup
+process.env.SECRET_KEY = '0a06bb4c1e6d2b8f62ec71166d8997f588b3b3b1c313bbf14fcdfc9ba882827c';
 const ivHexString = 'b16bf361893a9a874671090a4c969ba6';
 const iv = Buffer.from(ivHexString, 'hex');
 const rawString = 'string';
 const base64Encrypted = 'eyJpdiI6ImIxNmJmMzYxODkzYTlhODc0NjcxMDkwYTRjOTY5YmE2IiwiY29udGVudCI6Ijc0ZmFhZjk0ZjE4YSJ9';
+
+// Keep thos lines above this import, otherwise the environment SECRET_KEY will be used.
+// Tests are designed with this secret key to see the expected results.
+const { toLowerCamelCase, encrypt, decrypt, encryptObjectItems, decryptObjectItems } = require('../utils/converters');
+
+
 
 
 describe('Encryption and Decryption Tests', () => {
