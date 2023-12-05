@@ -9,9 +9,6 @@ const base64Encrypted = 'eyJpdiI6ImIxNmJmMzYxODkzYTlhODc0NjcxMDkwYTRjOTY5YmE2Iiw
 // Tests are designed with this secret key to see the expected results.
 const { toLowerCamelCase, encrypt, decrypt, encryptObjectItems, decryptObjectItems } = require('../utils/converters');
 
-
-
-
 describe('Encryption and Decryption Tests', () => {
 
     test('encrypt should return a base64 string', () => {
