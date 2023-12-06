@@ -1,15 +1,17 @@
 const request = require('supertest');
 const app = require('../app');
 const db = require('../db/database');
+const { mockUserRoute } = require('../utils/testUtils');
+
+const mockUser = mockUserRoute;
+const invalidMockUser = {
+  username: 'te', // Invalid username length
+  email: 'testexample.com', // Invalid email
+  password: 'pass' // Invalid password
+};
 
 describe('POST /register', () => {
   it('should return 201 for successful registration', async () => {
-    const mockUser = {
-      username: 'testuser',
-      email: 'test@example.com',
-      password: 'Password123!',
-      loginRedirectURL: ""
-    };
 
     const response = await request(app)
       .post('/register')
@@ -17,9 +19,9 @@ describe('POST /register', () => {
 
     expect(response.statusCode).toBe(201);
 
-    expect(response.body).toEqual({ 
-      message: "User registered successfully", 
-      userId: expect.any(Number) 
+    expect(response.body).toEqual({
+      message: "User registered successfully",
+      userId: expect.any(Number)
     });
 
     // Test to verify if user is actually in the database
@@ -29,28 +31,37 @@ describe('POST /register', () => {
   });
 
   it('should return 400 for invalid data', async () => {
-    const mockUser = {
-      username: 'te', // Invalid username length
-      email: 'testexample.com', // Invalid email
-      password: 'pass' // Invalid password
-    };
 
     const response = await request(app)
       .post('/register')
-      .send(mockUser);
+      .send(invalidMockUser);
 
     expect(response.statusCode).toBe(400);
     expect(response.body.errors).toBeDefined();
   });
 
+  it('should return 429 after 5 attempts', async () => {
+    var response;
+    
+    for (let i = 0; i < 6; i++) {
+      response = await request(app)
+        .post('/register')
+        .send(invalidMockUser);
+    }
+
+    expect(response.statusCode).toBe(429);
+    expect(response.body.message).toBeDefined();
+    expect(response.body.message).toBe('Too many accounts created from this IP, please try again after an hour');
+  });
+
   // Clean up after each tests
   afterEach(async () => {
-    await db.deleteUserByUsername('testuser');
+    await db.deleteUserByUsername(mockUser.username);
   });
 
   // Ensure the pool is closed after all tests
   afterAll(async () => {
-    await db.closePool(); 
+    await db.closePool();
   });
 
 });

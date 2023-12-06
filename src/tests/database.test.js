@@ -1,22 +1,7 @@
 const db = require('../db/database');
+const { mockUserDB } = require('../utils/testUtils');
 
-function generateRandomUsername(length = 8) {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let username = '';
-
-    for (let i = 0; i < length; i++) {
-        username += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    return username;
-}
-
-const mockUser = {
-    username: generateRandomUsername(),
-    email: generateRandomUsername() + '@example.com',
-    passwordHash: '$2b$10$3mNQEYa8JkvoHOcBBgSGeedoH2Bj.eGgbYH6mqcWDFargA0yF90SG'
-};
-
+const mockUser = mockUserDB;
 let insertedUser = null;
 
 describe('insertUser', () => {
