@@ -94,11 +94,11 @@ const isInactiveUser = async (user) => {
   const checkUserQuery =
     `SELECT * FROM ${usersTable} 
         WHERE 
-            created_at < CURRENT_TIMESTAMP + interval '5 days'
-        AND confirmation_at is null
-        AND username = $1 
-        AND activation_code = $2
+            confirmation_at IS NULL AND
+            username = $1 AND 
+            activation_code = $2
     `;
+
   const checkResult = await pool.query(checkUserQuery, [username.trim(), activationCode.trim()]);
 
   if (checkResult.rows.length > 0) {
@@ -120,10 +120,11 @@ const activeUser = async (user) => {
   const checkUserQuery =
     `SELECT * FROM ${usersTable} 
       WHERE 
-          created_at < CURRENT_TIMESTAMP + interval '5 days'
-      AND confirmation_at is null
-      AND username = $1
-      AND activation_code = $2
+          created_at >= (CURRENT_TIMESTAMP - interval '5 days') AND
+          created_at <= CURRENT_TIMESTAMP AND
+          confirmation_at IS NULL AND
+          username = $1 AND
+          activation_code = $2
     `;
   const checkResult = await pool.query(checkUserQuery, [username.trim(), activationCode.trim()]);
 
