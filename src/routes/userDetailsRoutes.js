@@ -3,6 +3,7 @@ const { body, param, validationResult } = require('express-validator');
 const { authenticateToken } = require('../utils/validations'); 
 const {toLowerCamelCase, encryptObjectItems, decryptObjectItems} = require('../utils/converters');
 const db = require('../db/database');
+const { apiRequestLimiter } = require('../utils/rateLimit'); 
 const router = express.Router();
 
 /**
@@ -40,25 +41,7 @@ const router = express.Router();
  *                 profilePictureThumbnailUrl:
  *                   type: string
  *       401:
- *         description: Unauthorized access - No token provided.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: You must provide a valid JWT token.
- *       403:
- *         description: Unauthorized access - Invalid Token.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Provided JWT token is invalid.
+ *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       404:
  *         description: User details not found.
  *         content:
@@ -69,22 +52,13 @@ const router = express.Router();
  *                 message:
  *                   type: string
  *                   example: User details not found.
+ *       429:
+ *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
- *         description: Internal server error.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Internal server error
- *                 error:
- *                   type: string
- *                   example: Exception in server processing.
+ *         $ref: '#/components/responses/ServerInternalError'
  * 
  */
-router.get('/user_details', authenticateToken, async (req, res) => {
+router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, res) => {
   try {
     const userId = req.user.userId; // Adjust depending on how the user ID is stored in the JWT
     const userDetails = await db.getUserDetails(userId);
@@ -96,7 +70,7 @@ router.get('/user_details', authenticateToken, async (req, res) => {
     return res.json(decryptObjectItems(toLowerCamelCase(userDetails)));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Internal server error", error: error.message });
+    return res.status(500).json({ message: error.message });
   }
 });
 
@@ -158,6 +132,8 @@ router.get('/user_details', authenticateToken, async (req, res) => {
  *                   type: string
  *                 profilePictureThumbnailUrl:
  *                   type: string
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       403:
  *         description: Unauthorized access - Update other users!
  *         content:
@@ -184,22 +160,13 @@ router.get('/user_details', authenticateToken, async (req, res) => {
  *                 details:
  *                   type: string
  *                   example: duplicate key value violates unique constraint "mra_user_details_pkey"
+ *       429:
+ *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
- *         description: Internal server error.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Internal server error
- *                 error:
- *                   type: string
- *                   example: Exception in server processing.
+ *         $ref: '#/components/responses/ServerInternalError' 
  *
  */
-router.post('/user_details', authenticateToken, async (req, res) => {
+router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req, res) => {
   const userIdFromToken = req.user.userId;
   const userDetails = req.body;
 
@@ -221,7 +188,7 @@ router.post('/user_details', authenticateToken, async (req, res) => {
       return res.status(422).json({ message: 'Invalid foreign key value.', details: error.message });
     }
 
-    return res.status(500).json({ message: "Internal server error", error: error.message });
+    return res.status(500).json({ message: error.message });
   }
 });
 
@@ -296,9 +263,11 @@ router.post('/user_details', authenticateToken, async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
- *                 error:
+ *                 message:
  *                   type: string
  *                   example: UserId is required.
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       403:
  *         description: Unauthorized access - Update other users!
  *         content:
@@ -332,21 +301,13 @@ router.post('/user_details', authenticateToken, async (req, res) => {
  *                 details:
  *                   type: string
  *                   example: insert or update on table "user_details" violates foreign key constraint "user_details_gender_id_fkey"
+ *       429:
+ *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
- *         description: Internal server error.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Internal server error
- *                 error:
- *                   type: string
- *                   example: Exception in server processing.
+ *         $ref: '#/components/responses/ServerInternalError'
+ * 
  */
-router.put('/user_details/:userId', 
+router.put('/user_details/:userId', apiRequestLimiter,
 [
   authenticateToken,
 
@@ -386,7 +347,7 @@ router.put('/user_details/:userId',
       return res.status(422).json({ message: 'Invalid foreign key value.', details: error.message });
     }
 
-    return res.status(500).json({ message: 'Internal server error', error: error.message });
+    return res.status(500).json({ message: error.message });
   }
 });
 

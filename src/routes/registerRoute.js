@@ -81,19 +81,11 @@ const router = express.Router();
  *                       location:
  *                         type: string
  *                         example: query
+ *       429:
+ *         $ref: '#/components/responses/CreateApiRateLimitExceeded' 
  *       500:
- *         description: Internal server error.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Internal server error
- *                 error:
- *                   type: string
- *                   example: Exception in postgres.
+ *         $ref: '#/components/responses/ServerInternalError'
+ * 
  */
 router.post('/register', createAccountLimiter,
   [
@@ -160,7 +152,7 @@ router.post('/register', createAccountLimiter,
       // Send success response
       res.status(201).json({ message: "User registered successfully", userId: result.user_id });
     } catch (error) {
-      res.status(500).json({ message: "Internal server error", error: error.message });
+      res.status(500).json({ message: error.message });
     }
   });
 

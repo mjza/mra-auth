@@ -3,7 +3,7 @@ const { query, validationResult } = require('express-validator');
 const crypto = require('crypto');
 const db = require('../db/database');
 const { userMustExist, isValidUrl } = require('../utils/validations');
-const { apiLimiter } = require('../utils/rateLimit'); 
+const { apiRequestLimiter } = require('../utils/rateLimit'); 
 
 const router = express.Router();
 
@@ -98,24 +98,16 @@ const router = express.Router();
  *             schema:
  *               type: object
  *               properties:
- *                 error:
- *                   type: string
- *                   example: Invalid activation link has been provided.
- *       500:
- *         description: Internal server error.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
  *                 message:
  *                   type: string
- *                   example: Internal server error
- *                 error:
- *                   type: string
- *                   example: Exception in postgres.   
+ *                   example: Invalid activation link has been provided.
+ *       429:
+ *         $ref: '#/components/responses/ApiRateLimitExceeded' 
+ *       500:
+ *         $ref: '#/components/responses/ServerInternalError'
+ *  
  */
-router.get('/activate', apiLimiter,
+router.get('/activate', apiRequestLimiter,
   [
     // Validate username
     query('username')

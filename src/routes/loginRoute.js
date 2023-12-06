@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../db/database');
+const { apiRequestLimiter } = require('../utils/rateLimit'); 
 const router = express.Router();
 
 /**
@@ -72,22 +73,14 @@ const router = express.Router();
  *                       location:
  *                         type: string
  *                         example: body
+ *       429:
+ *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
- *         description: Internal server error.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Internal server error
- *                 error:
- *                   type: string
- *                   example: Exception in server processing.
+ *         $ref: '#/components/responses/ServerInternalError'
+ * 
  */
-
-router.post('/login', [
+router.post('/login', apiRequestLimiter,
+[
   body('usernameOrEmail')
     .exists().withMessage('Username or email address is required.')
     .custom((value) => {
@@ -169,7 +162,7 @@ router.post('/login', [
     throw new Exception("The login method has a logical error.");
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 

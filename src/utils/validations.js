@@ -70,9 +70,24 @@ const isValidUrl = (inputUrl) => {
 };
 
 /**
+ * @swagger
+ * components:
+ *   responses:
+ *     UnauthorizedAccessInvalidTokenProvided:
+ *       description: Unauthorized access - No token provided.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 example: You must provide a valid JWT token. | Provided JWT token is invalid.
+ */
+/**
  * Middleware to authenticate a JWT token present in the request header.
  * It verifies the token and adds the user information to the request if the token is valid.
- * Sends a 401 or 403 response if the token is not provided or invalid, respectively.
+ * Sends a 401 response if the token is not provided or invalid, respectively.
  *
  * @param {Object} req - The request object from Express.js.
  * @param {Object} res - The response object from Express.js.
@@ -92,7 +107,7 @@ const authenticateToken = (req, res, next) => {
 
   jwt.verify(token, secretKeyBuffer, (err, user) => {
     if (err) {// If token is invalid
-      return res.status(403).json({ message: 'Provided JWT token is invalid.'});; 
+      return res.status(401).json({ message: 'Provided JWT token is invalid.'});; 
     }
 
     req.user = user; // Add user information to request

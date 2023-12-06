@@ -12,3 +12,19 @@ router.use(loginRoute);
 router.use(userDetailsRoutes);
 
 module.exports = router;
+
+/**
+ * @swagger
+ * components:
+ *   responses:
+ *     ServerInternalError:
+ *       description: Internal server error.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 example: different exception messages in server processing.
+ */

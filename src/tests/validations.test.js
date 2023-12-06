@@ -88,7 +88,7 @@ describe('Token Authentication Middleware', () => {
 
         await authenticateToken(req, res, next);
         
-        expect(res.status).toHaveBeenCalledWith(403);
+        expect(res.status).toHaveBeenCalledWith(401);
         expect(res.json).toHaveBeenCalledWith({ message: 'Provided JWT token is invalid.' });
     });
 
