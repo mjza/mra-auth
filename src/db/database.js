@@ -94,7 +94,7 @@ const isInactiveUser = async (user) => {
   const checkUserQuery =
     `SELECT * FROM ${usersTable} 
         WHERE 
-            created_at < CURRENT_TIMESTAMP - interval '5 days'
+            created_at < CURRENT_TIMESTAMP + interval '5 days'
         AND confirmation_at is null
         AND username = $1 
         AND activation_code = $2
@@ -120,7 +120,7 @@ const activeUser = async (user) => {
   const checkUserQuery =
     `SELECT * FROM ${usersTable} 
       WHERE 
-          created_at < CURRENT_TIMESTAMP - interval '5 days'
+          created_at < CURRENT_TIMESTAMP + interval '5 days'
       AND confirmation_at is null
       AND username = $1
       AND activation_code = $2
@@ -145,11 +145,13 @@ const activeUser = async (user) => {
  */
 async function getUserDetails(userId) {
   const query = `
-    SELECT user_id, first_name, middle_name, last_name, gender_id, date_of_birth as date_of_birth, profile_picture_url, profile_picture_thumbnail_url 
-    FROM ${userDetailsTable} WHERE user_id = $1;
+    SELECT u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url 
+    FROM ${userDetailsTable} u 
+    INNER JOIN ${genderTypesTable} g ON u.gender_id = g.gender_id
+    WHERE u.user_id = $1;
   `;
   const { rows } = await pool.query(query, [userId]);
-  return rows[0];
+  return undefined === rows[0] ? null : rows[0];
 }
 
 /**

@@ -22,9 +22,7 @@ const router = express.Router();
  *           application/json:
  *             schema:
  *               type: object
- *               properties:
- *                 userId:
- *                   type: integer
+ *               properties:                 
  *                 firstName:
  *                   type: string
  *                 middleName:
@@ -33,6 +31,8 @@ const router = express.Router();
  *                   type: string
  *                 genderId:
  *                   type: integer
+ *                 genderName:
+ *                   type: string
  *                 dateOfBirth:
  *                   type: string
  *                   format: date
@@ -114,8 +114,6 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, 
  *             schema:
  *               type: object
  *               properties:
- *                 userId:
- *                   type: integer
  *                 firstName:
  *                   type: string
  *                 middleName:
@@ -124,6 +122,8 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, 
  *                   type: string
  *                 genderId:
  *                   type: integer
+ *                 genderName:
+ *                   type: string
  *                 dateOfBirth:
  *                   type: string
  *                   format: date
@@ -237,8 +237,6 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
  *             schema:
  *               type: object
  *               properties:
- *                 userId:
- *                   type: integer
  *                 firstName:
  *                   type: string
  *                 middleName:
@@ -247,6 +245,8 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
  *                   type: string
  *                 genderId:
  *                   type: integer
+ *                 genderName:
+ *                   type: string
  *                 dateOfBirth:
  *                   type: string
  *                   format: date
