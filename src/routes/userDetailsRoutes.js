@@ -56,7 +56,6 @@ const router = express.Router();
  *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
- * 
  */
 router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, res) => {
   try {
@@ -163,8 +162,7 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, 
  *       429:
  *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
- *         $ref: '#/components/responses/ServerInternalError' 
- *
+ *         $ref: '#/components/responses/ServerInternalError'
  */
 router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req, res) => {
   const userIdFromToken = req.user.userId;
@@ -305,7 +303,6 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
  *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
- * 
  */
 router.put('/user_details/:userId', apiRequestLimiter,
 [

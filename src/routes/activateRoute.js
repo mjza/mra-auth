@@ -65,32 +65,7 @@ const router = express.Router();
  *             schema:
  *               type: string
  *       400:
- *         description: Invalid request parameters.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       type:
- *                         type: string
- *                         example: field
- *                       value:
- *                         type: string
- *                         example: usernameX
- *                       msg:
- *                         type: string
- *                         example: Username does not exist.
- *                       path:
- *                         type: string
- *                         example: username
- *                       location:
- *                         type: string
- *                         example: query
+ *         $ref: '#/components/responses/UserMustExistError'
  *       404:
  *         description: Invalid activation link has been provided.
  *         content:
@@ -105,7 +80,6 @@ const router = express.Router();
  *         $ref: '#/components/responses/ApiRateLimitExceeded' 
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
- *  
  */
 router.get('/activate', apiRequestLimiter,
   [
