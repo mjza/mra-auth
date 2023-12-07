@@ -130,42 +130,43 @@ router.get('/activate', apiRequestLimiter,
       const decryptedActivationObject = JSON.parse(decryptedActivationObjectHex);
       const { activationCode, redirectURL } = decryptedActivationObject;
 
-
       // Now you can use the activationCode for further processing
       const user = { username, activationCode };
 
       // first check if the user has not been already activated
-      var isInactivate = await db.isInactiveUser(user);
+      var isActivationLinkValid = await db.isActivationCodeValid(user);
 
       var result = false;      
-      if(isInactivate){
+      if(isActivationLinkValid){
         result = await db.activeUser(user);
       }
 
+      var isInactiveUser = await db.isInactiveUser(user);
+      
       // Database operation and response handling 
-      if (isInactivate === false || result === true) {
+      if (isInactiveUser === false || result === true) {
         // Check if redirectURL is not empty and is a valid URL
         if (redirectURL && isValidUrl(redirectURL)) {
           // Determine how to append the username based on the ending of redirectURL
-          const separator = redirectURL.includes('?') ? '&' : '?';
-          
+          const separator = redirectURL.includes('?') ? '&' : '?';          
           // Redirect the user to the modified URL
           const redirectLocation = `${redirectURL}${separator}username=${username}`;
           return res.redirect(redirectLocation);
-        } else if (isInactivate === false){
+        } else if (isInactiveUser === false){
           // RedirectURL is empty or not a valid URL and user is already activated
-          res.status(202).json({ message: 'Account has been already activated.' });
+          return res.status(202).json({ message: 'Account has been already activated.' });
         } else {
           // RedirectURL is empty or not a valid URL
-          res.status(200).json({ message: 'Account is activated successfully.' });
+          return res.status(200).json({ message: 'Account is activated successfully.' });
         }
-      } else {
-        res.status(404).json({ message: 'Invalid activation link has been provided.' });
+      } else if (isActivationLinkValid === false) {
+        return res.status(404).json({ message: 'Activation link is invalid.' });
       }
-      
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Internal server error' });
+
+      throw new Exception('Couldn\'t activate a user while the activation link was valid.');
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: error.message });
     }
   });
 

@@ -169,8 +169,8 @@ const authenticateToken = (req, res, next) => {
   const secretKeyHex = process.env.SECRET_KEY;
   const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
 
-  jwt.verify(token, secretKeyBuffer, (err, user) => {
-    if (err) {// If token is invalid
+  jwt.verify(token, secretKeyBuffer, (error, user) => {
+    if (error) {// If token is invalid
       return res.status(401).json({ message: 'Provided JWT token is invalid.'});; 
     }
 

@@ -49,6 +49,15 @@ describe('isInactiveUser', () => {
     });
 });
 
+describe('isActivationCodeValid', () => {
+    it('should check if a user is inactive', async () => {
+        // This depends on your database state and may need adjustment
+        const activationCode = { username: insertedUser.username, activationCode: insertedUser.activation_code };
+        const isActivationCodeValid = await db.isActivationCodeValid(activationCode);
+        expect(isActivationCodeValid).toBe(true);
+    });
+});
+
 describe('activeUser', () => {
     it('should activate a user', async () => {
         const userToActivate = { username: insertedUser.username, activationCode: insertedUser.activation_code };

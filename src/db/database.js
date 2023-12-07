@@ -109,6 +109,34 @@ const isInactiveUser = async (user) => {
 };
 
 /**
+ * Checks if an activation link is valid based on the provided user information.
+ *
+ * @param {Object} user - The user object containing username and activationCode.
+ * @returns {boolean} True if the user is inactive, false otherwise.
+ */
+const isActivationCodeValid = async (user) => {
+  const { username, activationCode } = user;
+  // Check if the user and activation code match
+  const checkUserQuery =
+    `SELECT * FROM ${usersTable} 
+        WHERE
+            created_at >= (CURRENT_TIMESTAMP - interval '5 days') AND
+            created_at <= CURRENT_TIMESTAMP AND 
+            confirmation_at IS NULL AND
+            username = $1 AND 
+            activation_code = $2
+    `;
+
+  const checkResult = await pool.query(checkUserQuery, [username.trim(), activationCode.trim()]);
+
+  if (checkResult.rows.length > 0) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+/**
  * Activates a user in the database based on the provided user information.
  *
  * @param {Object} user - The user object containing username and activationCode.
@@ -214,6 +242,7 @@ module.exports = {
   getUserByUsernameOrEmail,
   insertUser,
   isInactiveUser,
+  isActivationCodeValid,
   activeUser,
   getUserDetails,
   createUserDetails,
