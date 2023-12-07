@@ -1,6 +1,11 @@
 const crypto = require('crypto');
 
-// returns a object {token, data}
+/**
+ * Generates an encrypted activation object containing the activation code and redirect URL.
+ * @param {string} activationCode - The activation code to be encrypted.
+ * @param {string} redirectURL - The URL where the user will be redirected after activation.
+ * @returns {object} An object {token, data} containing the token and encrypted data.
+ */
 const generateEncryptedActivationObject = (activationCode, redirectURL) => {
     try {
         // Encrypt the activation object using a secret key
@@ -16,7 +21,13 @@ const generateEncryptedActivationObject = (activationCode, redirectURL) => {
     }
 };
 
-// returns string 
+/**
+ * Generates an activation link using the username, activation code, and redirect URL.
+ * @param {string} username - The username for which the activation link is generated.
+ * @param {string} activationCode - The activation code for the user.
+ * @param {string} redirectURL - The URL to redirect the user after activation.
+ * @returns {string} The generated activation link.
+ */
 const generateActivationLink = (username, activationCode, redirectURL) => {
     const activationObject = generateEncryptedActivationObject(activationCode, redirectURL);
     // Create the activation link
@@ -24,7 +35,12 @@ const generateActivationLink = (username, activationCode, redirectURL) => {
     return activationLink;
 };
 
-// returns a object const { activationCode, redirectURL }
+/**
+ * Decrypts an activation object from the given token and encrypted data.
+ * @param {string} token - The token used for decryption (includes IV).
+ * @param {string} data - The encrypted data.
+ * @returns {object} An object { activationCode, redirectURL } containing the decrypted activation code and redirect URL.
+ */
 const generateDecryptedActivationObject = (token, data) => {
     try {
         // Convert token (which includes IV) to a buffer
@@ -46,6 +62,11 @@ const generateDecryptedActivationObject = (token, data) => {
     }
 };
 
+/**
+ * Generates a random string of a specified length.
+ * @param {number} [length=8] - The length of the string to generate. Default is 8 characters.
+ * @returns {string} A random string of the specified length.
+ */
 function generateRandomString(length = 8) {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let str = '';
@@ -55,12 +76,14 @@ function generateRandomString(length = 8) {
     return str;
 }
 
+// Mock data
 const mockUserDB = {
     username: generateRandomString(),
     email: generateRandomString() + '@example.com',
     passwordHash: '$2b$10$3mNQEYa8JkvoHOcBBgSGeedoH2Bj.eGgbYH6mqcWDFargA0yF90SG'
 };
 
+// Mock data
 const mockUserRoute = {
     username: generateRandomString(),
     email: generateRandomString() + '@example.com',
