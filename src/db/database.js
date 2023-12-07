@@ -109,6 +109,33 @@ const isInactiveUser = async (user) => {
 };
 
 /**
+ * Checks if a user is active based on the provided user information.
+ *
+ * @param {String} username - The username of the user.
+ * @returns {boolean} True if the user is inactive, false otherwise.
+ */
+const isActiveUser = async (username) => {  
+  // Check if the user and activation code match
+  const checkUserQuery =
+    `SELECT * FROM ${usersTable} 
+        WHERE 
+            confirmation_at IS NOT NULL AND
+            activation_code IS NULL AND
+            deleted_at IS NULL AND
+	          suspended_at IS NULL AND
+            username = $1            
+    `;
+
+  const checkResult = await pool.query(checkUserQuery, [username.trim()]);
+
+  if (checkResult.rows.length > 0) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+/**
  * Checks if an activation link is valid based on the provided user information.
  *
  * @param {Object} user - The user object containing username and activationCode.
@@ -241,6 +268,7 @@ module.exports = {
   getUserByUsername,
   getUserByUsernameOrEmail,
   insertUser,
+  isActiveUser,
   isInactiveUser,
   isActivationCodeValid,
   activeUser,

@@ -1,11 +1,11 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
-const crypto = require('crypto');
 const db = require('../db/database');
 const { sendVerificationEmail } = require('../emails/emailService');
-const { userMustNotExist } = require('../utils/validations'); 
-const { createAccountLimiter } = require('../utils/rateLimit'); 
+const { userMustNotExist } = require('../utils/validations');
+const { createAccountLimiter } = require('../utils/rateLimit');
+const { generateActivationLink } = require('../utils/generators');
 
 const router = express.Router();
 
@@ -102,31 +102,17 @@ router.post('/register', createAccountLimiter,
 
       // Optional login redirect URL
       const loginRedirectURL = req.body.loginRedirectURL || '';
-
-      // Create the activation object
-      const activationObject = {
-        activationCode: result.activation_code,
-        redirectURL: loginRedirectURL,
-      };
-
-      // Encrypt the activation object using a secret key
-      const secretKeyHex = process.env.SECRET_KEY; 
-      const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
-      const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipheriv('aes-256-cbc', secretKeyBuffer, iv);
-      let encryptedActivationObject = cipher.update(JSON.stringify(activationObject), 'utf8', 'hex');
-      encryptedActivationObject += cipher.final('hex');
-
+      
       // Create the activation link
-      const activationLink = `${process.env.BASE_URL}/activate?username=${result.username}&token=${iv.toString('hex')}&data=${encryptedActivationObject}`;
+      const activationLink = generateActivationLink(result.username, result.activation_code, loginRedirectURL);
 
       // Send verification email
       await sendVerificationEmail(result.username, result.email, activationLink);
-      
+
       // Send success response
-      res.status(201).json({ message: "User registered successfully", userId: result.user_id });
+      return res.status(201).json({ message: "User registered successfully", userId: result.user_id });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
   });
 

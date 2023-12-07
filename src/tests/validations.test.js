@@ -1,16 +1,13 @@
 const { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken } = require('../utils/validations');
 const db = require('../db/database');
 const jwt = require('jsonwebtoken');
+const { mockUserDB, generateRandomString } = require('../utils/generators');
 
 describe('User Existence Checks', () => {
 
-    const strangeUserName = 'x/hnd)jYJRX2vD0_/Ds05&fR,49V9j';
+    const strangeUserName = generateRandomString(30);
 
-    const mockUser = {
-        username: 'testuser',
-        email: 'test@example.com',
-        passwordHash: '$2b$10$3mNQEYa8JkvoHOcBBgSGeedoH2Bj.eGgbYH6mqcWDFargA0yF90SG'
-      };
+    const mockUser = mockUserDB;
 
     beforeEach(async () => {
         // Insert a test user into the database

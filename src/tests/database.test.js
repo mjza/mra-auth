@@ -1,5 +1,5 @@
 const db = require('../db/database');
-const { mockUserDB } = require('../utils/testUtils');
+const { mockUserDB } = require('../utils/generators');
 
 const mockUser = mockUserDB;
 let insertedUser = null;

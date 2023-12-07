@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../app');
 const db = require('../db/database');
-const { mockUserRoute } = require('../utils/testUtils');
+const { mockUserRoute } = require('../utils/generators');
 
 const mockUser = mockUserRoute;
 const invalidMockUser = {

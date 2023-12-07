@@ -1,9 +1,9 @@
 const express = require('express');
 const { query, validationResult } = require('express-validator');
-const crypto = require('crypto');
 const db = require('../db/database');
 const { userMustExist, isValidUrl } = require('../utils/validations');
-const { apiRequestLimiter } = require('../utils/rateLimit'); 
+const { apiRequestLimiter } = require('../utils/rateLimit');
+const { generateDecryptedActivationObject } = require('../utils/generators');
 
 const router = express.Router();
 
@@ -100,7 +100,7 @@ router.get('/activate', apiRequestLimiter,
 
     // Validate data (encryptedActivationObject)
     query('data')
-      .isLength({ min: 32 }) 
+      .isLength({ min: 32 })
       .withMessage('Invalid data format.')
       .matches(/^[0-9a-fA-F]+$/)
       .withMessage('Data must be a hexadecimal string.')
@@ -115,44 +115,28 @@ router.get('/activate', apiRequestLimiter,
       // Extract validated parameters
       const { username, token, data } = req.query;
 
-      // Convert token (which includes IV) to a buffer
-      const iv = Buffer.from(token, 'hex');
-
-      // Decrypt the encrypted data using the secret key and IV
-      const secretKeyHex = process.env.SECRET_KEY; 
-      const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
-      const decipher = crypto.createDecipheriv('aes-256-cbc', secretKeyBuffer, iv);
-      // Decrypt the encryptedActivationObject
-      let decryptedActivationObjectHex = decipher.update(data, 'hex', 'utf8');
-      decryptedActivationObjectHex += decipher.final('utf8');
-
-      // Parse the JSON back into an object
-      const decryptedActivationObject = JSON.parse(decryptedActivationObjectHex);
-      const { activationCode, redirectURL } = decryptedActivationObject;
+      const { activationCode, redirectURL } = generateDecryptedActivationObject(token, data);
 
       // Now you can use the activationCode for further processing
       const user = { username, activationCode };
 
       // first check if the user has not been already activated
       var isActivationLinkValid = await db.isActivationCodeValid(user);
-
-      var result = false;      
-      if(isActivationLinkValid){
+      var result = false;
+      if (isActivationLinkValid)
         result = await db.activeUser(user);
-      }
+      var isActiveUser = await db.isActiveUser(username);
 
-      var isInactiveUser = await db.isInactiveUser(user);
-      
       // Database operation and response handling 
-      if (isInactiveUser === false || result === true) {
+      if (isActiveUser === true || result === true) {
         // Check if redirectURL is not empty and is a valid URL
         if (redirectURL && isValidUrl(redirectURL)) {
           // Determine how to append the username based on the ending of redirectURL
-          const separator = redirectURL.includes('?') ? '&' : '?';          
+          const separator = redirectURL.includes('?') ? '&' : '?';
           // Redirect the user to the modified URL
           const redirectLocation = `${redirectURL}${separator}username=${username}`;
           return res.redirect(redirectLocation);
-        } else if (isInactiveUser === false){
+        } else if (isActivationLinkValid === false) {
           // RedirectURL is empty or not a valid URL and user is already activated
           return res.status(202).json({ message: 'Account has been already activated.' });
         } else {

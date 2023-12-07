@@ -118,7 +118,7 @@ app.use(express.static('public'));
 
 // Catch-all route for undefined routes
 app.get('*', (req, res) => {
-    res.status(404).sendFile('public/error.html', { root: __dirname });
+    return res.status(404).sendFile('public/error.html', { root: __dirname });
 });
 
 module.exports = app;
