@@ -16,8 +16,8 @@ const gracefulShutdown = async () => {
       console.log('HTTP server closed');
       process.exit(0);
     });
-  } catch (error) {
-    console.error('Error during shutdown', error);
+  } catch (err) {
+    console.error('Error during shutdown', err);
     process.exit(1);
   }
 };

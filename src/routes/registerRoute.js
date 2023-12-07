@@ -111,8 +111,8 @@ router.post('/register', createAccountLimiter,
 
       // Send success response
       return res.status(201).json({ message: "User registered successfully", userId: result.user_id });
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
+    } catch (err) {
+      return res.status(500).json({ message: err.message });
     }
   });
 

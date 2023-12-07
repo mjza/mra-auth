@@ -113,7 +113,7 @@ const testUrlAccessibility = async function (url) {
         // Use axios to make a HEAD request to the URL
         await axios.head(url, { httpsAgent} );
         return true; // URL is accessible
-    } catch (error) {
+    } catch (err) {
         return false; // URL is not accessible
     }
 };
@@ -128,7 +128,7 @@ const isValidUrl = (inputUrl) => {
     try {
         const parsedUrl = new URL(inputUrl);
         return true;
-    } catch (error) {
+    } catch (err) {
         return false;
     }
 };
@@ -169,8 +169,8 @@ const authenticateToken = (req, res, next) => {
   const secretKeyHex = process.env.SECRET_KEY;
   const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
 
-  jwt.verify(token, secretKeyBuffer, (error, user) => {
-    if (error) {// If token is invalid
+  jwt.verify(token, secretKeyBuffer, (err, user) => {
+    if (err) {// If token is invalid
       return res.status(401).json({ message: 'Provided JWT token is invalid.'});; 
     }
 

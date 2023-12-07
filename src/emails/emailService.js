@@ -23,8 +23,8 @@ const sendEmail = async (email, subject, htmlContent) => {
     try {
         await sgMail.send(msg);
         console.log('Email sent successfully to ' + email);
-    } catch (error) {
-        console.error('Error sending email to ' + email, error);
+    } catch (err) {
+        console.error('Error sending email to ' + email, err);
         throw error; // Or handle it as per your application's error handling policy
     }
 };
@@ -63,8 +63,8 @@ const sendVerificationEmail = async (username, userEmail, activationLink) => {
     try {
         await sendEmail(userEmail, 'Verify Your Email', emailTemplate);
         console.log('Verification email sent successfully for ' + username);
-    } catch (error) {
-        console.error('Error sending verification email', error);
+    } catch (err) {
+        console.error('Error sending verification email', err);
         throw error;
     }
 };
@@ -93,8 +93,8 @@ const sendResetPasswordEmail = async (userEmail, resetToken) => {
     try {
         await sendEmail(userEmail, 'Reset Your Password', emailTemplate);
         console.log('Reset password email sent successfully for ' + userEmail);
-    } catch (error) {
-        console.error('Error sending reset password email', error);
+    } catch (err) {
+        console.error('Error sending reset password email', err);
         throw error;
     }
 };

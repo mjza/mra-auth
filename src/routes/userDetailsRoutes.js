@@ -67,9 +67,9 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, 
     }
 
     return res.json(decryptObjectItems(toLowerCamelCase(userDetails)));
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: error.message });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
   }
 });
 
@@ -175,18 +175,18 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
   try {
     const createdUserDetails = await db.createUserDetails(encryptObjectItems(userDetails));
     return res.status(201).json(decryptObjectItems(toLowerCamelCase(createdUserDetails)));
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
 
-    if (error.code === '23505') { // PostgreSQL foreign key violation error code
-      return res.status(422).json({ message: 'A record exists for the current user.', details: error.message });
+    if (err.code === '23505') { // PostgreSQL foreign key violation error code
+      return res.status(422).json({ message: 'A record exists for the current user.', details: err.message });
     }
 
-    if (error.code === '23503') { // PostgreSQL foreign key violation error code
-      return res.status(422).json({ message: 'Invalid foreign key value.', details: error.message });
+    if (err.code === '23503') { // PostgreSQL foreign key violation error code
+      return res.status(422).json({ message: 'Invalid foreign key value.', details: err.message });
     }
 
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: err.message });
   }
 });
 
@@ -337,14 +337,14 @@ router.put('/user_details/:userId', apiRequestLimiter,
     }
 
     return res.status(200).json(decryptObjectItems(toLowerCamelCase(updatedUserDetails)));
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
 
-    if (error.code === '23503') { // PostgreSQL foreign key violation error code
-      return res.status(422).json({ message: 'Invalid foreign key value.', details: error.message });
+    if (err.code === '23503') { // PostgreSQL foreign key violation error code
+      return res.status(422).json({ message: 'Invalid foreign key value.', details: err.message });
     }
 
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: err.message });
   }
 });
 

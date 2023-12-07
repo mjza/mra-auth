@@ -160,9 +160,9 @@ router.post('/login', apiRequestLimiter,
     }
 
     throw new Exception("The login method has a logical error.");
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: error.message });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
   }
 });
 

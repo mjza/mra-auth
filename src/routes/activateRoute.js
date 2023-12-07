@@ -148,9 +148,9 @@ router.get('/activate', apiRequestLimiter,
       }
 
       throw new Exception('Couldn\'t activate a user while the activation link was valid.');
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: error.message });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: err.message });
     }
   });
 
