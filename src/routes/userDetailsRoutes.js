@@ -1,9 +1,9 @@
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
-const { authenticateToken } = require('../utils/validations'); 
-const {toLowerCamelCase, encryptObjectItems, decryptObjectItems} = require('../utils/converters');
+const { authenticateToken } = require('../utils/validations');
+const { toLowerCamelCase, encryptObjectItems, decryptObjectItems } = require('../utils/converters');
 const db = require('../db/database');
-const { apiRequestLimiter } = require('../utils/rateLimit'); 
+const { apiRequestLimiter } = require('../utils/rateLimit');
 const router = express.Router();
 
 /**
@@ -63,7 +63,7 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, 
     const userDetails = await db.getUserDetails(userId);
 
     if (!userDetails) {
-      return res.status(404).json({ message: 'User details not found'});
+      return res.status(404).json({ message: 'User details not found' });
     }
 
     return res.json(decryptObjectItems(toLowerCamelCase(userDetails)));
@@ -169,7 +169,7 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
   const userDetails = req.body;
 
   if (userIdFromToken !== userDetails.userId) {
-    return res.status(403).json({ message: 'Unauthorized to create details for other users'});
+    return res.status(403).json({ message: 'Unauthorized to create details for other users' });
   }
 
   try {
@@ -305,48 +305,48 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
  *         $ref: '#/components/responses/ServerInternalError'
  */
 router.put('/user_details/:userId', apiRequestLimiter,
-[
-  authenticateToken,
+  [
+    authenticateToken,
 
-  // Validate userId
-  param('userId')
-  .exists()
-  .withMessage('UserId is required.')
-  .matches(/^[\d]+$/)
-  .withMessage('Userid must be a number.'),
-], async (req, res) => {
+    // Validate userId
+    param('userId')
+      .exists()
+      .withMessage('UserId is required.')
+      .matches(/^[\d]+$/)
+      .withMessage('Userid must be a number.'),
+  ], async (req, res) => {
 
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  const userIdFromToken = req.user.userId; // Adjust based on JWT structure
-  const { userId } = req.params;
-  const userDetails = req.body;
-
-  if (parseInt(userIdFromToken) !== parseInt(userId)) {
-    return res.status(403).json({ message: 'Unauthorized to update details for other users.'});
-  }
-
-  try {
-    const updatedUserDetails = await db.updateUserDetails(userId, encryptObjectItems(userDetails));
-
-    if(!updatedUserDetails){
-      return res.status(404).json({ message: "There is no record for this user in the user details table." });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    return res.status(200).json(decryptObjectItems(toLowerCamelCase(updatedUserDetails)));
-  } catch (err) {
-    console.error(err);
+    const userIdFromToken = req.user.userId; // Adjust based on JWT structure
+    const { userId } = req.params;
+    const userDetails = req.body;
 
-    if (err.code === '23503') { // PostgreSQL foreign key violation error code
-      return res.status(422).json({ message: 'Invalid foreign key value.', details: err.message });
+    if (parseInt(userIdFromToken) !== parseInt(userId)) {
+      return res.status(403).json({ message: 'Unauthorized to update details for other users.' });
     }
 
-    return res.status(500).json({ message: err.message });
-  }
-});
+    try {
+      const updatedUserDetails = await db.updateUserDetails(userId, encryptObjectItems(userDetails));
+
+      if (!updatedUserDetails) {
+        return res.status(404).json({ message: "There is no record for this user in the user details table." });
+      }
+
+      return res.status(200).json(decryptObjectItems(toLowerCamelCase(updatedUserDetails)));
+    } catch (err) {
+      console.error(err);
+
+      if (err.code === '23503') { // PostgreSQL foreign key violation error code
+        return res.status(422).json({ message: 'Invalid foreign key value.', details: err.message });
+      }
+
+      return res.status(500).json({ message: err.message });
+    }
+  });
 
 
 module.exports = router;

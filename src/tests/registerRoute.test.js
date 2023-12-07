@@ -1,16 +1,19 @@
 const request = require('supertest');
 const app = require('../app');
 const db = require('../db/database');
-const { mockUserRoute } = require('../utils/generators');
+const { generateMockUserRoute } = require('../utils/generators');
 
-const mockUser = mockUserRoute;
-const invalidMockUser = {
-  username: 'te', // Invalid username length
-  email: 'testexample.com', // Invalid email
-  password: 'pass' // Invalid password
-};
 
-describe('POST /register', () => {
+
+describe('POST /register endpoint', () => {
+  const mockUser = generateMockUserRoute();
+
+  const invalidMockUser = {
+    username: 'te', // Invalid username length
+    email: 'testexample.com', // Invalid email
+    password: 'pass' // Invalid password
+  };
+
   it('should return 201 for successful registration', async () => {
 
     const response = await request(app)

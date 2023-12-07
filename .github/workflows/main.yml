@@ -21,6 +21,7 @@ jobs:
       PORT: ${{ vars.PORT }}
       DOC_USER: ${{ vars.DOC_USER }}
       DOC_PASS: ${{ vars.DOC_PASS }}
+      FROM_EMAIL: ${{ vars.FROM_EMAIL }}
       COMPANY_LOGO_URL: ${{ vars.COMPANY_LOGO_URL }}
       COMPANY_NAME: ${{ vars.COMPANY_NAME }}
       COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}

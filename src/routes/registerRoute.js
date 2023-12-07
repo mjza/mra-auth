@@ -1,11 +1,10 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const bcrypt = require('bcrypt');
 const db = require('../db/database');
 const { sendVerificationEmail } = require('../emails/emailService');
 const { userMustNotExist } = require('../utils/validations');
 const { createAccountLimiter } = require('../utils/rateLimit');
-const { generateActivationLink } = require('../utils/generators');
+const { generateActivationLink, generatePasswordHash } = require('../utils/generators');
 
 const router = express.Router();
 
@@ -92,8 +91,7 @@ router.post('/register', createAccountLimiter,
       const { username, email, password } = req.body;
 
       // Hash the password
-      const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(password, salt);
+      const passwordHash = await generatePasswordHash(password);
 
       // Insert the user into the database
       const newUser = { username, email, passwordHash };
@@ -112,6 +110,7 @@ router.post('/register', createAccountLimiter,
       // Send success response
       return res.status(201).json({ message: "User registered successfully", userId: result.user_id });
     } catch (err) {
+      console.error(err);
       return res.status(500).json({ message: err.message });
     }
   });

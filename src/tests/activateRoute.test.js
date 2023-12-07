@@ -1,11 +1,16 @@
 const request = require('supertest');
 const app = require('../app');
 const db = require('../db/database');
-const { mockUserDB, generateEncryptedActivationObject } = require('../utils/generators');
+const { generateMockUserDB, generateEncryptedActivationObject } = require('../utils/generators');
 
-const mockUser = mockUserDB;
+describe('GET /activate Endpoint', () => {
 
-describe('Activate User Endpoint', () => {
+  let mockUser;
+
+  beforeAll(async () => {
+    mockUser = await generateMockUserDB();
+  });
+
   let testUser;
 
   beforeEach(async () => {
@@ -99,7 +104,7 @@ describe('Activate User Endpoint', () => {
       .query({
         username: testUser.username,
         token: activationObject.token,
-        data: activationObject.data + '1' 
+        data: activationObject.data + '1'
       });
 
     expect(response.statusCode).toBe(404);

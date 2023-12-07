@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
 /**
  * Generates an encrypted activation object containing the activation code and redirect URL.
@@ -63,32 +64,64 @@ const generateDecryptedActivationObject = (token, data) => {
 };
 
 /**
+ * Generates a hash for a given password using bcrypt.
+ * 
+ * @param {string} password - The password to be hashed.
+ * @returns {Promise<string>} A promise that resolves to the hashed password.
+ */
+const generatePasswordHash = async (password) => {
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+    return passwordHash;
+};
+
+/**
  * Generates a random string of a specified length.
  * @param {number} [length=8] - The length of the string to generate. Default is 8 characters.
  * @returns {string} A random string of the specified length.
  */
-function generateRandomString(length = 8) {
+const generateRandomString = (length = 8) => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let str = '';
     for (let i = 0; i < length; i++) {
         str += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return str;
-}
-
-// Mock data
-const mockUserDB = {
-    username: generateRandomString(),
-    email: generateRandomString() + '@example.com',
-    passwordHash: '$2b$10$3mNQEYa8JkvoHOcBBgSGeedoH2Bj.eGgbYH6mqcWDFargA0yF90SG'
 };
 
-// Mock data
-const mockUserRoute = {
-    username: generateRandomString(),
-    email: generateRandomString() + '@example.com',
-    password: 'Pasword1$',
-    "loginRedirectURL": "http://localhost:3000/login"
+/**
+ * Asynchronously generates a mock user object with hashed password.
+ * The function generates a random username and uses it to create an email.
+ * It also generates a password hash for a predefined password.
+ * 
+ * @returns {Promise<Object>} A promise that resolves to an object containing username, email, password, and passwordHash.
+ */
+const generateMockUserDB = async () => {
+    var username = generateRandomString();
+    return {
+        username: username,
+        email: username + '@example.com',
+        password: 'Pasword1$',
+        passwordHash: await generatePasswordHash('Pasword1$')
+    };
 };
 
-module.exports = { generateRandomString, mockUserDB, mockUserRoute, generateEncryptedActivationObject, generateActivationLink, generateDecryptedActivationObject };
+/**
+ * Generates a mock user object for a user route.
+ * This function creates a random username and uses it to construct an email.
+ * It also sets a predefined password and a login redirect URL.
+ * 
+ * @returns {Object} An object containing username, email, password, and loginRedirectURL.
+ */
+const generateMockUserRoute = () => {
+    var username = generateRandomString();
+    return {
+        username: username,
+        email: username + '@example.com',
+        password: 'Pasword1$',
+        loginRedirectURL: 'http://localhost:3000/login'
+    }
+};
+
+module.exports = { generateRandomString, generateMockUserDB, generateMockUserRoute, generateEncryptedActivationObject, generateActivationLink, generateDecryptedActivationObject, generatePasswordHash };
