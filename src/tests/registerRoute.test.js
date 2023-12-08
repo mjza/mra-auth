@@ -16,13 +16,13 @@ describe('POST /register endpoint', () => {
 
   it('should return 201 for successful registration', async () => {
 
-    const response = await request(app)
+    const res = await request(app)
       .post('/register')
       .send(mockUser);
 
-    expect(response.statusCode).toBe(201);
+    expect(res.statusCode).toBe(201);
 
-    expect(response.body).toEqual({
+    expect(res.body).toEqual({
       message: "User registered successfully",
       userId: expect.any(Number)
     });
@@ -35,26 +35,26 @@ describe('POST /register endpoint', () => {
 
   it('should return 400 for invalid data', async () => {
 
-    const response = await request(app)
+    const res = await request(app)
       .post('/register')
       .send(invalidMockUser);
 
-    expect(response.statusCode).toBe(400);
-    expect(response.body.errors).toBeDefined();
+    expect(res.statusCode).toBe(400);
+    expect(res.body.errors).toBeDefined();
   });
 
   it('should return 429 after 5 attempts', async () => {
     var response;
     
     for (let i = 0; i < 6; i++) {
-      response = await request(app)
+      res = await request(app)
         .post('/register')
         .send(invalidMockUser);
     }
 
-    expect(response.statusCode).toBe(429);
-    expect(response.body.message).toBeDefined();
-    expect(response.body.message).toBe('Too many accounts created from this IP, please try again after an hour');
+    expect(res.statusCode).toBe(429);
+    expect(res.body.message).toBeDefined();
+    expect(res.body.message).toBe('Too many accounts created from this IP, please try again after an hour.');
   });
 
   // Clean up after each tests

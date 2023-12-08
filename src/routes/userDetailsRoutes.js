@@ -142,7 +142,7 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, 
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Unauthorized to create details for this user.
+ *                   example: Unauthorized to create details for other users.
  *       422:
  *         description: |
  *           Unprocessable Content. This can occur in different scenarios:
@@ -158,7 +158,7 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, 
  *                   example: A record exists for the current user in the user details table.
  *                 details:
  *                   type: string
- *                   example: duplicate key value violates unique constraint "mra_user_details_pkey"
+ *                   example: duplicate key value violates unique constraint 'mra_user_details_pkey'
  *       429:
  *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
@@ -169,7 +169,7 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
   const userDetails = req.body;
 
   if (userIdFromToken !== userDetails.userId) {
-    return res.status(403).json({ message: 'Unauthorized to create details for other users' });
+    return res.status(403).json({ message: 'Unauthorized to create details for other users.' });
   }
 
   try {
@@ -179,7 +179,7 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
     console.error(err);
 
     if (err.code === '23505') { // PostgreSQL foreign key violation error code
-      return res.status(422).json({ message: 'A record exists for the current user.', details: err.message });
+      return res.status(422).json({ message: 'A record exists for the current user in the user details table.', details: err.message });
     }
 
     if (err.code === '23503') { // PostgreSQL foreign key violation error code
@@ -275,9 +275,9 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Unauthorized to create details for this user. 
+ *                   example: Unauthorized to update details for other users. 
  *       404:
- *         description: Not Found - There is no record in the "user_details" table.
+ *         description: Not Found - There is no record in the 'user_details' table.
  *         content:
  *           application/json:
  *             schema:
@@ -298,7 +298,7 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
  *                   example: Invalid foreign key value.
  *                 details:
  *                   type: string
- *                   example: insert or update on table "user_details" violates foreign key constraint "user_details_gender_id_fkey"
+ *                   example: insert or update on table 'user_details' violates foreign key constraint 'user_details_gender_id_fkey'
  *       429:
  *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
@@ -313,7 +313,7 @@ router.put('/user_details/:userId', apiRequestLimiter,
       .exists()
       .withMessage('UserId is required.')
       .matches(/^[\d]+$/)
-      .withMessage('Userid must be a number.'),
+      .withMessage('UserId must be a number.'),
   ], async (req, res) => {
 
     const errors = validationResult(req);
@@ -333,7 +333,7 @@ router.put('/user_details/:userId', apiRequestLimiter,
       const updatedUserDetails = await db.updateUserDetails(userId, encryptObjectItems(userDetails));
 
       if (!updatedUserDetails) {
-        return res.status(404).json({ message: "There is no record for this user in the user details table." });
+        return res.status(404).json({ message: 'There is no record for this user in the user details table.' });
       }
 
       return res.status(200).json(decryptObjectItems(toLowerCamelCase(updatedUserDetails)));

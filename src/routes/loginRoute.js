@@ -42,6 +42,9 @@ const router = express.Router();
  *                 token:
  *                   type: string
  *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 userId:
+ *                   type: integer
+ *                   example: 1
  *       401:
  *         description: Unauthorized - Invalid username/email or password.
  *         content:
@@ -145,7 +148,7 @@ router.post('/login', apiRequestLimiter,
           // Generate JWT Token for the matched user
           const token = jwt.sign({ userId: user.user_id, username: user.username, email: user.email }, secretKeyBuffer, { expiresIn: '1d' });
 
-          return res.json({ token });
+          return res.json({ token, userId: user.user_id });
         }
       }
 

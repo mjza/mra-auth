@@ -20,47 +20,47 @@ describe('Post /login endpoint', () => {
     });
 
     test('Successful login', async () => {
-        const response = await request(app)
+        const res = await request(app)
             .post('/login')
             .send({ usernameOrEmail: mockUser.username, password: mockUser.password });
 
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toHaveProperty('token');
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toHaveProperty('token');
     });
 
     test('Invalid username', async () => {
-        const response = await request(app)
+        const res = await request(app)
             .post('/login')
             .send({ usernameOrEmail: mockUser.username + 'x', password: mockUser.password });
 
-        expect(response.statusCode).toBe(401);
-        expect(response.body.message).toBe('Username or password is incorrect');
+        expect(res.statusCode).toBe(401);
+        expect(res.body.message).toBe('Username or password is incorrect');
     });
 
     test('Invalid password', async () => {
-        const response = await request(app)
+        const res = await request(app)
             .post('/login')
             .send({ usernameOrEmail: mockUser.username, password: mockUser.password + 'x' });
 
-        expect(response.statusCode).toBe(401);
-        expect(response.body.message).toBe('Username or password is incorrect');
+        expect(res.statusCode).toBe(401);
+        expect(res.body.message).toBe('Username or password is incorrect');
     });
 
     test('Incorrect username or password', async () => {
-        const response = await request(app)
+        const res = await request(app)
             .post('/login')
             .send({ usernameOrEmail: generateRandomString(4), password: generateRandomString(32) });
 
-        expect(response.statusCode).toBe(400);
-        expect(response.body).toHaveProperty('errors');
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toHaveProperty('errors');
     });
 
     test('Incorrect username or password', async () => {
-        const response = await request(app)
+        const res = await request(app)
             .post('/login')
             .send({ usernameOrEmail: 'nonexistentuser', password: 'wrongpassword' });
 
-        expect(response.statusCode).toBe(401);
+        expect(res.statusCode).toBe(401);
     });
 
 

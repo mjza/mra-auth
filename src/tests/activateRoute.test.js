@@ -21,7 +21,7 @@ describe('GET /activate Endpoint', () => {
   it('should activate a user and return redirect code', async () => {
     const activationObject = generateEncryptedActivationObject(testUser.activation_code, 'https://example.com/login');
 
-    const response = await request(app)
+    const res = await request(app)
       .get('/activate')
       .query({
         username: testUser.username,
@@ -29,8 +29,8 @@ describe('GET /activate Endpoint', () => {
         data: activationObject.data
       });
 
-    expect(response.statusCode).toBe(302);
-    expect(response.body.message).toBeUndefined();
+    expect(res.statusCode).toBe(302);
+    expect(res.body.message).toBeUndefined();
 
     // Verify user status in the database
     const isActiveUser = await db.isActiveUser(testUser.username);
@@ -40,7 +40,7 @@ describe('GET /activate Endpoint', () => {
   it('should activate a user and return 200 code', async () => {
     const activationObject = generateEncryptedActivationObject(testUser.activation_code, '');
 
-    const response = await request(app)
+    const res = await request(app)
       .get('/activate')
       .query({
         username: testUser.username,
@@ -48,8 +48,8 @@ describe('GET /activate Endpoint', () => {
         data: activationObject.data
       });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.body.message).toBe('Account is activated successfully.');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('Account is activated successfully.');
 
     // Verify user status in the database
     const isActiveUser = await db.isActiveUser(testUser.username);
@@ -59,7 +59,7 @@ describe('GET /activate Endpoint', () => {
   it('should try to activate an activate user and return 202 code', async () => {
     const activationObject = generateEncryptedActivationObject(testUser.activation_code, '');
 
-    let response = await request(app)
+    let res = await request(app)
       .get('/activate')
       .query({
         username: testUser.username,
@@ -67,7 +67,7 @@ describe('GET /activate Endpoint', () => {
         data: activationObject.data
       });
 
-    response = await request(app)
+    res = await request(app)
       .get('/activate')
       .query({
         username: testUser.username,
@@ -75,8 +75,8 @@ describe('GET /activate Endpoint', () => {
         data: activationObject.data
       });
 
-    expect(response.statusCode).toBe(202);
-    expect(response.body.message).toBe('Account has been already activated.');
+    expect(res.statusCode).toBe(202);
+    expect(res.body.message).toBe('Account has been already activated.');
 
     // Verify user status in the database
     const isActiveUser = await db.isActiveUser(testUser.username);
@@ -84,7 +84,7 @@ describe('GET /activate Endpoint', () => {
   });
 
   it('should handle invalid activation link', async () => {
-    const response = await request(app)
+    const res = await request(app)
       .get('/activate')
       .query({
         username: 'invalidFormat',
@@ -92,14 +92,14 @@ describe('GET /activate Endpoint', () => {
         data: 'invalidFormat'
       });
 
-    expect(response.statusCode).toBe(400);
-    expect(response.body.errors).toBeDefined();
+    expect(res.statusCode).toBe(400);
+    expect(res.body.errors).toBeDefined();
   });
 
   it('should try to activate with an invalid link and return 404 code', async () => {
     const activationObject = generateEncryptedActivationObject(testUser.activation_code, '');
 
-    const response = await request(app)
+    const res = await request(app)
       .get('/activate')
       .query({
         username: testUser.username,
@@ -107,8 +107,8 @@ describe('GET /activate Endpoint', () => {
         data: activationObject.data + '1'
       });
 
-    expect(response.statusCode).toBe(404);
-    expect(response.body.message).toBe('Activation link is invalid.');
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toBe('Activation link is invalid.');
 
     // Verify user status in the database
     const isActiveUser = await db.isActiveUser(testUser.username);

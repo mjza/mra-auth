@@ -13,7 +13,7 @@ const rateLimit = require('express-rate-limit');
  *             properties:
  *               message:
  *                 type: string
- *                 example: Too many requests from this IP, please try again after 15 minutes
+ *                 example: Too many requests from this IP, please try again after 15 minutes.
  *       headers:
  *         Retry-After:
  *           description: Indicates how long the user should wait before making a new request.
@@ -33,8 +33,8 @@ const rateLimit = require('express-rate-limit');
  */
 const apiRequestLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes in milliseconds
-    max: 10, // Limit each IP to 10 requests per `window` (here, per 15 minutes)
-    message: { message: 'Too many requests from this IP, please try again after 15 minutes' }
+    max: 30, // Limit each IP to 30 requests per `window` (here, per 15 minutes)
+    message: { message: 'Too many requests from this IP, please try again after 15 minutes.' }
 });
 
 /**
@@ -50,7 +50,7 @@ const apiRequestLimiter = rateLimit({
  *             properties:
  *               message:
  *                 type: string
- *                 example: Too many accounts created from this IP, please try again after an hour
+ *                 example: Too many accounts created from this IP, please try again after an hour.
  *       headers:
  *         Retry-After:
  *           description: Indicates how long the user should wait before making a new request.
@@ -72,7 +72,7 @@ const apiRequestLimiter = rateLimit({
 const createAccountLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 5, // limit each IP to 5 requests per windowMs
-    message: { message: 'Too many accounts created from this IP, please try again after an hour' }
+    message: { message: 'Too many accounts created from this IP, please try again after an hour.' }
 });
 
 module.exports = { apiRequestLimiter, createAccountLimiter };
