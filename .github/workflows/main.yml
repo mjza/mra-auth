@@ -23,6 +23,7 @@ jobs:
       DOC_PASS: ${{ vars.DOC_PASS }}
       FROM_EMAIL: ${{ vars.FROM_EMAIL }}
       COMPANY_LOGO_URL: ${{ vars.COMPANY_LOGO_URL }}
+      COMPANY_WEBSITE: ${{ vars.COMPANY_WEBSITE }}
       COMPANY_NAME: ${{ vars.COMPANY_NAME }}
       COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}
       COMPANY_PHONENUMBER: ${{ vars.COMPANY_PHONENUMBER }}
