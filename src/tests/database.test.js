@@ -19,7 +19,7 @@ describe('Test DB functions', () => {
             expect(insertedUser.username).toBe(mockUser.username);
             expect(insertedUser.email).toBe(mockUser.email);
             expect(insertedUser.password_hash).toBe(mockUser.passwordHash);
-            expect(Number.isInteger(insertedUser.user_id)).toBe(true);
+            expect(Number.isInteger(insertedUser.user_id)).toBeTruthy();
         });
     });
 
@@ -47,12 +47,23 @@ describe('Test DB functions', () => {
         });
     });
 
+    describe('getUsernamesByEmail', () => {
+        it('should retrieve some users by email', async () => {
+            // Assuming the test user is already inserted from previous test
+            const users = await db.getUsernamesByEmail(mockUser.email);
+            expect(users).not.toBeNull();
+            expect(users[0].username).toBe(mockUser.username);
+            expect(users[0].is_activated).toBeFalsy();
+            expect(users[0].is_suspended).toBeFalsy();
+        });
+    });
+
     describe('isInactiveUser', () => {
         it('should check if a user is inactive', async () => {
             // This depends on your database state and may need adjustment
             const inactiveUser = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const isInactive = await db.isInactiveUser(inactiveUser);
-            expect(isInactive).toBe(true);
+            expect(isInactive).toBeTruthy();
         });
     });
 
@@ -61,7 +72,7 @@ describe('Test DB functions', () => {
             // This depends on your database state and may need adjustment
             const activationCode = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const isActivationCodeValid = await db.isActivationCodeValid(activationCode);
-            expect(isActivationCodeValid).toBe(true);
+            expect(isActivationCodeValid).toBeTruthy();
         });
     });
 
@@ -69,7 +80,7 @@ describe('Test DB functions', () => {
         it('should activate a user', async () => {
             const userToActivate = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const activationResult = await db.activeUser(userToActivate);
-            expect(activationResult).toBe(true);
+            expect(activationResult).toBeTruthy();
         });
     });
 
@@ -78,7 +89,7 @@ describe('Test DB functions', () => {
             // This depends on your database state and may need adjustment
             const activedUser = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const isInactive = await db.isInactiveUser(activedUser);
-            expect(isInactive).toBe(false);
+            expect(isInactive).toBeFalsy();
         });
     });
 

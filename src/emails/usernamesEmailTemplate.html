@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Usernames List</title>
+  <style>
+    /* Add your CSS styling here */
+    .user-table {
+      width: 80%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .user-table th,
+    .user-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+
+    .user-table th {
+      text-align: left;
+      background-color: #f2f2f2;
+    }
+
+    .contact-table {
+      border-collapse: collapse;
+      width: fit-content;
+      margin: 20px 10px;
+      padding: 0;
+      border: none;
+    }
+
+    .contact-table th,
+    .contact-table tr,
+    .contact-table td {
+      padding: 0;
+      border: none;
+    }
+
+    .contact-table thead th {
+      visibility: hidden;
+      /* Hide header cells */
+    }
+
+    .contact-table td {
+      text-align: left;
+      vertical-align: center;
+    }
+
+    .contact-table td:first-child {
+      text-align: right;
+      padding-right: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div style="background-color:#ffffff;color:#202123;padding:27px 20px 0 15px">
+    <p style="text-align:left;margin:0">
+      <img src="{{companyLogoUrl}}" alt="Company Logo" width="560" height="168" title="{{companyLogoUrl}}"
+        style="width:140px;height:auto;border:0;line-height:100%;outline:none;text-decoration:none" class="CToWUd"
+        data-bit="iit">
+    </p>
+  </div>
+  <div style="background-color:#ffffff;color:#353740;padding:40px 20px;text-align:left;line-height:1.5">
+    <h1 style="color:#202123;font-size:32px;line-height:40px;margin:0 0 20px">Usernames List</h1>
+    <h2>Dear user,</h2>
+    <p style="font-size:16px;line-height:24px">
+      Below is the list of usernames associated with your email address.
+    </p>
+
+    <!-- Table for Usernames, Activated, and Suspended Status -->
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Activated</th>
+          <th>Suspended</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{tableBody}}
+      </tbody>
+    </table>
+  </div>
+  <div style="text-align:left;background:#ffffff;color:#6e6e80;padding:0 20px 20px;font-size:13px;line-height:1.4">
+    <p style="margin:0">
+      This is an automated email. If you have any concerns or questions, please contact us through our <a
+        href="https://yourwebsite.com/contact" target="_blank">Help center</a>.
+    </p>
+  </div>
+  <footer style="text-align:left;background:#ffffff;color:#353740;padding:0 20px 20px;font-size:12px;line-height:1.2">
+    <table class="contact-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Website:</td>
+          <td>
+            <p>{{companyWebsite}}</p>
+          </td>
+        </tr>
+        <tr>
+          <td>Address:</td>
+          <td>
+            <p>{{companyAddress}}</p>
+          </td>
+        </tr>
+        <tr>
+          <td>Telephone:</td>
+          <td>
+            <p>{{companyPhonenumber}}</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p>&copy; {{currentYear}} {{companyName}}. All rights reserved.</p>
+  </footer>
+</body>
+
+</html>

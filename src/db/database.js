@@ -70,6 +70,36 @@ const getUserByUsernameOrEmail = async (usernameOrEmail) => {
 };
 
 /**
+ * Retrieves all usernames from the database based on the provided email.
+ *
+ * @param {string} email - The email of the user to retrieve.
+ * @returns {Object|null} The user object if found, null otherwise.
+ */
+const getUsernamesByEmail = async (email) => {
+  const query = `
+    SELECT username, 
+           CASE 
+             WHEN confirmation_at IS NULL THEN FALSE 
+             ELSE TRUE 
+           END AS is_activated,
+           CASE 
+             WHEN suspended_at IS NULL THEN FALSE 
+             ELSE TRUE 
+           END AS is_suspended
+    FROM ${usersTable} 
+    WHERE 
+      deleted_at IS NULL AND
+      email = $1`;
+  const { rows } = await pool.query(query, [email.trim()]);
+
+  if (rows.length === 0) {
+    return null; // User not found
+  }
+
+  return rows; // Return the user data
+};
+
+/**
  * Inserts a new user into the database.
  *
  * @param {Object} user - The user object containing username, email, and passwordHash.
@@ -267,6 +297,7 @@ module.exports = {
   deleteUserByUsername,
   getUserByUsername,
   getUserByUsernameOrEmail,
+  getUsernamesByEmail,
   insertUser,
   isActiveUser,
   isInactiveUser,

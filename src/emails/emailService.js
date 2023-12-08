@@ -48,6 +48,7 @@ const sendVerificationEmail = async (username, userEmail, activationLink) => {
         '{{username}}': username,
         '{{companyLogoUrl}}': process.env.COMPANY_LOGO_URL,
         '{{companyName}}': process.env.COMPANY_NAME,
+        '{{companyWebsite}}': process.env.COMPANY_WEBSITE,
         '{{companyAddress}}': process.env.COMPANY_ADDRESS,
         '{{companyPhonenumber}}': process.env.COMPANY_PHONENUMBER,
         '{{currentYear}}': new Date().getFullYear(),
@@ -65,6 +66,56 @@ const sendVerificationEmail = async (username, userEmail, activationLink) => {
         //console.log('Verification email sent successfully for ' + username);
     } catch (err) {
         console.error('Error sending verification email', err);
+        throw err;
+    }
+};
+
+/**
+ * Sends List of usernames email to a user.
+ * The email content is generated using a HTML template file.
+ * 
+ * @async
+ * @param {array} users - The usernames associated to an email.
+ * @param {string} userEmail - The email address of the user.
+ * @throws Will throw an error if the email fails to send.
+ */
+const sendEmailWithUsernames = async (users, userEmail) => {
+    // Read the template file
+    const templatePath = path.join(__dirname, './usernamesEmailTemplate.html');
+    let emailTemplate = fs.readFileSync(templatePath, 'utf8');
+
+    let tableBody = '';
+
+    for (let user of users) {
+        tableBody += `<tr>
+                        <td>${user.username}</td>
+                        <td>${user.is_activated ? 'Yes' : 'No'}</td>
+                        <td>${user.is_suspended ? 'Yes' : 'No'}</td>
+                      </tr>`;
+    }
+
+    const replacements = {
+        '{{email}}': userEmail,
+        '{{tableBody}}': tableBody,
+        '{{companyLogoUrl}}': process.env.COMPANY_LOGO_URL,
+        '{{companyName}}': process.env.COMPANY_NAME,
+        '{{companyWebsite}}': process.env.COMPANY_WEBSITE,
+        '{{companyAddress}}': process.env.COMPANY_ADDRESS,
+        '{{companyPhonenumber}}': process.env.COMPANY_PHONENUMBER,
+        '{{currentYear}}': new Date().getFullYear()
+    };
+
+    Object.keys(replacements).forEach(placeholder => {
+        emailTemplate = emailTemplate.split(placeholder).join(replacements[placeholder]);
+    });
+
+
+    // Send the email
+    try {
+        await sendEmail(userEmail, 'List of your accounts', emailTemplate);
+        //console.log('List of emails sent successfully for ' + userEmail);
+    } catch (err) {
+        console.error('Error sending usernames email', err);
         throw err;
     }
 };
@@ -101,5 +152,6 @@ const sendResetPasswordEmail = async (userEmail, resetToken) => {
 
 module.exports = {
     sendVerificationEmail,
+    sendEmailWithUsernames,
     sendResetPasswordEmail
 };
