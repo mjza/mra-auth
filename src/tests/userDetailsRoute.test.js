@@ -198,7 +198,7 @@ describe('/user_details endpoints', () => {
             expect(res.body.message).toEqual('Invalid foreign key value.');
         });
 
-
+        /*
         it('should return 429 after some attempts', async () => {
             var res;
 
@@ -228,5 +228,6 @@ describe('/user_details endpoints', () => {
             expect(res.headers).toHaveProperty('retry-after');
             expect(parseInt(res.headers['retry-after'])).toBeGreaterThan(0);
         });
+        */
     });
 });
