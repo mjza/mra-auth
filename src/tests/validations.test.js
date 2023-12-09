@@ -4,6 +4,11 @@ const { generateMockUserDB, generateRandomString, generateAuthToken } = require(
 
 describe('Test validation functions', () => {
 
+    // Ensure the pool is closed after all tests
+    afterAll(async () => {
+        await db.closePool();
+    });
+
     describe('User Existence Checks', () => {
         let mockUser;
 
@@ -37,11 +42,6 @@ describe('Test validation functions', () => {
 
         test('userMustExist should reject if user does not exist', async () => {
             await expect(userMustExist(strangeUserName)).rejects.toEqual('Username does not exist.');
-        });
-
-        // Ensure the pool is closed after all tests
-        afterAll(async () => {
-            await db.closePool();
         });
     });
 

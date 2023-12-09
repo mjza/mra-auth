@@ -70,7 +70,7 @@ const generateDecryptedActivationObject = (token, data) => {
  * @returns {string} A JWT token encoded with the user's information.
  *
  * @example
- * const user = { user_id: 123, username: 'johndoe', email: 'john@example.com' };
+ * const user = { userId: 123, username: 'johndoe', email: 'john@example.com' };
  * const token = generateAuthToken(user);
  */
 const generateAuthToken = (user) => {
@@ -101,6 +101,36 @@ const extractUserDataFromAuthToke = (token) => {
     }
 };
 
+/**
+ * Decodes a JSON Web Token (JWT) and returns its payload as a JSON object.
+ * 
+ * This function splits the JWT into its constituent parts, decodes the Base64-encoded payload,
+ * and then parses it into a JSON object. It's designed to handle the decoding process and
+ * does not validate the token's signature. The function safely handles errors and returns
+ * `null` if decoding fails.
+ *
+ * @param {string} token - The JWT string to be decoded.
+ * @returns {object|null} The decoded payload as a JSON object, or `null` if decoding fails.
+ * 
+ * @example
+ * // Typical usage
+ * const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+ * const decodedPayload = parseJwt(token);
+ * console.log(decodedPayload);
+ */
+const parseJwt = (token) => {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        return JSON.parse(jsonPayload);
+    } catch (error) {
+        return null;
+    }
+};
 
 /**
  * Generates a hash for a given password using bcrypt.
@@ -163,4 +193,4 @@ const generateMockUserRoute = () => {
     }
 };
 
-module.exports = { generateRandomString, generateMockUserDB, generateMockUserRoute, generateEncryptedActivationObject, generateActivationLink, generateDecryptedActivationObject, generatePasswordHash, generateAuthToken, extractUserDataFromAuthToke };
+module.exports = { generateRandomString, generateMockUserDB, generateMockUserRoute, generateEncryptedActivationObject, generateActivationLink, generateDecryptedActivationObject, generatePasswordHash, generateAuthToken, extractUserDataFromAuthToke, parseJwt };

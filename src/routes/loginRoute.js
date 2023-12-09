@@ -2,7 +2,7 @@ const express = require('express');
 const db = require('../utils/database');
 const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
-const { generateAuthToken } = require('../utils/generators');
+const { generateAuthToken, parseJwt } = require('../utils/generators');
 const { apiRequestLimiter } = require('../utils/rateLimit');
 const { recordErrorLog } = require('./auditLogMiddleware');
 const router = express.Router();
@@ -42,7 +42,11 @@ const router = express.Router();
  *               properties:
  *                 token:
  *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE2NjEsInVzZXJuYW1lIjoidXNlcm5hbWUxMDEiLCJlbWFpbCI6Im1haGRpLmpiekBnbWFpbC5jb20iLCJpYXQiOjE3MDIxNDY5MjYsImV4cCI6MTcwMjIzMzMyNn0.J0rvd1VZtqaPIKY4irykdIktr1bxcuZSd3yIHC-28NM"
+ *                 exp:
+ *                   type: integer
+ *                   example: 1702233326
+ *                   description: Expiration Time of the token
  *                 userId:
  *                   type: integer
  *                   example: 1
@@ -145,8 +149,8 @@ router.post('/login', apiRequestLimiter,
 
           // Generate JWT Token for the matched user
           const token = generateAuthToken({ userId: user.user_id, username: user.username, email: user.email });
-
-          return res.json({ token, userId: user.user_id });
+          const tokenData = parseJwt(token);
+          return res.status(200).json({ token, exp: tokenData.exp, userId: tokenData.userId });
         }
       }
 

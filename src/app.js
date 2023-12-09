@@ -86,7 +86,8 @@ const swaggerDefinition = {
         { name: '2nd', description: 'Activation'},
         { name: '3rd', description: 'Login'},
         { name: '4th', description: 'User Details'},
-        // ... add other tags alphabetically ... 
+        { name: '5th', description: 'Usernames'},
+        { name: '6th', description: 'JWT Token'},
     ],
 };
 

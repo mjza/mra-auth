@@ -16,6 +16,33 @@ const logsTable = process.env.LOGS_TABLE;
 const usersTable = process.env.USERS_TABLE;
 const userDetailsTable = process.env.USER_DETAILS_TABLE;
 const genderTypesTable = process.env.GENDER_TYPES_TABLE;
+const tokensTable = process.env.TOKENS_TABLE;
+
+/**
+ * Inserts a new token into the blacklist database.
+ *
+ * @param {Object} tokenData - The token data object { token, expiry } containing token and expiry.
+ * @returns {Object} The inserted token data object.
+ */
+const insertBlacklistToken = async (tokenData) => {
+  const { token, expiry } = tokenData;
+  const query = `INSERT INTO ${tokensTable} (token, expiry) VALUES ($1, $2) RETURNING *`;
+  const { rows } = await pool.query(query, [token, expiry]);
+  return rows[0];
+};
+
+/**
+ * Checks if a token is expired by looking it up in the blacklist table.
+ *
+ * @param {string} token - The token to check for expiration.
+ * @returns {Promise<boolean>} True if the token is expired (present in the blacklist), otherwise false.
+ */
+const isTokenExpired = async (token) => {
+  const query = `SELECT 1 FROM ${tokensTable} WHERE token = $1`;
+  const { rows } = await pool.query(query, [token]);
+
+  return rows.length > 0;
+};
 
 /**
  * Inserts a new audit log into the database.
@@ -26,7 +53,7 @@ const genderTypesTable = process.env.GENDER_TYPES_TABLE;
 const insertAuditLog = async (log) => {
   const { methodRoute, req, comments, ipAddress, userId } = log;
   const query = `INSERT INTO ${logsTable} (method_route, req, ip_address, comments, user_id) VALUES ($1, $2, $3, COALESCE($4, ''), $5) RETURNING *`;
-  const {rows} = await pool.query(query, [ methodRoute, req, ipAddress, comments, userId ]);
+  const { rows } = await pool.query(query, [methodRoute, req, ipAddress, comments, userId]);
   return rows[0];
 };
 
@@ -334,6 +361,8 @@ const closePool = async () => {
 };
 
 module.exports = {
+  insertBlacklistToken,
+  isTokenExpired,
   insertAuditLog,
   updateAuditLog,
   deleteAuditLog,

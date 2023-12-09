@@ -1,6 +1,10 @@
 const db = require('../utils/database');
 const { generateMockUserDB } = require('../utils/generators');
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 describe('Test DB functions', () => {
 
     let mockUser;
@@ -56,7 +60,56 @@ describe('Test DB functions', () => {
                 expect(updatedLog.comments).toContain('Updated comment');
             });
         });
-    });    
+    });  
+    
+    describe('Blacklist Token Functions', () => {
+        const mockTokenData = {
+            token: 'exampleToken',
+            expiry: new Date(Date.now() + 1000) // 1 seconds from now
+        };
+    
+        describe('insertBlacklistToken', () => {
+            it('should insert a new token into the blacklist', async () => {
+                const insertedToken = await db.insertBlacklistToken(mockTokenData);
+    
+                expect(insertedToken).toBeDefined();
+                expect(insertedToken.token).toBe(mockTokenData.token);
+                expect(new Date(insertedToken.expiry)).toEqual(mockTokenData.expiry);
+            });
+        });
+    
+        describe('isTokenExpired', () => {
+            it('should return true if the token is in the blacklist', async () => {
+                // Assuming the test token is already inserted from previous test
+                const isExpired = await db.isTokenExpired(mockTokenData.token);
+                expect(isExpired).toBeTruthy();
+            });
+    
+            it('should return false if the token is not in the blacklist', async () => {
+                const isExpired = await db.isTokenExpired('nonExistentToken');
+                expect(isExpired).toBeFalsy();
+            });
+
+            it('should check by inserting new token the old one is deleted after 2 seconds', async () => {
+                await sleep(2000); // Sleep for 2 seconds
+                
+                const newMockTokenData = {
+                    token: 'exampleExpiredToken',
+                    expiry: new Date(Date.now() - 1000) // 1 seconds in past from now
+                };
+
+                // must delete expired token immediately after inserting 
+                const insertedToken = await db.insertBlacklistToken(newMockTokenData);
+                expect(insertedToken).toBeDefined();
+                // must also delete the privious token also
+                const doesNewTokenExist = await db.isTokenExpired(newMockTokenData.token);
+                expect(doesNewTokenExist).toBeFalsy();
+                const doesOldTokenExist = await db.isTokenExpired(mockTokenData.token);
+                expect(doesOldTokenExist).toBeFalsy();
+            });
+        });        
+    });
+    
 
     let insertedUser;
 

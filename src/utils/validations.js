@@ -2,6 +2,9 @@ const db = require('./database');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { Agent } = require('https');
+const { promisify } = require('util');
+const jwtVerify = promisify(jwt.verify);
+const { recordErrorLog } = require('../routes/auditLogMiddleware');
 
 /**
  * @swagger
@@ -111,7 +114,7 @@ const testUrlAccessibility = async function (url) {
         // Create a new instance of the HTTPS agent with keepAlive set to false
         const httpsAgent = new Agent({ keepAlive: false });
         // Use axios to make a HEAD request to the URL
-        await axios.head(url, { httpsAgent} );
+        await axios.head(url, { httpsAgent });
         return true; // URL is accessible
     } catch (err) {
         return false; // URL is not accessible
@@ -157,26 +160,34 @@ const isValidUrl = (inputUrl) => {
  * @param {Object} res - The response object from Express.js.
  * @param {function} next - The next middleware function in the Express.js route.
  */
-const authenticateToken = (req, res, next) => {  
-  // Get the token from the request header
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+const authenticateToken = async (req, res, next) => {
+    // Get the token from the request header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-  if (token == null) {// If no token is provided
-    return res.status(401).json({ message: 'You must provide a valid JWT token.'}); 
-  }
-
-  const secretKeyHex = process.env.SECRET_KEY;
-  const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
-
-  jwt.verify(token, secretKeyBuffer, (err, user) => {
-    if (err) {// If token is invalid
-      return res.status(401).json({ message: 'Provided JWT token is invalid.'});; 
+    if (token == null) {// If no token is provided
+        return res.status(401).json({ message: 'You must provide a valid JWT token.' });
     }
 
-    req.user = user; // Add user information to request
-    next(); // Proceed to the next middleware or route handler
-  });
+    try {
+        const secretKeyHex = process.env.SECRET_KEY;
+        const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
+
+        // Verify JWT Token
+        const tokenData = await jwtVerify(token, secretKeyBuffer);
+        // Check if token is expired in database
+        const isExpired = await db.isTokenExpired(token);
+        if (isExpired) {
+            return res.status(401).json({ message: 'Provided JWT token is invalid.' });
+        }
+
+        req.user = {userId: tokenData.userId, username: tokenData.username, email: tokenData.email}; // Add user information to request
+        next(); // Proceed to the next middleware or route handler
+    } catch (err) {
+        recordErrorLog(req, { error: 'Error in validating auth token.', details: err});
+        // Handle error (token invalid or other errors)
+        return res.status(401).json({ message: 'Provided JWT token is invalid.' });
+    }
 };
 
 module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken };

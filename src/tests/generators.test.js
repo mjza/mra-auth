@@ -58,17 +58,17 @@ describe('Generator Functions', () => {
 
     describe('generatePasswordHash', () => {
         it('should generate a hash for a given password', async () => {
-          const password = 'Pasword2$';
-          const hash = await gn.generatePasswordHash(password);
-      
-          // Verify that the hash is not the same as the plain password
-          expect(hash).not.toBe(password);
-      
-          // Verify that the hash can be validated against the original password
-          const isMatch = await bcrypt.compare(password, hash);
-          expect(isMatch).toBeTruthy();
+            const password = 'Pasword2$';
+            const hash = await gn.generatePasswordHash(password);
+
+            // Verify that the hash is not the same as the plain password
+            expect(hash).not.toBe(password);
+
+            // Verify that the hash can be validated against the original password
+            const isMatch = await bcrypt.compare(password, hash);
+            expect(isMatch).toBeTruthy();
         });
-      });
+    });
 
     describe('generateRandomString', () => {
         it('should return a string of default length 8', () => {
@@ -125,7 +125,7 @@ describe('Generator Functions', () => {
         const user = { userId: 1, username: 'username1', email: 'test@example.com' };
         const secretKeyHex = process.env.SECRET_KEY;
         const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
-    
+
         test('generateAuthToken should return a valid JWT', () => {
             const token = gn.generateAuthToken(user, secretKeyBuffer);
             expect(token).toBeDefined();
@@ -134,13 +134,33 @@ describe('Generator Functions', () => {
             expect(decoded.username).toBe(user.username);
             expect(decoded.email).toBe(user.email);
         });
-    
+
         test('extractUserDataFromAuthToke should return correct user data from token', () => {
             const token = jwt.sign(user, secretKeyBuffer, { expiresIn: '1d' });
             const extractedData = gn.extractUserDataFromAuthToke(token, secretKeyBuffer);
             expect(extractedData.userId).toBe(user.userId);
             expect(extractedData.username).toBe(user.username);
             expect(extractedData.email).toBe(user.email);
+        });
+
+        test('parseJwt should return a valid json object', () => {
+            const token = gn.generateAuthToken(user, secretKeyBuffer);
+            const extractedData = gn.parseJwt(token);
+
+            const oneDayInMilliseconds = 24 * 60 * 60 * 1000 + 1000; // milliseconds in a day + 1 sec
+            const currentTimeInMilliseconds = new Date().getTime(); // current time in milliseconds
+            const futureTimestamp = Math.floor((currentTimeInMilliseconds + oneDayInMilliseconds) / 1000); // convert to seconds
+
+            expect(extractedData.userId).toBe(user.userId);
+            expect(extractedData.username).toBe(user.username);
+            expect(extractedData.email).toBe(user.email);
+            expect(Number.isInteger(extractedData.iat)).toBe(true);            
+            expect(extractedData.iat).toBeGreaterThanOrEqual(0);
+            expect(extractedData.iat).toBeLessThan(futureTimestamp);
+            expect(Number.isInteger(extractedData.exp)).toBe(true);
+            expect(extractedData.exp).toBeGreaterThanOrEqual(0);
+            expect(extractedData.exp).toBeLessThan(futureTimestamp);
+
         });
     });
 });

@@ -31,6 +31,7 @@ jobs:
       USER_DETAILS_TABLE: ${{ vars.USER_DETAILS_TABLE }}
       GENDER_TYPES_TABLE: ${{ vars.GENDER_TYPES_TABLE }}
       LOGS_TABLE: ${{ vars.LOGS_TABLE }}
+      TOKENS_TABLE: ${{ vars.TOKENS_TABLE }}
 
     runs-on: ubuntu-latest  
 
