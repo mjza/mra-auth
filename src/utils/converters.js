@@ -126,21 +126,22 @@ const toLowerCamelCase = (obj) => {
  * or cookie-parser for `req.cookies`) is set up in your Express application.
  */
 function convertRequestData(req) {
+    const forbiddenProperties = ['password', 'token', 'firstName', 'middleName', 'lastName', 'dateOfBirth', 'profilePictureUrl', 'profilePictureThumbnailUrl']; // Array of properties to hide
+
     const requestData = {
         method: req.method,
         url: req.originalUrl,
-        headers: req.headers,
-        body: req.body, // Make sure you have body-parser middleware if you need this
-        query: req.query,
-        params: req.params,
+        headers: hideSensitiveData(req.headers, ['Authorization']),
+        body: hideSensitiveData(req.body, forbiddenProperties),
+        query: hideSensitiveData(req.query, forbiddenProperties),
+        params: hideSensitiveData(req.params, forbiddenProperties),
         ip: req.ip,
         hostname: req.hostname,
         protocol: req.protocol,
         path: req.path,
-        cookies: req.cookies, // Requires cookie-parser middleware if used
+        cookies: hideSensitiveData(req.cookies, forbiddenProperties)
     };
 
-    // Handling circular structures in JSON stringify
     const getCircularReplacer = () => {
         const seen = new WeakSet();
         return (key, value) => {
@@ -155,6 +156,25 @@ function convertRequestData(req) {
     };
 
     return JSON.stringify(requestData, getCircularReplacer());
+}
+
+function hideSensitiveData(obj, forbiddenProperties) {
+    if (!obj || typeof obj !== 'object') {
+        return obj;
+    }
+
+    const newObj = {};
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            if (forbiddenProperties.some(prop => key.toLowerCase().includes(prop.toLowerCase()))) {
+                newObj[key] = '****';
+            } else {
+                newObj[key] = obj[key];
+            }
+        }
+    }
+
+    return newObj;
 }
 
 
