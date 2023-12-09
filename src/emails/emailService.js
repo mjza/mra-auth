@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const sgMail = require('@sendgrid/mail');
+const { recordErrorLog } = require('../routes/auditLogMiddleware');
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 /**
@@ -12,7 +14,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
  * @param {string} htmlContent - The HTML content of the email.
  * @throws Will throw an error if the email fails to send.
  */
-const sendEmail = async (email, subject, htmlContent) => {
+const sendEmail = async (req, email, subject, htmlContent) => {
     const msg = {
         to: email,
         from: process.env.FROM_EMAIL,
@@ -21,11 +23,15 @@ const sendEmail = async (email, subject, htmlContent) => {
     };
 
     try {
+        if(email.endsWith('@example.com'))
+            return;
         await sgMail.send(msg);
-        //console.log('Email sent successfully to ' + email);
+        recordErrorLog(req, { success: 'Email sent successfully to ' + email});
     } catch (err) {
-        console.error('Error sending email to ' + email, err);
-        throw err; // Or handle it as per your application's error handling policy
+        recordErrorLog(req, { error: 'Error sending email to ' + email});
+        recordErrorLog(req, msg);
+        recordErrorLog(req, err);
+        throw err;
     }
 };
 
@@ -39,7 +45,7 @@ const sendEmail = async (email, subject, htmlContent) => {
  * @param {string} activationLink - The link the user needs to click to verify their email.
  * @throws Will throw an error if the email fails to send.
  */
-const sendVerificationEmail = async (username, userEmail, activationLink) => {
+const sendVerificationEmail = async (req, username, userEmail, activationLink) => {
     // Read the template file
     const templatePath = path.join(__dirname, './verificationEmailTemplate.html');
     let emailTemplate = fs.readFileSync(templatePath, 'utf8');
@@ -62,10 +68,11 @@ const sendVerificationEmail = async (username, userEmail, activationLink) => {
 
     // Send the email
     try {
-        await sendEmail(userEmail, 'Verify Your Email', emailTemplate);
-        //console.log('Verification email sent successfully for ' + username);
+        await sendEmail(req, userEmail, 'Verify Your Email', emailTemplate);
+        recordErrorLog(req, { success: 'Verification email sent successfully for ' + username});
     } catch (err) {
-        console.error('Error sending verification email', err);
+        recordErrorLog(req, { error: 'Error sending verification email.'});
+        recordErrorLog(req, err);
         throw err;
     }
 };
@@ -79,7 +86,7 @@ const sendVerificationEmail = async (username, userEmail, activationLink) => {
  * @param {string} userEmail - The email address of the user.
  * @throws Will throw an error if the email fails to send.
  */
-const sendEmailWithUsernames = async (users, userEmail) => {
+const sendEmailWithUsernames = async (req, users, userEmail) => {
     // Read the template file
     const templatePath = path.join(__dirname, './usernamesEmailTemplate.html');
     let emailTemplate = fs.readFileSync(templatePath, 'utf8');
@@ -112,10 +119,11 @@ const sendEmailWithUsernames = async (users, userEmail) => {
 
     // Send the email
     try {
-        await sendEmail(userEmail, 'List of your accounts', emailTemplate);
-        //console.log('List of emails sent successfully for ' + userEmail);
+        await sendEmail(req, userEmail, 'List of your accounts', emailTemplate);
+        recordErrorLog(req, 'List of emails sent successfully for ' + userEmail);
     } catch (err) {
-        console.error('Error sending usernames email', err);
+        recordErrorLog(req, { error: 'Error sending usernames email.'});
+        recordErrorLog(req, err);
         throw err;
     }
 };
@@ -129,7 +137,7 @@ const sendEmailWithUsernames = async (users, userEmail) => {
  * @param {string} resetToken - The password reset token to be included in the reset link.
  * @throws Will throw an error if the email fails to send.
  */
-const sendResetPasswordEmail = async (userEmail, resetToken) => {
+const sendResetPasswordEmail = async (req, userEmail, resetToken) => {
     // Read the template file
     const templatePath = path.join(__dirname, './resetPasswordEmailTemplate.html');
     let emailTemplate = fs.readFileSync(templatePath, 'utf8');
@@ -142,10 +150,11 @@ const sendResetPasswordEmail = async (userEmail, resetToken) => {
 
     // Send the email
     try {
-        await sendEmail(userEmail, 'Reset Your Password', emailTemplate);
-        //console.log('Reset password email sent successfully for ' + userEmail);
+        await sendEmail(req, userEmail, 'Reset Your Password', emailTemplate);
+        recordErrorLog(req, { success: 'Reset password email sent successfully for ' + userEmail});
     } catch (err) {
-        console.error('Error sending reset password email', err);
+        recordErrorLog(req, { error: 'Error sending reset password email.'});
+        recordErrorLog(req, err);
         throw err;
     }
 };
