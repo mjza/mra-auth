@@ -1,5 +1,5 @@
 const db = require('../utils/database');
-const { generateMockUserDB } = require('../utils/generators');
+const { generateMockUserDB, generateRandomString } = require('../utils/generators');
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -64,8 +64,8 @@ describe('Test DB functions', () => {
     
     describe('Blacklist Token Functions', () => {
         const mockTokenData = {
-            token: 'exampleToken',
-            expiry: new Date(Date.now() + 1000) // 1 seconds from now
+            token: generateRandomString(32),
+            expiry: Math.floor(Date.now() / 1000) + 2 // 1 seconds from now
         };
     
         describe('insertBlacklistToken', () => {
@@ -74,7 +74,7 @@ describe('Test DB functions', () => {
     
                 expect(insertedToken).toBeDefined();
                 expect(insertedToken.token).toBe(mockTokenData.token);
-                expect(new Date(insertedToken.expiry)).toEqual(mockTokenData.expiry);
+                expect(insertedToken.expiry).toEqual(mockTokenData.expiry);
             });
         });
     
@@ -94,8 +94,8 @@ describe('Test DB functions', () => {
                 await sleep(2000); // Sleep for 2 seconds
                 
                 const newMockTokenData = {
-                    token: 'exampleExpiredToken',
-                    expiry: new Date(Date.now() - 1000) // 1 seconds in past from now
+                    token: generateRandomString(32),
+                    expiry: Math.floor(Date.now() / 1000) - 2 // 1 seconds in past from now
                 };
 
                 // must delete expired token immediately after inserting 

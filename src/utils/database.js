@@ -28,7 +28,11 @@ const insertBlacklistToken = async (tokenData) => {
   const { token, expiry } = tokenData;
   const query = `INSERT INTO ${tokensTable} (token, expiry) VALUES ($1, $2) RETURNING *`;
   const { rows } = await pool.query(query, [token, expiry]);
-  return rows[0];
+
+  const insertedData = rows[0];
+  insertedData.expiry = parseInt(insertedData.expiry, 10);
+
+  return insertedData;
 };
 
 /**
