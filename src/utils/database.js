@@ -41,7 +41,7 @@ const insertBlacklistToken = async (tokenData) => {
  * @param {string} token - The token to check for expiration.
  * @returns {Promise<boolean>} True if the token is expired (present in the blacklist), otherwise false.
  */
-const isTokenExpired = async (token) => {
+const isTokenBlacklisted = async (token) => {
   const query = `SELECT 1 FROM ${tokensTable} WHERE token = $1`;
   const { rows } = await pool.query(query, [token]);
 
@@ -366,7 +366,7 @@ const closePool = async () => {
 
 module.exports = {
   insertBlacklistToken,
-  isTokenExpired,
+  isTokenBlacklisted,
   insertAuditLog,
   updateAuditLog,
   deleteAuditLog,

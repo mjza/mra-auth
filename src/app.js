@@ -84,10 +84,10 @@ const swaggerDefinition = {
     tags: [
         { name: '1st', description: 'Registeration' },
         { name: '2nd', description: 'Activation'},
-        { name: '3rd', description: 'Login'},
+        { name: '3rd', description: 'Sessions'},
         { name: '4th', description: 'User Details'},
-        { name: '5th', description: 'Usernames'},
-        { name: '6th', description: 'JWT Token'},
+        { name: '5th', description: 'Username'},
+        { name: '6th', description: 'Passwords'},
     ],
 };
 

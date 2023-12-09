@@ -78,15 +78,15 @@ describe('Test DB functions', () => {
             });
         });
     
-        describe('isTokenExpired', () => {
+        describe('isTokenBlacklisted', () => {
             it('should return true if the token is in the blacklist', async () => {
                 // Assuming the test token is already inserted from previous test
-                const isExpired = await db.isTokenExpired(mockTokenData.token);
+                const isExpired = await db.isTokenBlacklisted(mockTokenData.token);
                 expect(isExpired).toBeTruthy();
             });
     
             it('should return false if the token is not in the blacklist', async () => {
-                const isExpired = await db.isTokenExpired('nonExistentToken');
+                const isExpired = await db.isTokenBlacklisted('nonExistentToken');
                 expect(isExpired).toBeFalsy();
             });
 
@@ -102,9 +102,9 @@ describe('Test DB functions', () => {
                 const insertedToken = await db.insertBlacklistToken(newMockTokenData);
                 expect(insertedToken).toBeDefined();
                 // must also delete the privious token also
-                const doesNewTokenExist = await db.isTokenExpired(newMockTokenData.token);
+                const doesNewTokenExist = await db.isTokenBlacklisted(newMockTokenData.token);
                 expect(doesNewTokenExist).toBeFalsy();
-                const doesOldTokenExist = await db.isTokenExpired(mockTokenData.token);
+                const doesOldTokenExist = await db.isTokenBlacklisted(mockTokenData.token);
                 expect(doesOldTokenExist).toBeFalsy();
             });
         });        

@@ -176,7 +176,7 @@ const authenticateToken = async (req, res, next) => {
         // Verify JWT Token
         const tokenData = await jwtVerify(token, secretKeyBuffer);
         // Check if token is expired in database
-        const isExpired = await db.isTokenExpired(token);
+        const isExpired = await db.isTokenBlacklisted(token);
         if (isExpired) {
             return res.status(401).json({ message: 'Provided JWT token is invalid.' });
         }
