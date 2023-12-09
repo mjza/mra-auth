@@ -3,6 +3,7 @@ require('dotenv').config({
 });
 const localhost = 'http://localhost:3000';
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const cors = require('cors');
 const basicAuth = require('express-basic-auth');
@@ -11,8 +12,11 @@ const swaggerJSDoc = require('swagger-jsdoc');
 
 const app = express();
 
-// Middleware for parsing JSON
+// Built-in middleware for parsing JSON and URL-encoded bodies
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+// Cookie-parser middleware for parsing cookies
+app.use(cookieParser());
 
 // This will enable CORS for all routes
 const allowedOrigins = [process.env.BASE_URL || localhost, 'https://myreportapp.com'];

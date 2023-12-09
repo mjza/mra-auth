@@ -106,4 +106,56 @@ const toLowerCamelCase = (obj) => {
     return convertedObject;
 };
 
-module.exports = { toLowerCamelCase, encrypt, decrypt, encryptObjectItems, decryptObjectItems };
+/**
+ * Extracts key information from the Express request object and returns it as a JSON string.
+ * Handles circular references in the object structure to ensure proper JSON serialization.
+ * 
+ * @param {object} req - The Express request object.
+ * @returns {string} A JSON string representing key information from the request object.
+ *
+ * @example
+ * app.use((req, res, next) => {
+ *   const requestData = extractRequestData(req);
+ *   console.log(requestData); // Logs serialized request data
+ *   next();
+ * });
+ * 
+ * The function selectively extracts data such as HTTP method, URL, headers, body, query parameters,
+ * IP address, and more. It's designed to be used in middleware for logging or auditing purposes.
+ * Note: Ensure that any middleware required for populating these fields (like body-parser for `req.body`, 
+ * or cookie-parser for `req.cookies`) is set up in your Express application.
+ */
+function convertRequestData(req) {
+    const requestData = {
+        method: req.method,
+        url: req.originalUrl,
+        headers: req.headers,
+        body: req.body, // Make sure you have body-parser middleware if you need this
+        query: req.query,
+        params: req.params,
+        ip: req.ip,
+        hostname: req.hostname,
+        protocol: req.protocol,
+        path: req.path,
+        cookies: req.cookies, // Requires cookie-parser middleware if used
+    };
+
+    // Handling circular structures in JSON stringify
+    const getCircularReplacer = () => {
+        const seen = new WeakSet();
+        return (key, value) => {
+            if (typeof value === "object" && value !== null) {
+                if (seen.has(value)) {
+                    return;
+                }
+                seen.add(value);
+            }
+            return value;
+        };
+    };
+
+    return JSON.stringify(requestData, getCircularReplacer());
+}
+
+
+module.exports = { toLowerCamelCase, encrypt, decrypt, encryptObjectItems, decryptObjectItems, convertRequestData};

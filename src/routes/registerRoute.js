@@ -1,10 +1,11 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const db = require('../db/database');
+const db = require('../utils/database');
 const { sendVerificationEmail } = require('../emails/emailService');
 const { userMustNotExist } = require('../utils/validations');
 const { createAccountLimiter } = require('../utils/rateLimit');
 const { generateActivationLink, generatePasswordHash } = require('../utils/generators');
+const { recordErrorLog } = require('./auditLogMiddleware');
 
 const router = express.Router();
 
@@ -32,7 +33,7 @@ const router = express.Router();
  *               email:
  *                 type: string
  *                 format: email
- *                 default: "username1@xyz.com"
+ *                 default: "test@example.com"
  *               password:
  *                 type: string
  *                 default: "Password1$"
@@ -105,12 +106,12 @@ router.post('/register', createAccountLimiter,
       const activationLink = generateActivationLink(result.username, result.activation_code, loginRedirectURL);
 
       // Send verification email
-      await sendVerificationEmail(result.username, result.email, activationLink);
+      await sendVerificationEmail(req, result.username, result.email, activationLink);
 
       // Send success response
       return res.status(201).json({ message: "User registered successfully", userId: result.user_id });
     } catch (err) {
-      console.error(err);
+      recordErrorLog(req, err);
       return res.status(500).json({ message: err.message });
     }
   });

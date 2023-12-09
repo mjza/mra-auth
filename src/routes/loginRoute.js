@@ -1,9 +1,10 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+const db = require('../utils/database');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const db = require('../db/database');
+const { body, validationResult } = require('express-validator');
+const { generateAuthToken } = require('../utils/generators');
 const { apiRequestLimiter } = require('../utils/rateLimit');
+const { recordErrorLog } = require('./auditLogMiddleware');
 const router = express.Router();
 
 /**
@@ -26,7 +27,7 @@ const router = express.Router();
  *               usernameOrEmail:
  *                 type: string
  *                 description: Username or Email of the user
- *                 example: "username1 or username1@xyz.com"
+ *                 example: "username1 or test@example.com"
  *               password:
  *                 type: string
  *                 description: Password of the user
@@ -142,11 +143,8 @@ router.post('/login', apiRequestLimiter,
             continue;
           }
 
-          const secretKeyHex = process.env.SECRET_KEY;
-          const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
-
           // Generate JWT Token for the matched user
-          const token = jwt.sign({ userId: user.user_id, username: user.username, email: user.email }, secretKeyBuffer, { expiresIn: '1d' });
+          const token = generateAuthToken({ userId: user.user_id, username: user.username, email: user.email });
 
           return res.json({ token, userId: user.user_id });
         }
@@ -164,7 +162,7 @@ router.post('/login', apiRequestLimiter,
 
       throw new Exception("The login method has a logical error.");
     } catch (err) {
-      console.error(err);
+      recordErrorLog(req, err);
       return res.status(500).json({ message: err.message });
     }
   });

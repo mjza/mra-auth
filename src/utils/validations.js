@@ -1,4 +1,4 @@
-const db = require('../db/database');
+const db = require('./database');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { Agent } = require('https');

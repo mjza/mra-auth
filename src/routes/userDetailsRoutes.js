@@ -1,9 +1,10 @@
 const express = require('express');
-const { body, param, validationResult } = require('express-validator');
+const { param, validationResult } = require('express-validator');
 const { authenticateToken } = require('../utils/validations');
 const { toLowerCamelCase, encryptObjectItems, decryptObjectItems } = require('../utils/converters');
-const db = require('../db/database');
+const db = require('../utils/database');
 const { apiRequestLimiter } = require('../utils/rateLimit');
+const { recordErrorLog } = require('./auditLogMiddleware');
 const router = express.Router();
 
 /**
@@ -68,7 +69,7 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, 
 
     return res.json(decryptObjectItems(toLowerCamelCase(userDetails)));
   } catch (err) {
-    console.error(err);
+    recordErrorLog(req, err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -176,7 +177,7 @@ router.post('/user_details', apiRequestLimiter, [authenticateToken], async (req,
     const createdUserDetails = await db.createUserDetails(encryptObjectItems(userDetails));
     return res.status(201).json(decryptObjectItems(toLowerCamelCase(createdUserDetails)));
   } catch (err) {
-    console.error(err);
+    recordErrorLog(req, err);
 
     if (err.code === '23505') { // PostgreSQL foreign key violation error code
       return res.status(422).json({ message: 'A record exists for the current user in the user details table.', details: err.message });
@@ -338,7 +339,7 @@ router.put('/user_details/:userId', apiRequestLimiter,
 
       return res.status(200).json(decryptObjectItems(toLowerCamelCase(updatedUserDetails)));
     } catch (err) {
-      console.error(err);
+      recordErrorLog(req, err);
 
       if (err.code === '23503') { // PostgreSQL foreign key violation error code
         return res.status(422).json({ message: 'Invalid foreign key value.', details: err.message });

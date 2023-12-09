@@ -1,5 +1,9 @@
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const secretKeyHex = process.env.SECRET_KEY;
+const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
 
 /**
  * Generates an encrypted activation object containing the activation code and redirect URL.
@@ -9,9 +13,7 @@ const bcrypt = require('bcrypt');
  */
 const generateEncryptedActivationObject = (activationCode, redirectURL) => {
     try {
-        // Encrypt the activation object using a secret key
-        const secretKeyHex = process.env.SECRET_KEY;
-        const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
+        // Encrypt the activation object using a secret key        
         const iv = crypto.randomBytes(16);
         const cipher = crypto.createCipheriv('aes-256-cbc', secretKeyBuffer, iv);
         let encryptedActivationObject = cipher.update(JSON.stringify({ activationCode, redirectURL }), 'utf8', 'hex');
@@ -48,8 +50,6 @@ const generateDecryptedActivationObject = (token, data) => {
         const iv = Buffer.from(token, 'hex');
 
         // Decrypt the encrypted data using the secret key and IV
-        const secretKeyHex = process.env.SECRET_KEY;
-        const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
         const decipher = crypto.createDecipheriv('aes-256-cbc', secretKeyBuffer, iv);
         // Decrypt the encryptedActivationObject
         let decryptedActivationObjectHex = decipher.update(data, 'hex', 'utf8');
@@ -62,6 +62,45 @@ const generateDecryptedActivationObject = (token, data) => {
         return { activationCode: '', redirectURL: '' };
     }
 };
+
+/**
+ * Generates an authentication token for a user.
+ * 
+ * @param {object} user - The user object containing user details.
+ * @returns {string} A JWT token encoded with the user's information.
+ *
+ * @example
+ * const user = { user_id: 123, username: 'johndoe', email: 'john@example.com' };
+ * const token = generateAuthToken(user);
+ */
+const generateAuthToken = (user) => {
+    try {
+        const token = jwt.sign({ userId: user.userId, username: user.username, email: user.email }, secretKeyBuffer, { expiresIn: '1d' });
+        return token;
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * Extracts user data from a given JWT token.
+ * 
+ * @param {string} token - The JWT token to be decoded.
+ * @returns {object} An object (i.e., { userId, username, email }) containing the userId, username, and email. 
+ * 
+ * @example
+ * const token = '...'; // JWT token
+ * const userData = extractUserDataFromAuthToke(token);
+ */
+const extractUserDataFromAuthToke = (token) => {
+    try {
+        const decodedToken = jwt.verify(token, secretKeyBuffer);
+        return decodedToken;
+    } catch {
+        return null;
+    }
+};
+
 
 /**
  * Generates a hash for a given password using bcrypt.
@@ -101,7 +140,7 @@ const generateMockUserDB = async () => {
     var username = generateRandomString();
     return {
         username: username,
-        email: username + '@example.com',
+        email: 'test@example.com',
         password: 'Pasword1$',
         passwordHash: await generatePasswordHash('Pasword1$')
     };
@@ -118,10 +157,10 @@ const generateMockUserRoute = () => {
     var username = generateRandomString();
     return {
         username: username,
-        email: username + '@example.com',
+        email: 'test@example.com',
         password: 'Pasword1$',
         loginRedirectURL: 'http://localhost:3000/login'
     }
 };
 
-module.exports = { generateRandomString, generateMockUserDB, generateMockUserRoute, generateEncryptedActivationObject, generateActivationLink, generateDecryptedActivationObject, generatePasswordHash };
+module.exports = { generateRandomString, generateMockUserDB, generateMockUserRoute, generateEncryptedActivationObject, generateActivationLink, generateDecryptedActivationObject, generatePasswordHash, generateAuthToken, extractUserDataFromAuthToke };

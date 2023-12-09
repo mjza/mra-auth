@@ -1,7 +1,6 @@
 const { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken } = require('../utils/validations');
-const db = require('../db/database');
-const jwt = require('jsonwebtoken');
-const { generateMockUserDB, generateRandomString } = require('../utils/generators');
+const db = require('../utils/database');
+const { generateMockUserDB, generateRandomString, generateAuthToken } = require('../utils/generators');
 
 describe('Test validation functions', () => {
 
@@ -66,9 +65,7 @@ describe('Test validation functions', () => {
     });
 
     describe('Token Authentication Middleware', () => {
-        const secretKeyHex = process.env.SECRET_KEY;
-        const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
-        const validToken = jwt.sign({ userId: 1 }, secretKeyBuffer);
+        const validToken = generateAuthToken({ userId: 1, username: 'username1', email: 'test@example.com' });
         const invalidToken = 'thisIsAnInvalidToken';
 
         // ToDo Old token: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQwLCJ1c2VybmFtZSI6InVzZW5hbWUyIiwiZW1haWwiOiJtYWhkaS5qYnpAZ21haWwuY29tIiwiaWF0IjoxNzAxNzYxMDM4LCJleHAiOjE3MDE4NDc0Mzh9.hewZldHmLoQRC-bVYq8zwlaPqcSqJIyWLFA4FQ34efY' 

@@ -1,8 +1,9 @@
 const express = require('express');
 const { query, validationResult } = require('express-validator');
 const { sendEmailWithUsernames } = require('../emails/emailService');
-const db = require('../db/database');
+const db = require('../utils/database');
 const { apiRequestLimiter } = require('../utils/rateLimit');
+const { recordErrorLog } = require('./auditLogMiddleware');
 const router = express.Router();
 
 /**
@@ -81,11 +82,11 @@ router.get('/usernames', apiRequestLimiter,
       const usernames = await db.getUsernamesByEmail(email);
       if (usernames && usernames.length > 0) {
             // Send email with the list of usernames
-            await sendEmailWithUsernames(usernames, email);
+            await sendEmailWithUsernames(req, usernames, email);
       }
       return res.status(200).json({ message: 'If there are any usernames associated with the provided email address, a list of them has been sent to that email address.' });
     } catch (err) {
-      console.error(err);
+      recordErrorLog(req, err);
       return res.status(500).json({ message: 'Internal server error.' });
     }
 });

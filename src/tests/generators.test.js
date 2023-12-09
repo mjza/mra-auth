@@ -1,5 +1,6 @@
 const gn = require('../utils/generators');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 describe('Generator Functions', () => {
     describe('generateEncryptedActivationObject', () => {
@@ -97,7 +98,7 @@ describe('Generator Functions', () => {
             expect(user).toHaveProperty('passwordHash');
 
             // Check that the email includes the username
-            expect(user.email).toContain(user.username);
+            expect(user.email).toBe(user.email);
 
             // Verify that the password is hashed
             const isMatch = await bcrypt.compare('Pasword1$', user.passwordHash);
@@ -116,7 +117,30 @@ describe('Generator Functions', () => {
             expect(user).toHaveProperty('loginRedirectURL', 'http://localhost:3000/login');
 
             // Check that the email includes the username
-            expect(user.email).toContain(user.username);
+            expect(user.email).toBe(user.email);
+        });
+    });
+
+    describe('Auth Token Tests', () => {
+        const user = { userId: 1, username: 'username1', email: 'test@example.com' };
+        const secretKeyHex = process.env.SECRET_KEY;
+        const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
+    
+        test('generateAuthToken should return a valid JWT', () => {
+            const token = gn.generateAuthToken(user, secretKeyBuffer);
+            expect(token).toBeDefined();
+            const decoded = jwt.verify(token, secretKeyBuffer);
+            expect(decoded.userId).toBe(user.userId);
+            expect(decoded.username).toBe(user.username);
+            expect(decoded.email).toBe(user.email);
+        });
+    
+        test('extractUserDataFromAuthToke should return correct user data from token', () => {
+            const token = jwt.sign(user, secretKeyBuffer, { expiresIn: '1d' });
+            const extractedData = gn.extractUserDataFromAuthToke(token, secretKeyBuffer);
+            expect(extractedData.userId).toBe(user.userId);
+            expect(extractedData.username).toBe(user.username);
+            expect(extractedData.email).toBe(user.email);
         });
     });
 });

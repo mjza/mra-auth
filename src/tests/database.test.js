@@ -1,4 +1,4 @@
-const db = require('../db/database');
+const db = require('../utils/database');
 const { generateMockUserDB } = require('../utils/generators');
 
 describe('Test DB functions', () => {
@@ -8,6 +8,55 @@ describe('Test DB functions', () => {
     beforeAll(async () => {
         mockUser = await generateMockUserDB();
     });
+
+    describe('Audit Log DB functions', () => {
+        let mockLog;
+        let insertedLog;
+        let updatedLog;
+    
+        beforeAll(() => {
+            mockLog = {
+                methodRoute: 'TEST : /testRoute',
+                req: JSON.stringify({ param: 'test' }),
+                comments: 'Initial comment',
+                ipAddress: '127.0.0.1',
+                userId: '123'
+            };
+        });
+
+        afterAll(async () => {
+            if(insertedLog) {
+                await db.deleteAuditLog(insertedLog.log_id);
+            }
+        });
+    
+        describe('insertAuditLog', () => {
+            it('should insert a new audit log', async () => {
+                insertedLog = await db.insertAuditLog(mockLog);
+    
+                expect(insertedLog).toBeDefined();
+                expect(insertedLog.method_route).toBe(mockLog.methodRoute);
+                expect(insertedLog.req).toStrictEqual(JSON.parse(mockLog.req));
+                expect(insertedLog.comments).toBe(mockLog.comments);
+                expect(insertedLog.ip_address).toBe(mockLog.ipAddress);
+                expect(insertedLog.user_id).toBe(mockLog.userId);
+            });
+        });
+    
+        describe('updateAuditLog', () => {
+            it('should update an existing audit log', async () => {
+                const updateData = {
+                    logId: insertedLog.log_id,
+                    comments: 'Updated comment'
+                };
+                updatedLog = await db.updateAuditLog(updateData);
+    
+                expect(updatedLog).toBeDefined();
+                expect(updatedLog.comments).toContain('Initial comment');
+                expect(updatedLog.comments).toContain('Updated comment');
+            });
+        });
+    });    
 
     let insertedUser;
 

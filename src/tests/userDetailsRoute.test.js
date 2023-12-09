@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../app');
-const db = require('../db/database');
+const db = require('../utils/database');
 const { generateMockUserDB, generateRandomString } = require('../utils/generators');
 
 describe('/user_details endpoints', () => {
