@@ -4,7 +4,7 @@ const router = express.Router();
 const { auditLogMiddleware } = require('./auditLogMiddleware');
 const registerRoute = require('./registerRoute');
 const activateRoute = require('./activateRoute');
-const loginRoute = require('./loginRoute');
+const sessionRoutes = require('./sessionRoutes');
 const userDetailsRoutes = require('./userDetailsRoutes');
 const usernamesRoute = require('./usernamesRoute');
 const tokenRoutes = require('./tokenRoutes');
@@ -15,7 +15,7 @@ router.use(auditLogMiddleware);
 
 router.use(registerRoute);
 router.use(activateRoute);
-router.use(loginRoute);
+router.use(sessionRoutes);
 router.use(userDetailsRoutes);
 router.use(usernamesRoute);
 router.use(tokenRoutes);

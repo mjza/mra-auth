@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const { generateAuthToken, parseJwt } = require('../utils/generators');
 const { apiRequestLimiter } = require('../utils/rateLimit');
 const { recordErrorLog } = require('./auditLogMiddleware');
+const { authenticateToken } = require('../utils/validations');
 const router = express.Router();
 
 /**
@@ -170,5 +171,56 @@ router.post('/login', apiRequestLimiter,
       return res.status(500).json({ message: err.message });
     }
   });
+
+/**
+ * @swagger
+ * /logout:
+ *   post:
+ *     summary: Refresh the JWT token
+ *     description: Refreshes the JWT for a user if the current token is valid and close to expiry.
+ *     tags: [6th]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                 exp:
+ *                   type: integer
+ *                   description: Expiration Time of the new token
+ *                 userId:
+ *                   type: integer
+ *                   example: 1
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
+ *       429:
+ *         $ref: '#/components/responses/ApiRateLimitExceeded'
+ *       500:
+ *         $ref: '#/components/responses/ServerInternalError'
+ */  
+router.post('/logout', apiRequestLimiter, [authenticateToken], async (req, res) => {
+  try {
+      // Extract the token from the Authorization header
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+      const tokenData = parseJwt(token);
+
+      // Insert the token into the blacklist
+      await db.insertBlacklistToken({ token, expiry: tokenData.exp });
+
+      return res.status(200).json({ message: 'Successfully logged out.' });
+  } catch (err) {
+      recordErrorLog(req, err);
+      return res.status(500).json({ message: err.message });
+  }
+});
+
 
 module.exports = router;
