@@ -111,7 +111,7 @@ router.post('/reset_token', apiRequestLimiter, [
  * /reset_password:
  *   put:
  *     summary: Reset the account password
- *     description: This endpoint is used for reseting the password of an account with a username and reset token.
+ *     description: This endpoint is used for resetting the password of an account with a username and reset token.
  *     tags: [6th]
  *     requestBody:
  *       required: true
