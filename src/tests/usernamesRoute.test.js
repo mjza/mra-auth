@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../app');
 const db = require('../utils/database');
-const { generateMockUserDB, generateEncryptedActivationObject } = require('../utils/generators');
+const { generateMockUserDB, generateEncryptedObject } = require('../utils/generators');
 
 describe('GET /usernames Endpoint', () => {
 

@@ -17,7 +17,7 @@ describe('Test DB functions', () => {
         let mockLog;
         let insertedLog;
         let updatedLog;
-    
+
         beforeAll(() => {
             mockLog = {
                 methodRoute: 'TEST : /testRoute',
@@ -29,15 +29,15 @@ describe('Test DB functions', () => {
         });
 
         afterAll(async () => {
-            if(insertedLog) {
+            if (insertedLog) {
                 await db.deleteAuditLog(insertedLog.log_id);
             }
         });
-    
+
         describe('insertAuditLog', () => {
             it('should insert a new audit log', async () => {
                 insertedLog = await db.insertAuditLog(mockLog);
-    
+
                 expect(insertedLog).toBeDefined();
                 expect(insertedLog.method_route).toBe(mockLog.methodRoute);
                 expect(insertedLog.req).toStrictEqual(JSON.parse(mockLog.req));
@@ -46,7 +46,7 @@ describe('Test DB functions', () => {
                 expect(insertedLog.user_id).toBe(mockLog.userId);
             });
         });
-    
+
         describe('updateAuditLog', () => {
             it('should update an existing audit log', async () => {
                 const updateData = {
@@ -54,37 +54,37 @@ describe('Test DB functions', () => {
                     comments: 'Updated comment'
                 };
                 updatedLog = await db.updateAuditLog(updateData);
-    
+
                 expect(updatedLog).toBeDefined();
                 expect(updatedLog.comments).toContain('Initial comment');
                 expect(updatedLog.comments).toContain('Updated comment');
             });
         });
-    });  
-    
+    });
+
     describe('Blacklist Token Functions', () => {
         const mockTokenData = {
             token: generateRandomString(32),
             expiry: Math.floor(Date.now() / 1000) + 2 // 1 seconds from now
         };
-    
+
         describe('insertBlacklistToken', () => {
             it('should insert a new token into the blacklist', async () => {
                 const insertedToken = await db.insertBlacklistToken(mockTokenData);
-    
+
                 expect(insertedToken).toBeDefined();
                 expect(insertedToken.token).toBe(mockTokenData.token);
                 expect(insertedToken.expiry).toEqual(mockTokenData.expiry);
             });
         });
-    
+
         describe('isTokenBlacklisted', () => {
             it('should return true if the token is in the blacklist', async () => {
                 // Assuming the test token is already inserted from previous test
                 const isExpired = await db.isTokenBlacklisted(mockTokenData.token);
                 expect(isExpired).toBeTruthy();
             });
-    
+
             it('should return false if the token is not in the blacklist', async () => {
                 const isExpired = await db.isTokenBlacklisted('nonExistentToken');
                 expect(isExpired).toBeFalsy();
@@ -92,7 +92,7 @@ describe('Test DB functions', () => {
 
             it('should check by inserting new token the old one is deleted after 2 seconds', async () => {
                 await sleep(2000); // Sleep for 2 seconds
-                
+
                 const newMockTokenData = {
                     token: generateRandomString(32),
                     expiry: Math.floor(Date.now() / 1000) - 2 // 1 seconds in past from now
@@ -107,9 +107,9 @@ describe('Test DB functions', () => {
                 const doesOldTokenExist = await db.isTokenBlacklisted(mockTokenData.token);
                 expect(doesOldTokenExist).toBeFalsy();
             });
-        });        
+        });
     });
-    
+
 
     let insertedUser;
 
@@ -192,6 +192,45 @@ describe('Test DB functions', () => {
             const activedUser = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const isInactive = await db.isInactiveUser(activedUser);
             expect(isInactive).toBeFalsy();
+        });
+    });
+
+    describe('generateResetToken', () => {
+        it('should not  generate a password_reset token for wrong username', async () => {
+            const resetResult = await db.generateResetToken(insertedUser.username + 'x');
+            expect(resetResult).toBeUndefined();
+        });
+
+        it('should generate a password_reset token', async () => {
+            const resetResult = await db.generateResetToken(insertedUser.username);
+            expect(resetResult).toBeDefined();
+            expect(resetResult.user_id).toBe(insertedUser.user_id);
+            expect(resetResult.username).toBe(insertedUser.username);
+            expect(resetResult.email).toBe(insertedUser.email);
+            expect(resetResult.reset_token).toBeDefined();
+            expect(typeof resetResult.reset_token).toBe('string');
+            expect(resetResult.reset_token.length).toBe(64);
+            insertedUser.reset_token = resetResult.reset_token;
+        });
+    });
+
+    describe('resetPassword', () => {
+        it('should set a new password_hash for the user', async () => {
+            const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.reset_token, passwordHash: mockUser.passwordHash + 'x'};
+            const resetResult = await db.resetPassword(userToResetItsPassowrd);
+            expect(resetResult).toBeTruthy();
+        });
+
+        it('should not set a new password_hash for wrong username', async () => {
+            const userToResetItsPassowrd = { username: insertedUser.username + 'x', resetToken: insertedUser.reset_token, passwordHash: mockUser.passwordHash + 'x'};
+            const resetResult = await db.resetPassword(userToResetItsPassowrd);
+            expect(resetResult).toBeFalsy();
+        });
+
+        it('should not set a new password_hash for wrong reset token', async () => {
+            const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.reset_token + 'x', passwordHash: mockUser.passwordHash + 'x'};
+            const resetResult = await db.resetPassword(userToResetItsPassowrd);
+            expect(resetResult).toBeFalsy();
         });
     });
 
@@ -287,7 +326,7 @@ describe('Test DB functions', () => {
             expect(results).toBeNull();
         });
     });
-    
+
     afterAll(async () => {
         await db.closePool();
     });

@@ -203,22 +203,22 @@ router.post('/login', apiRequestLimiter,
  *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
- */  
+ */
 router.post('/logout', apiRequestLimiter, [authenticateToken], async (req, res) => {
   try {
-      // Extract the token from the Authorization header
-      const authHeader = req.headers['authorization'];
-      const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    // Extract the token from the Authorization header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-      const tokenData = parseJwt(token);
+    const tokenData = parseJwt(token);
 
-      // Insert the token into the blacklist
-      await db.insertBlacklistToken({ token, expiry: tokenData.exp });
+    // Insert the token into the blacklist
+    await db.insertBlacklistToken({ token, expiry: tokenData.exp });
 
-      return res.status(200).json({ message: 'Successfully logged out.' });
+    return res.status(200).json({ message: 'Successfully logged out.' });
   } catch (err) {
-      recordErrorLog(req, err);
-      return res.status(500).json({ message: err.message });
+    recordErrorLog(req, err);
+    return res.status(500).json({ message: err.message });
   }
 });
 
@@ -259,15 +259,15 @@ router.post('/logout', apiRequestLimiter, [authenticateToken], async (req, res) 
  *         $ref: '#/components/responses/ServerInternalError'
  */
 router.get('/parse_token', apiRequestLimiter, [authenticateToken], async (req, res) => {
-    try {
-        // Get the token from the request header
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-        return res.status(200).json(parseJwt(token));
-    } catch (err) {
-        recordErrorLog(req, err);
-        return res.status(500).json({ message: err.message });
-    }
+  try {
+    // Get the token from the request header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    return res.status(200).json(parseJwt(token));
+  } catch (err) {
+    recordErrorLog(req, err);
+    return res.status(500).json({ message: err.message });
+  }
 });
 
 /**
@@ -303,24 +303,24 @@ router.get('/parse_token', apiRequestLimiter, [authenticateToken], async (req, r
  *         $ref: '#/components/responses/ServerInternalError'
  */
 router.post('/refresh_token', apiRequestLimiter, [authenticateToken], async (req, res) => {
-    try {
-        // Verify the current token
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN  
+  try {
+    // Verify the current token
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN  
 
-        const tokenData = parseJwt(token);
+    const tokenData = parseJwt(token);
 
-        // Generate a new token
-        const newToken = generateAuthToken(tokenData);
-        const newTokenData = parseJwt(newToken);
+    // Generate a new token
+    const newToken = generateAuthToken(tokenData);
+    const newTokenData = parseJwt(newToken);
 
-        await db.insertBlacklistToken({ token, expiry: tokenData.exp });
+    await db.insertBlacklistToken({ token, expiry: tokenData.exp });
 
-        return res.status(200).json({ token: newToken, exp: newTokenData.exp, userId: newTokenData.userId });
-    } catch (err) {
-        recordErrorLog(req, err);
-        return res.status(500).json({ message: err.message });
-    }
+    return res.status(200).json({ token: newToken, exp: newTokenData.exp, userId: newTokenData.userId });
+  } catch (err) {
+    recordErrorLog(req, err);
+    return res.status(500).json({ message: err.message });
+  }
 });
 
 

@@ -180,7 +180,7 @@ const insertUser = async (user) => {
   const { username, email, passwordHash } = user;
   const insertQuery = `INSERT INTO ${usersTable} (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *`;
   const { rows } = await pool.query(insertQuery, [username.trim(), email.trim(), passwordHash.trim()]);
-  return rows[0]; // Returns the inserted user
+  return rows && rows[0]; // Returns the inserted user
 };
 
 /**
@@ -273,25 +273,65 @@ const isActivationCodeValid = async (user) => {
 const activeUser = async (user) => {
   const { username, activationCode } = user;
   // Check if the user and activation code match
-  const checkUserQuery =
-    `SELECT * FROM ${usersTable} 
-      WHERE 
-          created_at >= (CURRENT_TIMESTAMP - interval '5 days') AND
-          created_at <= CURRENT_TIMESTAMP AND
-          confirmation_at IS NULL AND
-          username = $1 AND
-          activation_code = $2
-    `;
-  const checkResult = await pool.query(checkUserQuery, [username.trim(), activationCode.trim()]);
+  const updateUserQuery = `UPDATE ${usersTable} 
+                            SET activation_code = NULL 
+                            WHERE
+                              created_at >= (CURRENT_TIMESTAMP - interval '5 days') AND
+                              created_at <= CURRENT_TIMESTAMP AND
+                              confirmation_at IS NULL AND
+                              username = $1 AND
+                              activation_code = $2
+                            RETURNING *  
+                          `;
 
-  if (checkResult.rows.length > 0) {
-    // Update the user's activation_code and confirmation_at
-    const updateUserQuery = `UPDATE ${usersTable} SET activation_code = NULL, confirmation_at = NOW() WHERE username = $1`;
-    await pool.query(updateUserQuery, [username.trim()]);
-    return true;
-  } else {
-    return false;
-  }
+  const checkResult = await pool.query(updateUserQuery, [username.trim(), activationCode.trim()]);
+  return checkResult && checkResult.rows.length > 0;
+};
+
+/**
+ * Generates a reset token for a user and updates it in the database.
+ * 
+ * This function creates a new reset token, updates the specified user's record in the database,
+ * and returns the updated user information including the reset token. It assumes that a reset token
+ * generation logic is implemented elsewhere and passed to this function.
+ *
+ * @param {string} username - The username of the user for whom to generate and set a reset token.
+ * @returns {Promise<Object|null>} A promise that resolves to the updated user object containing the 
+ *                                 user_id, username, email, and reset_token. Returns null if no user is found.
+ */
+const generateResetToken = async (username) => {
+  const query = `UPDATE ${usersTable} SET reset_token = '1' WHERE username = $1 RETURNING user_id, username, email, reset_token`;
+  const { rows } = await pool.query(query, [username]);
+  return rows && rows[0];
+}
+
+/**
+ * Resets a user's password in the database.
+ * 
+ * This function updates the password hash of a user in the database, provided that the reset token 
+ * is valid and was created within the last 5 days. It also nullifies the reset token after successful 
+ * password reset to prevent reuse.
+ * 
+ * @param {Object} user - An object containing the user's details.
+ * @param {string} user.username - The username of the user whose password is to be reset.
+ * @param {string} user.resetToken - The reset token for password reset verification.
+ * @param {string} user.passwordHash - The new password hash to set for the user.
+ * @returns {Promise<boolean>} A promise that resolves to `true` if the password was successfully 
+ *                             reset, or `false` if the reset operation failed (e.g., invalid token, 
+ *                             token expired, or user not found).
+ */
+const resetPassword = async (user) => {
+  const { username, resetToken, passwordHash } = user;
+  const query = `UPDATE ${usersTable} 
+                 SET reset_token = null, password_hash = $1 
+                 WHERE 
+                    reset_token_created_at >= (CURRENT_TIMESTAMP - interval '5 days') AND
+                    reset_token_created_at <= CURRENT_TIMESTAMP AND
+                    username = $2 AND 
+                    reset_token = $3 
+                 RETURNING *`;
+  const { rows } = await pool.query(query, [passwordHash, username, resetToken]);
+  return rows && rows.length > 0;
 };
 
 /**
@@ -343,10 +383,10 @@ async function createUserDetails(userDetails) {
 async function updateUserDetails(userId, userDetails) {
   const query = `
   WITH updated AS (
-    UPDATE ${userDetailsTable}
-    SET first_name = $1, middle_name = $2, last_name = $3, gender_id = $4, date_of_birth = $5, profile_picture_url = $6, profile_picture_thumbnail_url = $7, updator = $8, updated_at = NOW()
-    WHERE user_id = $9
-    RETURNING first_name, middle_name, last_name, gender_id, date_of_birth as date_of_birth, profile_picture_url, profile_picture_thumbnail_url
+      UPDATE ${userDetailsTable}
+      SET first_name = $1, middle_name = $2, last_name = $3, gender_id = $4, date_of_birth = $5, profile_picture_url = $6, profile_picture_thumbnail_url = $7, updator = $8, updated_at = NOW()
+      WHERE user_id = $9
+      RETURNING first_name, middle_name, last_name, gender_id, date_of_birth as date_of_birth, profile_picture_url, profile_picture_thumbnail_url
     )
   SELECT u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url
   FROM updated u
@@ -379,6 +419,8 @@ module.exports = {
   isInactiveUser,
   isActivationCodeValid,
   activeUser,
+  resetPassword,
+  generateResetToken,
   getUserDetails,
   createUserDetails,
   updateUserDetails,

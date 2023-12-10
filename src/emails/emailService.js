@@ -129,29 +129,40 @@ const sendEmailWithUsernames = async (req, users, userEmail) => {
 };
 
 /**
- * Sends a password reset email to a user.
- * The email content is generated using a HTML template file and includes a password reset link.
+ * Sends a verification email to a new user.
+ * The email content is generated using a HTML template file.
  * 
  * @async
+ * @param {string} username - The username of the user.
  * @param {string} userEmail - The email address of the user.
- * @param {string} resetToken - The password reset token to be included in the reset link.
+ * @param {string} resetPasswordLink - The link the user needs to click to verify their email.
  * @throws Will throw an error if the email fails to send.
  */
-const sendResetPasswordEmail = async (req, userEmail, resetToken) => {
+const sendResetPasswordEmail = async (req, username, userEmail, resetPasswordLink) => {
     // Read the template file
     const templatePath = path.join(__dirname, './resetPasswordEmailTemplate.html');
     let emailTemplate = fs.readFileSync(templatePath, 'utf8');
 
-    // Generate the reset password link
-    const resetLink = `${process.env.BASE_URL}/reset-password?token=${resetToken}`;
+    const replacements = {
+        '{{username}}': username,
+        '{{companyLogoUrl}}': process.env.COMPANY_LOGO_URL,
+        '{{companyName}}': process.env.COMPANY_NAME,
+        '{{companyWebsite}}': process.env.COMPANY_WEBSITE,
+        '{{companyAddress}}': process.env.COMPANY_ADDRESS,
+        '{{companyPhonenumber}}': process.env.COMPANY_PHONENUMBER,
+        '{{currentYear}}': new Date().getFullYear(),
+        '{{resetPasswordLink}}': resetPasswordLink
+    };
 
-    // Replace the placeholder in the template
-    emailTemplate = emailTemplate.replace('{{resetLink}}', resetLink);
+    Object.keys(replacements).forEach(placeholder => {
+        emailTemplate = emailTemplate.split(placeholder).join(replacements[placeholder]);
+    });
+
 
     // Send the email
     try {
-        await sendEmail(req, userEmail, 'Reset Your Password', emailTemplate);
-        recordErrorLog(req, { success: 'Reset password email sent successfully for ' + userEmail});
+        await sendEmail(req, userEmail, 'Reset Your password', emailTemplate);
+        recordErrorLog(req, { success: 'Reset password email sent successfully for ' + username});
     } catch (err) {
         recordErrorLog(req, { error: 'Error sending reset password email.'});
         recordErrorLog(req, err);

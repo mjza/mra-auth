@@ -3,12 +3,12 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 describe('Generator Functions', () => {
-    describe('generateEncryptedActivationObject', () => {
+    describe('generateEncryptedObject', () => {
         it('should return an object with token and data', () => {
             const activationCode = '12345';
             const redirectURL = 'http://example.com';
 
-            const result = gn.generateEncryptedActivationObject(activationCode, redirectURL);
+            const result = gn.generateEncryptedObject(activationCode, redirectURL);
 
             expect(result).toHaveProperty('token');
             expect(result).toHaveProperty('data');
@@ -20,10 +20,26 @@ describe('Generator Functions', () => {
     describe('generateActivationLink', () => {
         it('should return a valid activation link', () => {
             const username = 'testuser';
-            const activationCode = '12345';
+            const code = '12345';
             const redirectURL = 'http://example.com/login';
 
-            const result = gn.generateActivationLink(username, activationCode, redirectURL);
+            const result = gn.generateActivationLink(username, code, redirectURL);
+
+            expect(typeof result).toBe('string');
+            expect(result).toContain('/activate');
+            expect(result).toContain(username);
+            expect(result).toContain('token');
+            expect(result).toContain('data');
+        });
+    });
+
+    describe('generateResetPasswordLink', () => {
+        it('should return a valid activation link', () => {
+            const username = 'testuser';
+            const resetToken = '12345';
+            const redirectURL = 'http://example.com/new_password';
+
+            const result = gn.generateResetPasswordLink(username, resetToken, redirectURL);
 
             expect(typeof result).toBe('string');
             expect(result).toContain(username);
@@ -32,26 +48,26 @@ describe('Generator Functions', () => {
         });
     });
 
-    describe('generateDecryptedActivationObject', () => {
-        it('should return an object with activationCode and redirectURL', () => {
+    describe('generateDecryptedObject', () => {
+        it('should return an object with code and redirectURL', () => {
             const username = 'testuser';
-            const activationCode = '12345';
+            const code = '12345';
             const redirectURL = 'http://example.com/login';
 
-            const link = gn.generateActivationLink(username, activationCode, redirectURL);
+            const link = gn.generateActivationLink(username, code, redirectURL);
             const url = new URL(link);
             const queryParams = new URLSearchParams(url.search);
 
             const token = queryParams.get('token');
             const data = queryParams.get('data');
 
-            const result = gn.generateDecryptedActivationObject(token, data);
+            const result = gn.generateDecryptedObject(token, data);
 
-            expect(result).toHaveProperty('activationCode');
+            expect(result).toHaveProperty('code');
             expect(result).toHaveProperty('redirectURL');
-            expect(typeof result.activationCode).toBe('string');
+            expect(typeof result.code).toBe('string');
             expect(typeof result.redirectURL).toBe('string');
-            expect(result.activationCode).toBe(activationCode);
+            expect(result.code).toBe(code);
             expect(result.redirectURL).toBe(redirectURL);
         });
     });

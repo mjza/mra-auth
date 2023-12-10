@@ -3,7 +3,7 @@ const { query, validationResult } = require('express-validator');
 const db = require('../utils/database');
 const { userMustExist, isValidUrl } = require('../utils/validations');
 const { apiRequestLimiter } = require('../utils/rateLimit');
-const { generateDecryptedActivationObject } = require('../utils/generators');
+const { generateDecryptedObject } = require('../utils/generators');
 const { recordErrorLog } = require('./auditLogMiddleware');
 
 const router = express.Router();
@@ -116,10 +116,10 @@ router.get('/activate', apiRequestLimiter,
       // Extract validated parameters
       const { username, token, data } = req.query;
 
-      const { activationCode, redirectURL } = generateDecryptedActivationObject(token, data);
+      const { code, redirectURL } = generateDecryptedObject(token, data);
 
       // Now you can use the activationCode for further processing
-      const user = { username, activationCode };
+      const user = { username, activationCode: code };
 
       // first check if the user has not been already activated
       var isActivationLinkValid = await db.isActivationCodeValid(user);

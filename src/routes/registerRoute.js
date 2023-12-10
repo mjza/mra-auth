@@ -67,11 +67,13 @@ router.post('/register', createAccountLimiter,
       .isLength({ min: 5, max: 30 })
       .withMessage('Username must be between 5 and 30 characters.')
       .custom(userMustNotExist),
+
     body('email')
       .isEmail()
       .withMessage('Invalid email address.')
       .isLength({ min: 5, max: 255 })
       .withMessage('Email must be between 5 and 255 characters.'),
+      
     body('password')
       .isLength({ min: 8, max: 30 })
       .withMessage('Password must be between 8 and 30 characters.')

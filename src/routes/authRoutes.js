@@ -7,7 +7,7 @@ const activateRoute = require('./activateRoute');
 const sessionRoutes = require('./sessionRoutes');
 const userDetailsRoutes = require('./userDetailsRoutes');
 const usernamesRoute = require('./usernamesRoute');
-
+const passwordRoutes = require('./passwordRoutes');
 
 //To automatically apply the auditLogMiddleware to all routes, We must place the middleware function before any route definitions
 router.use(auditLogMiddleware);
@@ -17,6 +17,7 @@ router.use(activateRoute);
 router.use(sessionRoutes);
 router.use(userDetailsRoutes);
 router.use(usernamesRoute);
+router.use(passwordRoutes);
 
 module.exports = router;
 

@@ -6,61 +6,75 @@ const secretKeyHex = process.env.SECRET_KEY;
 const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
 
 /**
- * Generates an encrypted activation object containing the activation code and redirect URL.
- * @param {string} activationCode - The activation code to be encrypted.
+ * Generates an encrypted activation/reset object containing the activation/reset code and redirect URL.
+ * @param {string} code - The code/token to be encrypted.
  * @param {string} redirectURL - The URL where the user will be redirected after activation.
  * @returns {object} An object {token, data} containing the token and encrypted data.
  */
-const generateEncryptedActivationObject = (activationCode, redirectURL) => {
+const generateEncryptedObject = (code, redirectURL) => {
     try {
         // Encrypt the activation object using a secret key        
         const iv = crypto.randomBytes(16);
         const cipher = crypto.createCipheriv('aes-256-cbc', secretKeyBuffer, iv);
-        let encryptedActivationObject = cipher.update(JSON.stringify({ activationCode, redirectURL }), 'utf8', 'hex');
-        encryptedActivationObject += cipher.final('hex');
-        return { token: iv.toString('hex'), data: encryptedActivationObject };
+        let encryptedObject = cipher.update(JSON.stringify({ code, redirectURL }), 'utf8', 'hex');
+        encryptedObject += cipher.final('hex');
+        return { token: iv.toString('hex'), data: encryptedObject };
     } catch {
         return { token: '', data: '' };
     }
 };
 
 /**
- * Generates an activation link using the username, activation code, and redirect URL.
- * @param {string} username - The username for which the activation link is generated.
- * @param {string} activationCode - The activation code for the user.
- * @param {string} redirectURL - The URL to redirect the user after activation.
- * @returns {string} The generated activation link.
- */
-const generateActivationLink = (username, activationCode, redirectURL) => {
-    const activationObject = generateEncryptedActivationObject(activationCode, redirectURL);
-    // Create the activation link
-    const activationLink = `${process.env.BASE_URL}/activate?username=${username}&token=${activationObject.token}&data=${activationObject.data}`;
-    return activationLink;
-};
-
-/**
- * Decrypts an activation object from the given token and encrypted data.
+ * Decrypts an activation/reset object from the given token and encrypted data.
  * @param {string} token - The token used for decryption (includes IV).
  * @param {string} data - The encrypted data.
- * @returns {object} An object { activationCode, redirectURL } containing the decrypted activation code and redirect URL.
+ * @returns {object} An object { code, redirectURL } containing the decrypted activation code and redirect URL.
  */
-const generateDecryptedActivationObject = (token, data) => {
+const generateDecryptedObject = (token, data) => {
     try {
         // Convert token (which includes IV) to a buffer
         const iv = Buffer.from(token, 'hex');
 
         // Decrypt the encrypted data using the secret key and IV
         const decipher = crypto.createDecipheriv('aes-256-cbc', secretKeyBuffer, iv);
-        // Decrypt the encryptedActivationObject
-        let decryptedActivationObjectHex = decipher.update(data, 'hex', 'utf8');
-        decryptedActivationObjectHex += decipher.final('utf8');
+        // Decrypt the encryptedObject
+        let decryptedObjectHex = decipher.update(data, 'hex', 'utf8');
+        decryptedObjectHex += decipher.final('utf8');
 
         // Parse the JSON back into an object
-        const decryptedActivationObject = JSON.parse(decryptedActivationObjectHex);
-        return decryptedActivationObject;
+        const decryptedObject = JSON.parse(decryptedObjectHex);
+        return decryptedObject;
     } catch {
-        return { activationCode: '', redirectURL: '' };
+        return { code: '', redirectURL: '' };
     }
+};
+
+/**
+ * Generates an activation link using the username, activation code, and redirect URL.
+ * @param {string} username - The username for which the activation link is generated.
+ * @param {string} activationCode - The code/token for the user.
+ * @param {string} redirectURL - The URL to redirect the user after activation.
+ * @returns {string} The generated activation link.
+ */
+const generateActivationLink = (username, activationCode, redirectURL) => {
+    const activationObject = generateEncryptedObject(activationCode, redirectURL);
+    // Create the activation link
+    const activationLink = `${process.env.BASE_URL}/activate?username=${username}&token=${activationObject.token}&data=${activationObject.data}`;
+    return activationLink;
+};
+
+/**
+ * Generates a reset password link using the username, reset token, and redirect URL.
+ * @param {string} username - The username for which the activation link is generated.
+ * @param {string} resetToken - The code/token for the user.
+ * @param {string} redirectURL - The URL to redirect the user after activation.
+ * @returns {string} The generated reset password link.
+ */
+const generateResetPasswordLink = (username, resetToken, redirectURL) => {
+    const resetObject = generateEncryptedObject(resetToken);
+    // Create the activation link
+    const passwordResetLink = `${redirectURL}?username=${username}&token=${resetObject.token}&data=${resetObject.data}`;
+    return passwordResetLink;
 };
 
 /**
@@ -122,7 +136,7 @@ const parseJwt = (token) => {
     try {
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
 
@@ -193,4 +207,4 @@ const generateMockUserRoute = () => {
     }
 };
 
-module.exports = { generateRandomString, generateMockUserDB, generateMockUserRoute, generateEncryptedActivationObject, generateActivationLink, generateDecryptedActivationObject, generatePasswordHash, generateAuthToken, extractUserDataFromAuthToke, parseJwt };
+module.exports = { generateRandomString, generateMockUserDB, generateMockUserRoute, generateEncryptedObject, generateActivationLink, generateResetPasswordLink, generateDecryptedObject, generatePasswordHash, generateAuthToken, extractUserDataFromAuthToke, parseJwt };

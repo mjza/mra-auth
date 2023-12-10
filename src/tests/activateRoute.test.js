@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../app');
 const db = require('../utils/database');
-const { generateMockUserDB, generateEncryptedActivationObject } = require('../utils/generators');
+const { generateMockUserDB, generateEncryptedObject } = require('../utils/generators');
 
 describe('GET /activate Endpoint', () => {
 
@@ -19,7 +19,7 @@ describe('GET /activate Endpoint', () => {
   });
 
   it('should activate a user and return redirect code', async () => {
-    const activationObject = generateEncryptedActivationObject(testUser.activation_code, 'https://example.com/login');
+    const activationObject = generateEncryptedObject(testUser.activation_code, 'https://example.com/login');
 
     const res = await request(app)
       .get('/activate')
@@ -38,7 +38,7 @@ describe('GET /activate Endpoint', () => {
   });
 
   it('should activate a user and return 200 code', async () => {
-    const activationObject = generateEncryptedActivationObject(testUser.activation_code, '');
+    const activationObject = generateEncryptedObject(testUser.activation_code, '');
 
     const res = await request(app)
       .get('/activate')
@@ -57,7 +57,7 @@ describe('GET /activate Endpoint', () => {
   });
 
   it('should try to activate an activate user and return 202 code', async () => {
-    const activationObject = generateEncryptedActivationObject(testUser.activation_code, '');
+    const activationObject = generateEncryptedObject(testUser.activation_code, '');
 
     let res = await request(app)
       .get('/activate')
@@ -97,7 +97,7 @@ describe('GET /activate Endpoint', () => {
   });
 
   it('should try to activate with an invalid link and return 404 code', async () => {
-    const activationObject = generateEncryptedActivationObject(testUser.activation_code, '');
+    const activationObject = generateEncryptedObject(testUser.activation_code, '');
 
     const res = await request(app)
       .get('/activate')
