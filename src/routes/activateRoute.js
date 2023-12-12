@@ -89,7 +89,7 @@ router.get('/activate', apiRequestLimiter,
       .isLength({ min: 5, max: 30 })
       .withMessage('Username must be between 5 and 30 characters.')
       .matches(/^[a-zA-Z0-9_]+$/)
-      .withMessage('Username must be alphanumeric.')
+      .withMessage('Username can only contain letters, numbers, and underscores.')    
       .custom(userMustExist),
 
     // Validate token

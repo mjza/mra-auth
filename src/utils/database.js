@@ -360,15 +360,15 @@ async function getUserDetails(userId) {
 async function createUserDetails(userDetails) {
   const query = `
   WITH updated AS (
-    INSERT INTO ${userDetailsTable} (user_id, first_name, middle_name, last_name, gender_id, date_of_birth, profile_picture_url, profile_picture_thumbnail_url, updator)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    RETURNING user_id, first_name, middle_name, last_name, gender_id, date_of_birth as date_of_birth, profile_picture_url, profile_picture_thumbnail_url
+    INSERT INTO ${userDetailsTable} (user_id, first_name, middle_name, last_name, gender_id, date_of_birth, profile_picture_url, profile_picture_thumbnail_url, display_name, public_profile_picture_thumbnail_url, updator)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    RETURNING user_id, first_name, middle_name, last_name, gender_id, date_of_birth as date_of_birth, profile_picture_url, profile_picture_thumbnail_url, display_name, public_profile_picture_thumbnail_url
     )
-  SELECT u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url
+  SELECT u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url, u.display_name, u.public_profile_picture_thumbnail_url
   FROM updated u
   INNER JOIN ${genderTypesTable} g ON u.gender_id = g.gender_id;
   `;
-  const values = [userDetails.userId, userDetails.firstName, userDetails.middleName, userDetails.lastName, userDetails.genderId, userDetails.dateOfBirth, userDetails.profilePictureUrl, userDetails.profilePictureThumbnailUrl, userDetails.userId];
+  const values = [userDetails.userId, userDetails.firstName, userDetails.middleName, userDetails.lastName, userDetails.genderId, userDetails.dateOfBirth, userDetails.profilePictureUrl, userDetails.profilePictureThumbnailUrl, userDetails.displayName, userDetails.publicProfilePictureThumbnailUrl, userDetails.userId];
   const { rows } = await pool.query(query, values);
   return rows[0];
 }
@@ -384,15 +384,15 @@ async function updateUserDetails(userId, userDetails) {
   const query = `
   WITH updated AS (
       UPDATE ${userDetailsTable}
-      SET first_name = $1, middle_name = $2, last_name = $3, gender_id = $4, date_of_birth = $5, profile_picture_url = $6, profile_picture_thumbnail_url = $7, updator = $8, updated_at = NOW()
-      WHERE user_id = $9
-      RETURNING first_name, middle_name, last_name, gender_id, date_of_birth as date_of_birth, profile_picture_url, profile_picture_thumbnail_url
+      SET first_name = $1, middle_name = $2, last_name = $3, gender_id = $4, date_of_birth = $5, profile_picture_url = $6, profile_picture_thumbnail_url = $7, display_name = $8, public_profile_picture_thumbnail_url = $9, updator = $10
+      WHERE user_id = $11
+      RETURNING first_name, middle_name, last_name, gender_id, date_of_birth as date_of_birth, profile_picture_url, profile_picture_thumbnail_url, display_name, public_profile_picture_thumbnail_url
     )
-  SELECT u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url
+  SELECT u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url, u.display_name, u.public_profile_picture_thumbnail_url
   FROM updated u
   INNER JOIN ${genderTypesTable} g ON u.gender_id = g.gender_id;  
   `;
-  const values = [userDetails.firstName, userDetails.middleName, userDetails.lastName, userDetails.genderId, userDetails.dateOfBirth, userDetails.profilePictureUrl, userDetails.profilePictureThumbnailUrl, userId, userId];
+  const values = [userDetails.firstName, userDetails.middleName, userDetails.lastName, userDetails.genderId, userDetails.dateOfBirth, userDetails.profilePictureUrl, userDetails.profilePictureThumbnailUrl, userDetails.displayName, userDetails.publicProfilePictureThumbnailUrl, userId, userId];
   const { rows } = await pool.query(query, values);
   return rows[0];
 }

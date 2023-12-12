@@ -28,18 +28,21 @@ describe('Test converters', () => {
 
     describe('Object Encryption and Decryption Tests', () => {
         const testObject = { key1: 'string', key2: 'notstring' };
+        const secretProperties = [
+            'key1'
+          ];
 
         test('encryptObjectItems should encrypt all string values', () => {
-            const encryptedObject = encryptObjectItems(testObject, iv);
+            const encryptedObject = encryptObjectItems(testObject, secretProperties, iv);
             expect(encryptedObject.key1).not.toBe(testObject.key1);
-            expect(encryptedObject.key2).not.toBe(testObject.key2);
+            expect(encryptedObject.key2).toBe(testObject.key2);
             expect(encryptedObject.key1).toBe(base64Encrypted);
             expect(encryptedObject.key2).not.toBe(base64Encrypted);
         });
 
         test('decryptObjectItems should decrypt all string values', () => {
-            const encryptedObject = encryptObjectItems(testObject, iv);
-            const decryptedObject = decryptObjectItems(encryptedObject);
+            const encryptedObject = encryptObjectItems(testObject, secretProperties, iv);
+            const decryptedObject = decryptObjectItems(encryptedObject, secretProperties);
             expect(decryptedObject).toEqual(testObject);
         });
 

@@ -54,11 +54,11 @@ describe('/user_details endpoints', () => {
 
         it('should not create user details for other user', async () => {
             const copy = { ...userDetails };
-            copy.genderId = 0;
+            copy.userId = 2147483647;
             const res = await request(app).post('/user_details').send(copy).set('Authorization', `Bearer ${authData.token}`);
 
-            expect(res.statusCode).toEqual(422);
-            expect(res.body.message).toEqual('Invalid foreign key value.');
+            expect(res.statusCode).toEqual(403);
+            expect(res.body.message).toEqual('Unauthorized to create details for other users.');
         });
 
         it('should create user details', async () => {
@@ -189,13 +189,13 @@ describe('/user_details endpoints', () => {
             expect(res.body.message).toEqual('Unauthorized to update details for other users.');
         });
 
-        it('should returns 422 as the foreign key is wrong', async () => {
+        it('should returns 400 as the gender id is wrong', async () => {
             const copy = { ...userDetails };
-            copy.genderId = 0;
+            copy.genderId = 2147483647;
             const res = await request(app).put(`/user_details/${userDetails.userId}`).send(copy).set('Authorization', `Bearer ${authData.token}`);
 
-            expect(res.statusCode).toEqual(422);
-            expect(res.body.message).toEqual('Invalid foreign key value.');
+            expect(res.statusCode).toEqual(400);
+            expect(res.body.errors[0].msg).toEqual('Gender ID must be an integer between 1 and 10, inclusive.');
         });
 
 

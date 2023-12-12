@@ -46,15 +46,16 @@ const decrypt = (base64String) => {
  * Encrypts all string values within an object.
  * 
  * @param {Object} obj - The object whose string values are to be encrypted.
+ * @param {string[]} [propertiesToEncrypt] - List of property names to encrypt. If not provided, all string properties are encrypted.
  * @param {Buffer} [iv] - The initialization vector for encryption. If not provided, a random 16-byte IV is generated.
  * @returns {Object} A new object with all string values encrypted. Non-string values are copied as is.
  */
-const encryptObjectItems = (obj, iv) => {
+const encryptObjectItems = (obj, propertiesToEncrypt, iv) => {
     const convertedObject = {};
 
     for (let key in obj) {
         if (obj.hasOwnProperty(key)) {
-            if (typeof obj[key] === 'string') {
+            if (typeof obj[key] === 'string' && (!propertiesToEncrypt || propertiesToEncrypt.includes(key))) {
                 convertedObject[key] = encrypt(obj[key], iv);
             } else {
                 convertedObject[key] = obj[key];
@@ -69,14 +70,15 @@ const encryptObjectItems = (obj, iv) => {
  * Decrypts all string values within an object that were encrypted using encryptObjectItems.
  * 
  * @param {Object} obj - The object with encrypted string values.
+ * @param {string[]} [propertiesToDecrypt] - List of property names to decrypt. If not provided, all string properties are decrypted.
  * @returns {Object} A new object with all string values decrypted. Non-string values are copied as is.
  */
-const decryptObjectItems = (obj) => {
+const decryptObjectItems = (obj, propertiesToDecrypt) => {
     const convertedObject = {};
 
     for (let key in obj) {
         if (obj.hasOwnProperty(key)) {
-            if (typeof obj[key] === 'string') {
+            if (typeof obj[key] === 'string' && (!propertiesToDecrypt || propertiesToDecrypt.includes(key))) {
                 convertedObject[key] = decrypt(obj[key]);
             } else {
                 convertedObject[key] = obj[key];

@@ -66,6 +66,8 @@ router.post('/register', createAccountLimiter,
     body('username')
       .isLength({ min: 5, max: 30 })
       .withMessage('Username must be between 5 and 30 characters.')
+      .matches(/^[A-Za-z0-9_]+$/)
+      .withMessage('Username can only contain letters, numbers, and underscores.')
       .custom(userMustNotExist),
 
     body('email')
