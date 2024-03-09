@@ -93,13 +93,13 @@ describe('Test session endpoints', () => {
             await db.deleteUserByUsername(mockUser.username);
         });
 
-        describe('/verify-token endpoint', () => {
+        describe('/verify_token endpoint', () => {
             it('should confirm a valid JWT token', async () => {
                 // Mock a valid JWT token
                 const validToken = `Bearer ${authData.token}`;
 
                 const res = await request(app)
-                    .post('/verify-token')
+                    .post('/verify_token')
                     .set('Authorization', validToken);
 
                 expect(res.statusCode).toBe(200);
@@ -115,14 +115,14 @@ describe('Test session endpoints', () => {
             });
 
             it('should return 401 as authorization token is missing', async () => {
-                const res = await request(app).post('/verify-token');
+                const res = await request(app).post('/verify_token');
 
                 expect(res.statusCode).toEqual(401);
                 expect(res.body.message).toEqual('You must provide a valid JWT token.');
             });
 
             it('should return 401 as authorization token is invalid', async () => {
-                const res = await request(app).post('/verify-token').set('Authorization', `Bearer ${authData.token}` + 'x');
+                const res = await request(app).post('/verify_token').set('Authorization', `Bearer ${authData.token}` + 'x');
 
                 expect(res.statusCode).toEqual(401);
                 expect(res.body.message).toEqual('Provided JWT token is invalid.');
