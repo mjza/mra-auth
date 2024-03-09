@@ -178,10 +178,10 @@ describe('Test DB functions', () => {
         });
     });
 
-    describe('activeUser', () => {
+    describe('activateeUser', () => {
         it('should activate a user', async () => {
             const userToActivate = { username: insertedUser.username, activationCode: insertedUser.activation_code };
-            const activationResult = await db.activeUser(userToActivate);
+            const activationResult = await db.activateUser(userToActivate);
             expect(activationResult).toBeTruthy();
         });
     });

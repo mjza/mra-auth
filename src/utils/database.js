@@ -26,6 +26,8 @@ const tokensTable = process.env.TOKENS_TABLE;
  */
 const insertBlacklistToken = async (tokenData) => {
   const { token, expiry } = tokenData;
+  if (!token || !token.trim())
+    return null;
   const query = `INSERT INTO ${tokensTable} (token, expiry) VALUES ($1, $2) RETURNING *`;
   const { rows } = await pool.query(query, [token, expiry]);
 
@@ -42,6 +44,8 @@ const insertBlacklistToken = async (tokenData) => {
  * @returns {Promise<boolean>} True if the token is expired (present in the blacklist), otherwise false.
  */
 const isTokenBlacklisted = async (token) => {
+  if (!token || !token.trim())
+    return true;
   const query = `SELECT 1 FROM ${tokensTable} WHERE token = $1`;
   const { rows } = await pool.query(query, [token]);
 
@@ -69,6 +73,8 @@ const insertAuditLog = async (log) => {
  */
 const updateAuditLog = async (log) => {
   const { logId, comments } = log;
+  if (isNaN(logId))
+    return null;
   const query = `UPDATE ${logsTable} SET comments = $1 WHERE log_id = $2 RETURNING log_id, comments`;
   const { rows } = await pool.query(query, [comments, logId]);
   return rows[0];
@@ -81,6 +87,8 @@ const updateAuditLog = async (log) => {
  * @returns {Object} An object indicating the success of the deletion.
  */
 const deleteAuditLog = async (logId) => {
+  if (isNaN(logId))
+    return { success: false };
   const query = `DELETE FROM ${logsTable} WHERE method_route LIKE 'TEST %' AND log_id = $1`;
   const result = await pool.query(query, [logId]);
   return { success: result.rowCount > 0 };
@@ -94,6 +102,8 @@ const deleteAuditLog = async (logId) => {
  * @returns {Object|null} The deleted user object if successful, null if no user was found or deleted.
  */
 const deleteUserByUsername = async (username) => {
+  if (!username || !username.trim())
+    return null;
   const query = `DELETE FROM ${usersTable} WHERE username = $1 RETURNING *`; // SQL query to delete user
   const { rows } = await pool.query(query, [username.trim()]);
 
@@ -110,6 +120,8 @@ const deleteUserByUsername = async (username) => {
  * @returns {Object|null} The user object if found, null otherwise.
  */
 const getUserByUsername = async (username) => {
+  if (!username || !username.trim())
+    return null;
   const query = `SELECT * FROM ${usersTable} WHERE username = $1`;
   const { rows } = await pool.query(query, [username.trim()]);
 
@@ -127,6 +139,8 @@ const getUserByUsername = async (username) => {
  * @returns {Object|null} The user object if found, null otherwise.
  */
 const getUserByUsernameOrEmail = async (usernameOrEmail) => {
+  if (!usernameOrEmail || !usernameOrEmail.trim())
+    return null;
   const query = `
     (SELECT * FROM ${usersTable} WHERE username = $1) 
      UNION 
@@ -147,6 +161,8 @@ const getUserByUsernameOrEmail = async (usernameOrEmail) => {
  * @returns {Object|null} The user object if found, null otherwise.
  */
 const getUsernamesByEmail = async (email) => {
+  if (!email || !email.trim())
+    return null;
   const query = `
     SELECT username, 
            CASE 
@@ -178,6 +194,8 @@ const getUsernamesByEmail = async (email) => {
  */
 const insertUser = async (user) => {
   const { username, email, passwordHash } = user;
+  if (!username || !username.trim() || !email || !email.trim() || !passwordHash || !passwordHash.trim())
+    return null;
   const insertQuery = `INSERT INTO ${usersTable} (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *`;
   const { rows } = await pool.query(insertQuery, [username.trim(), email.trim(), passwordHash.trim()]);
   return rows && rows[0]; // Returns the inserted user
@@ -191,6 +209,9 @@ const insertUser = async (user) => {
  */
 const isInactiveUser = async (user) => {
   const { username, activationCode } = user;
+  if (!username || !username.trim() || !activationCode || !activationCode.trim())
+    return false;
+
   // Check if the user and activation code match
   const checkUserQuery =
     `SELECT * FROM ${usersTable} 
@@ -216,6 +237,9 @@ const isInactiveUser = async (user) => {
  * @returns {boolean} True if the user is inactive, false otherwise.
  */
 const isActiveUser = async (username) => {
+  if (!username || !username.trim())
+    return false;
+
   // Check if the user and activation code match
   const checkUserQuery =
     `SELECT * FROM ${usersTable} 
@@ -244,6 +268,8 @@ const isActiveUser = async (username) => {
  */
 const isActivationCodeValid = async (user) => {
   const { username, activationCode } = user;
+  if (!username || !username.trim() || !activationCode || !activationCode.trim())
+    return false;
   // Check if the user and activation code match
   const checkUserQuery =
     `SELECT * FROM ${usersTable} 
@@ -270,8 +296,10 @@ const isActivationCodeValid = async (user) => {
  * @param {Object} user - The user object containing username and activationCode.
  * @returns {boolean} True if the user was successfully activated, false otherwise.
  */
-const activeUser = async (user) => {
+const activateUser = async (user) => {
   const { username, activationCode } = user;
+  if (!username || !username.trim() || !activationCode || !activationCode.trim())
+    return false;
   // Check if the user and activation code match
   const updateUserQuery = `UPDATE ${usersTable} 
                             SET activation_code = NULL 
@@ -322,6 +350,8 @@ const generateResetToken = async (username) => {
  */
 const resetPassword = async (user) => {
   const { username, resetToken, passwordHash } = user;
+  if (!username || !username.trim() || !resetToken || !resetToken.trim() || !passwordHash || !passwordHash.trim())
+    return false;
   const query = `UPDATE ${usersTable} 
                  SET reset_token = null, password_hash = $1 
                  WHERE 
@@ -330,7 +360,7 @@ const resetPassword = async (user) => {
                     username = $2 AND 
                     reset_token = $3 
                  RETURNING *`;
-  const { rows } = await pool.query(query, [passwordHash, username, resetToken]);
+  const { rows } = await pool.query(query, [passwordHash.trim(), username.trim(), resetToken.trim()]);
   return rows && rows.length > 0;
 };
 
@@ -341,6 +371,8 @@ const resetPassword = async (user) => {
  * @returns {Object} The user details object.
  */
 async function getUserDetails(userId) {
+  if (isNaN(userId))
+    return null;
   const query = `
     SELECT u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url 
     FROM ${userDetailsTable} u 
@@ -418,7 +450,7 @@ module.exports = {
   isActiveUser,
   isInactiveUser,
   isActivationCodeValid,
-  activeUser,
+  activateUser,
   resetPassword,
   generateResetToken,
   getUserDetails,

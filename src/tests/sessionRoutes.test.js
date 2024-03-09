@@ -18,7 +18,7 @@ describe('Test session endpoints', () => {
             // Insert a test user into the database
             testUser = await db.insertUser(mockUser);
             var user = { username: testUser.username, activationCode: testUser.activation_code };
-            await db.activeUser(user);
+            await db.activateUser(user);
         });
 
         // Clean up after each tests
@@ -79,7 +79,7 @@ describe('Test session endpoints', () => {
             // Insert a test user into the database
             testUser = await db.insertUser(mockUser);
             var user = { username: testUser.username, activationCode: testUser.activation_code };
-            await db.activeUser(user);
+            await db.activateUser(user);
             authData = (await request(app)
                 .post('/login')
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;
@@ -177,7 +177,7 @@ describe('Test session endpoints', () => {
             // Insert a test user into the database
             testUser = await db.insertUser(mockUser);
             var user = { username: testUser.username, activationCode: testUser.activation_code };
-            await db.activeUser(user);
+            await db.activateUser(user);
             authData = (await request(app)
                 .post('/login')
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;

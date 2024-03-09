@@ -125,7 +125,7 @@ router.get('/activate', apiRequestLimiter,
       var isActivationLinkValid = await db.isActivationCodeValid(user);
       var result = false;
       if (isActivationLinkValid)
-        result = await db.activeUser(user);
+        result = await db.activateUser(user);
       var isActiveUser = await db.isActiveUser(username);
 
       // Database operation and response handling 
