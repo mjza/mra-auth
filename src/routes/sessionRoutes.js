@@ -225,9 +225,9 @@ router.post('/logout', apiRequestLimiter, [authenticateToken], async (req, res) 
 /**
  * @swagger
  * /verify-token:
- *   get:
- *     summary: Parse the passed JWT token
- *     description: Get the details of the user whose ID matches the one in the JWT.
+ *   post:
+ *     summary: Verify the passed JWT token
+ *     description: Returns the details of the user whose ID matches the one in the JWT.
  *     tags: [3rd]
  *     security:
  *       - bearerAuth: []
@@ -258,7 +258,7 @@ router.post('/logout', apiRequestLimiter, [authenticateToken], async (req, res) 
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.get('/verify-token', apiRequestLimiter, [authenticateToken], async (req, res) => {
+router.post('/verify-token', apiRequestLimiter, [authenticateToken], async (req, res) => {
   try {
     // Get the token from the request header
     const authHeader = req.headers['authorization'];
