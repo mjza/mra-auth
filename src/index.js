@@ -7,6 +7,7 @@ const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
+// graceful shuting down the server is needed for passing tests
 const gracefulShutdown = async () => {
   console.log('Shutting down gracefully...');
   try {
