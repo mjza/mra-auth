@@ -113,7 +113,7 @@ const users = {};
 users[process.env.DOC_USER] = process.env.DOC_PASS;
 
 // Use swaggerUi to serve swagger docs
-app.use('/api-docs', basicAuth({
+app.use(process.env.DOC_URL, basicAuth({
     users: users,
     challenge: true // Causes browsers to show a login dialog
 }), swaggerUi.serve, swaggerUi.setup(swaggerSpec));

@@ -26,6 +26,7 @@ heroku config:set DB_HOST=XXX --app mra-authentication
 heroku config:set DB_NAME=XXX --app mra-authentication
 heroku config:set DB_PASSWORD=XXX --app mra-authentication
 heroku config:set DB_PORT=5432 --app mra-authentication
+heroku config:set DOC_URL=/docs --app mra-authentication
 heroku config:set DOC_PASS=Zu~0WC,X,8h3Hh@s --app mra-authentication
 heroku config:set DOC_USER=modir --app mra-authentication
 heroku config:set FROM_EMAIL=noreply@reportcycle.com --app mra-authentication
