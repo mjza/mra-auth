@@ -1,14 +1,14 @@
 const express = require('express');
 const { query, validationResult } = require('express-validator');
-const { sendEmailWithUsernames } = require('../emails/emailService');
-const db = require('../utils/database');
-const { apiRequestLimiter } = require('../utils/rateLimit');
+const { sendEmailWithUsernames } = require('../../emails/v1/emailService');
+const db = require('../../utils/database');
+const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { recordErrorLog } = require('./auditLogMiddleware');
 const router = express.Router();
 
 /**
  * @swagger
- * /usernames:
+ * /v1/usernames:
  *   get:
  *     summary: Retrieve usernames for a specific email
  *     description: This endpoint allows users to request a list of usernames associated with a specific email address. The list is emailed to them.

@@ -1,6 +1,6 @@
-const db = require('../utils/database');
-const { convertRequestData } = require('../utils/converters');
-const { extractUserDataFromAuthToke } = require('../utils/generators');
+const db = require('../../utils/database');
+const { convertRequestData } = require('../../utils/converters');
+const { extractUserDataFromAuthToke } = require('../../utils/generators');
 
 /**
  * Middleware function to create an audit log for each request.

@@ -4,7 +4,7 @@ const axios = require('axios');
 const { Agent } = require('https');
 const { promisify } = require('util');
 const jwtVerify = promisify(jwt.verify);
-const { recordErrorLog } = require('../routes/auditLogMiddleware');
+const { recordErrorLog } = require('../routes/v1/auditLogMiddleware');
 
 /**
  * @swagger

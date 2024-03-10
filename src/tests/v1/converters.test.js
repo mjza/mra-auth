@@ -7,7 +7,7 @@ const base64Encrypted = 'eyJpdiI6ImIxNmJmMzYxODkzYTlhODc0NjcxMDkwYTRjOTY5YmE2Iiw
 
 // Keep thos lines above this import, otherwise the environment SECRET_KEY will be used.
 // Tests are designed with this secret key to see the expected results.
-const { toLowerCamelCase, encrypt, decrypt, encryptObjectItems, decryptObjectItems } = require('../utils/converters');
+const { toLowerCamelCase, encrypt, decrypt, encryptObjectItems, decryptObjectItems } = require('../../utils/converters');
 describe('Test converters', () => {
     describe('Encryption and Decryption Tests', () => {
 

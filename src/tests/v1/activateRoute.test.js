@@ -1,9 +1,9 @@
 const request = require('supertest');
-const app = require('../app');
-const db = require('../utils/database');
-const { generateMockUserDB, generateEncryptedObject } = require('../utils/generators');
+const app = require('../../app');
+const db = require('../../utils/database');
+const { generateMockUserDB, generateEncryptedObject } = require('../../utils/generators');
 
-describe('GET /activate Endpoint', () => {
+describe('GET /v1/activate Endpoint', () => {
 
   let mockUser;
 
@@ -22,7 +22,7 @@ describe('GET /activate Endpoint', () => {
     const activationObject = generateEncryptedObject(testUser.activation_code, 'https://example.com/login');
 
     const res = await request(app)
-      .get('/activate')
+      .get('/v1/activate')
       .query({
         username: testUser.username,
         token: activationObject.token,
@@ -41,7 +41,7 @@ describe('GET /activate Endpoint', () => {
     const activationObject = generateEncryptedObject(testUser.activation_code, '');
 
     const res = await request(app)
-      .get('/activate')
+      .get('/v1/activate')
       .query({
         username: testUser.username,
         token: activationObject.token,
@@ -60,7 +60,7 @@ describe('GET /activate Endpoint', () => {
     const activationObject = generateEncryptedObject(testUser.activation_code, '');
 
     let res = await request(app)
-      .get('/activate')
+      .get('/v1/activate')
       .query({
         username: testUser.username,
         token: activationObject.token,
@@ -68,7 +68,7 @@ describe('GET /activate Endpoint', () => {
       });
 
     res = await request(app)
-      .get('/activate')
+      .get('/v1/activate')
       .query({
         username: testUser.username,
         token: activationObject.token,
@@ -85,7 +85,7 @@ describe('GET /activate Endpoint', () => {
 
   it('should handle invalid activation link', async () => {
     const res = await request(app)
-      .get('/activate')
+      .get('/v1/activate')
       .query({
         username: 'invalidFormat',
         token: 'invalidFormat',
@@ -100,7 +100,7 @@ describe('GET /activate Endpoint', () => {
     const activationObject = generateEncryptedObject(testUser.activation_code, '');
 
     const res = await request(app)
-      .get('/activate')
+      .get('/v1/activate')
       .query({
         username: testUser.username,
         token: activationObject.token,

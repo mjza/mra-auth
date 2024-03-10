@@ -1,7 +1,7 @@
 const request = require('supertest');
-const app = require('../app');
-const db = require('../utils/database');
-const { generateMockUserDB, generateEncryptedObject } = require('../utils/generators');
+const app = require('../../app');
+const db = require('../../utils/database');
+const { generateMockUserDB, generateEncryptedObject } = require('../../utils/generators');
 
 describe('GET /usernames Endpoint', () => {
 
@@ -16,7 +16,7 @@ describe('GET /usernames Endpoint', () => {
 
     it('should return 200 code', async () => {
         const res = await request(app)
-            .get('/usernames')
+            .get('/v1/usernames')
             .query({
                 email: testUser.email
             });
@@ -27,7 +27,7 @@ describe('GET /usernames Endpoint', () => {
 
     it('should return 200 code even for incorrect email', async () => {
         const res = await request(app)
-            .get('/usernames')
+            .get('/v1/usernames')
             .query({
                 email: 'x' + testUser.email
             });
@@ -39,7 +39,7 @@ describe('GET /usernames Endpoint', () => {
     it('should return 400 for invalid email', async () => {
 
         const res = await request(app)
-            .get('/usernames')
+            .get('/v1/usernames')
             .query({
                 email: 'xyz'
             });

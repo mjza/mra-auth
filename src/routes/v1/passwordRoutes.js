@@ -1,17 +1,17 @@
 const express = require('express');
-const db = require('../utils/database');
 const { body, validationResult } = require('express-validator');
-const { generateResetPasswordLink, generateDecryptedObject, generatePasswordHash } = require('../utils/generators');
-const { apiRequestLimiter } = require('../utils/rateLimit');
+const db = require('../../utils/database');
+const { generateResetPasswordLink, generateDecryptedObject, generatePasswordHash } = require('../../utils/generators');
+const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { recordErrorLog } = require('./auditLogMiddleware');
-const { sendResetPasswordEmail } = require('../emails/emailService');
-const { userMustExist, testUrlAccessibility } = require('../utils/validations');
+const { sendResetPasswordEmail } = require('../../emails/v1/emailService');
+const { userMustExist, testUrlAccessibility } = require('../../utils/validations');
 
 const router = express.Router();
 
 /**
  * @swagger
- * /reset_token:
+ * /v1/reset_token:
  *   post:
  *     summary: Request password reset token.  
  *     description: Generates a password reset token and emails the reset link to the user emaill.
@@ -108,7 +108,7 @@ router.post('/reset_token', apiRequestLimiter, [
 
 /**
  * @swagger
- * /reset_password:
+ * /v1/reset_password:
  *   put:
  *     summary: Reset the account password
  *     description: This endpoint is used for resetting the password of an account with a username and reset token.

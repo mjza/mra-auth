@@ -1,7 +1,7 @@
 const request = require('supertest');
-const app = require('../app');
-const db = require('../utils/database');
-const { generateMockUserDB } = require('../utils/generators');
+const app = require('../../app');
+const db = require('../../utils/database');
+const { generateMockUserDB } = require('../../utils/generators');
 
 describe('/user_details endpoints', () => {
     let mockUser, testUser, authData, userDetails;
@@ -13,7 +13,7 @@ describe('/user_details endpoints', () => {
         var user = { username: testUser.username, activationCode: testUser.activation_code };
         await db.activateUser(user);
         authData = (await request(app)
-            .post('/login')
+            .post('/v1/login')
             .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;
         userDetails = {
             userId: testUser.user_id,
@@ -35,7 +35,7 @@ describe('/user_details endpoints', () => {
 
     describe('GET /user_details before creation', () => {
         it('should return 404 as user details has not yet defined', async () => {
-            const res = await request(app).get('/user_details').set('Authorization', `Bearer ${authData.token}`);
+            const res = await request(app).get('/v1/user_details').set('Authorization', `Bearer ${authData.token}`);
             expect(res.statusCode).toEqual(404);
             expect(res.body.message).toEqual('User details not found');
         });
@@ -43,7 +43,7 @@ describe('/user_details endpoints', () => {
 
     describe('PUT /user_details/:userId after creation', () => {
         it('should return 404 as user details has not yet defined', async () => {
-            const res = await request(app).put(`/user_details/${userDetails.userId}`).send(userDetails).set('Authorization', `Bearer ${authData.token}`);
+            const res = await request(app).put(`/v1/user_details/${userDetails.userId}`).send(userDetails).set('Authorization', `Bearer ${authData.token}`);
 
             expect(res.statusCode).toEqual(404);
             expect(res.body.message).toEqual('There is no record for this user in the user details table.');
@@ -55,14 +55,20 @@ describe('/user_details endpoints', () => {
         it('should not create user details for other user', async () => {
             const copy = { ...userDetails };
             copy.userId = 2147483647;
-            const res = await request(app).post('/user_details').send(copy).set('Authorization', `Bearer ${authData.token}`);
+            const res = await request(app)
+            .post('/v1/user_details')
+            .send(copy)
+            .set('Authorization', `Bearer ${authData.token}`);
 
             expect(res.statusCode).toEqual(403);
             expect(res.body.message).toEqual('Unauthorized to create details for other users.');
         });
 
         it('should create user details', async () => {
-            const res = await request(app).post('/user_details').send(userDetails).set('Authorization', `Bearer ${authData.token}`);
+            const res = await request(app)
+            .post('/v1/user_details')
+            .send(userDetails)
+            .set('Authorization', `Bearer ${authData.token}`);
 
             expect(res.statusCode).toEqual(201);
             expect(res.body).not.toBeNull();
@@ -80,14 +86,19 @@ describe('/user_details endpoints', () => {
         });
 
         it('should return 401 as token is missing', async () => {
-            const res = await request(app).post('/user_details').send(userDetails);
+            const res = await request(app)
+            .post('/v1/user_details')
+            .send(userDetails);
 
             expect(res.statusCode).toEqual(401);
             expect(res.body.message).toEqual('You must provide a valid JWT token.');
         });
 
         it('should return 401 as token is invalid', async () => {
-            const res = await request(app).post('/user_details').send(userDetails).set('Authorization', `Bearer ${authData.token}` + 'x');
+            const res = await request(app)
+            .post('/v1/user_details')
+            .send(userDetails)
+            .set('Authorization', `Bearer ${authData.token}` + 'x');
 
             expect(res.statusCode).toEqual(401);
             expect(res.body.message).toEqual('Provided JWT token is invalid.');
@@ -96,14 +107,19 @@ describe('/user_details endpoints', () => {
         it('should not create user details for other user', async () => {
             const copy = { ...userDetails };
             copy.userId++;
-            const res = await request(app).post('/user_details').send(copy).set('Authorization', `Bearer ${authData.token}`);
+            const res = await request(app)
+            .post('/v1/user_details')
+            .send(copy)
+            .set('Authorization', `Bearer ${authData.token}`);
 
             expect(res.statusCode).toEqual(403);
             expect(res.body.message).toEqual('Unauthorized to create details for other users.');
         });
 
         it('should returns 422 as the entity exists', async () => {
-            const res = await request(app).post('/user_details').send(userDetails).set('Authorization', `Bearer ${authData.token}`);
+            const res = await request(app)
+            .post('/v1/user_details')
+            .send(userDetails).set('Authorization', `Bearer ${authData.token}`);
 
             expect(res.statusCode).toEqual(422);
             expect(res.body.message).toEqual('A record exists for the current user in the user details table.');
@@ -112,7 +128,7 @@ describe('/user_details endpoints', () => {
 
     describe('GET /user_details after creation', () => {
         it('should return 200 as user details has been defined already', async () => {
-            const res = await request(app).get('/user_details').set('Authorization', `Bearer ${authData.token}`);
+            const res = await request(app).get('/v1/user_details').set('Authorization', `Bearer ${authData.token}`);
             expect(res.statusCode).toEqual(200);
             expect(res.body).not.toBeNull();
             expect(res.body.userId).toBeUndefined();
@@ -129,13 +145,13 @@ describe('/user_details endpoints', () => {
         });
 
         it('should return 401 as token is missing', async () => {
-            const res = await request(app).get('/user_details')
+            const res = await request(app).get('/v1/user_details')
             expect(res.statusCode).toEqual(401);
             expect(res.body.message).toEqual('You must provide a valid JWT token.');
         });
 
         it('should return 401 as token is invalid', async () => {
-            const res = await request(app).get('/user_details').set('Authorization', `Bearer ${authData.token}` + 'x');
+            const res = await request(app).get('/v1/user_details').set('Authorization', `Bearer ${authData.token}` + 'x');
             expect(res.statusCode).toEqual(401);
             expect(res.body.message).toEqual('Provided JWT token is invalid.');
         });
@@ -151,7 +167,7 @@ describe('/user_details endpoints', () => {
             userDetails.profilePictureUrl += 'x';
             userDetails.profilePictureThumbnailUrl += 'x';
 
-            const res = await request(app).put(`/user_details/${userDetails.userId}`).send(userDetails).set('Authorization', `Bearer ${authData.token}`);
+            const res = await request(app).put(`/v1/user_details/${userDetails.userId}`).send(userDetails).set('Authorization', `Bearer ${authData.token}`);
 
             expect(res.statusCode).toEqual(200);
             expect(res.body).not.toBeNull();
@@ -169,21 +185,21 @@ describe('/user_details endpoints', () => {
         });
 
         it('should return 401 as token is missing', async () => {
-            const res = await request(app).put(`/user_details/${userDetails.userId}`).send(userDetails);
+            const res = await request(app).put(`/v1/user_details/${userDetails.userId}`).send(userDetails);
 
             expect(res.statusCode).toEqual(401);
             expect(res.body.message).toEqual('You must provide a valid JWT token.');
         });
 
         it('should return 401 as token is invalid', async () => {
-            const res = await request(app).put(`/user_details/${userDetails.userId}`).send(userDetails).set('Authorization', `Bearer ${authData.token}` + 'x');
+            const res = await request(app).put(`/v1/user_details/${userDetails.userId}`).send(userDetails).set('Authorization', `Bearer ${authData.token}` + 'x');
 
             expect(res.statusCode).toEqual(401);
             expect(res.body.message).toEqual('Provided JWT token is invalid.');
         });
 
         it('should not update user details for other user', async () => {
-            const res = await request(app).put(`/user_details/${userDetails.userId + 1}`).send(userDetails).set('Authorization', `Bearer ${authData.token}`);
+            const res = await request(app).put(`/v1/user_details/${userDetails.userId + 1}`).send(userDetails).set('Authorization', `Bearer ${authData.token}`);
 
             expect(res.statusCode).toEqual(403);
             expect(res.body.message).toEqual('Unauthorized to update details for other users.');
@@ -192,7 +208,7 @@ describe('/user_details endpoints', () => {
         it('should returns 400 as the gender id is wrong', async () => {
             const copy = { ...userDetails };
             copy.genderId = 2147483647;
-            const res = await request(app).put(`/user_details/${userDetails.userId}`).send(copy).set('Authorization', `Bearer ${authData.token}`);
+            const res = await request(app).put(`/v1/user_details/${userDetails.userId}`).send(copy).set('Authorization', `Bearer ${authData.token}`);
 
             expect(res.statusCode).toEqual(400);
             expect(res.body.errors[0].msg).toEqual('Gender ID must be an integer between 1 and 10, inclusive.');
@@ -203,7 +219,7 @@ describe('/user_details endpoints', () => {
             var res;
 
             for (let i = 0; i < 15; i++) {
-                res = await request(app).put(`/user_details/1`);
+                res = await request(app).put('/v1/user_details/1');
             }
 
             expect(res.statusCode).toBe(429);
@@ -212,7 +228,7 @@ describe('/user_details endpoints', () => {
             expect(res.headers).toHaveProperty('retry-after');
             expect(parseInt(res.headers['retry-after'])).toBeGreaterThan(0);
 
-            res = await request(app).post(`/user_details`);
+            res = await request(app).post('/v1/user_details');
 
             expect(res.statusCode).toBe(429);
             expect(res.body.message).toBeDefined();
@@ -220,7 +236,7 @@ describe('/user_details endpoints', () => {
             expect(res.headers).toHaveProperty('retry-after');
             expect(parseInt(res.headers['retry-after'])).toBeGreaterThan(0);
 
-            res = await request(app).get(`/user_details`);
+            res = await request(app).get('/v1/user_details');
 
             expect(res.statusCode).toBe(429);
             expect(res.body.message).toBeDefined();

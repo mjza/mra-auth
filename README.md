@@ -34,7 +34,7 @@ heroku config:set GENDER_TYPES_TABLE=mra_gender_types --app mra-authentication
 heroku config:set LOGS_TABLE=mra_audit_logs_authentication --app mra-authentication
 heroku config:set NODE_ENV=production --app mra-authentication
 heroku config:set PORT=443 --app mra-authentication
-heroku config:set SECRET_KEY=YYY --app mra-authentication
+heroku config:set SECRET_KEY=ZZZ --app mra-authentication
 heroku config:set SENDGRID_API_KEY=YYY --app mra-authentication
 heroku config:set OKENS_TABLE=mra_token_blacklist --app mra-authentication
 heroku config:set TZ=UTC --app mra-authentication
@@ -56,6 +56,7 @@ openssl req -x509 -newkey rsa:4096 -keyout localhost.key -out localhost.crt -day
 ```bash 
 openssl rand -hex 32
 ```
+This key is used as SECRET_KEY in .env file. 
 
 ## Generate documentations using JSDoc
 ```bash

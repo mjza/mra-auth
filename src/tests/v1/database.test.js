@@ -1,5 +1,5 @@
-const db = require('../utils/database');
-const { generateMockUserDB, generateRandomString } = require('../utils/generators');
+const db = require('../../utils/database');
+const { generateMockUserDB, generateRandomString } = require('../../utils/generators');
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));

@@ -1,11 +1,11 @@
 const request = require('supertest');
-const app = require('../app');
-const db = require('../utils/database');
-const { generateMockUserRoute } = require('../utils/generators');
+const app = require('../../app');
+const db = require('../../utils/database');
+const { generateMockUserRoute } = require('../../utils/generators');
 
 
 
-describe('POST /register endpoint', () => {
+describe('POST /v1/register endpoint', () => {
   const mockUser = generateMockUserRoute();
 
   const invalidMockUser = {
@@ -17,7 +17,7 @@ describe('POST /register endpoint', () => {
   it('should return 201 for successful registration', async () => {
 
     const res = await request(app)
-      .post('/register')
+      .post('/v1/register')
       .send(mockUser);
 
     expect(res.statusCode).toBe(201);
@@ -36,7 +36,7 @@ describe('POST /register endpoint', () => {
   it('should return 400 for invalid data', async () => {
 
     const res = await request(app)
-      .post('/register')
+      .post('/v1/register')
       .send(invalidMockUser);
 
     expect(res.statusCode).toBe(400);
@@ -48,7 +48,7 @@ describe('POST /register endpoint', () => {
     
     for (let i = 0; i < 6; i++) {
       res = await request(app)
-        .post('/register')
+        .post('/v1/register')
         .send(invalidMockUser);
     }
 

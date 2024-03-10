@@ -1,9 +1,9 @@
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
-const { authenticateToken } = require('../utils/validations');
-const { toLowerCamelCase, encryptObjectItems, decryptObjectItems } = require('../utils/converters');
-const db = require('../utils/database');
-const { apiRequestLimiter } = require('../utils/rateLimit');
+const { authenticateToken } = require('../../utils/validations');
+const { toLowerCamelCase, encryptObjectItems, decryptObjectItems } = require('../../utils/converters');
+const db = require('../../utils/database');
+const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { recordErrorLog } = require('./auditLogMiddleware');
 const moment = require('moment');
 const router = express.Router();
@@ -32,7 +32,7 @@ const secretProperties = [
 
 /**
  * @swagger
- * /user_details:
+ * /v1/user_details:
  *   get:
  *     summary: Retrieve user details
  *     description: Get the details of the user whose ID matches the one in the JWT.
@@ -103,7 +103,7 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, 
 
 /**
  * @swagger
- * /user_details:
+ * /v1/user_details:
  *   post:
  *     summary: Create user details
  *     description: Create details for the user whose ID matches the one in the JWT.
@@ -342,7 +342,7 @@ router.post('/user_details', apiRequestLimiter,
 
 /**
  * @swagger
- * /user_details/{userId}:
+ * /v1/user_details/{userId}:
  *   put:
  *     summary: Update user details
  *     description: Update details for the user whose ID matches the one in the JWT.

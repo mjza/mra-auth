@@ -1,17 +1,17 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const db = require('../utils/database');
-const { sendVerificationEmail } = require('../emails/emailService');
-const { userMustNotExist } = require('../utils/validations');
-const { createAccountLimiter } = require('../utils/rateLimit');
-const { generateActivationLink, generatePasswordHash } = require('../utils/generators');
+const db = require('../../utils/database');
+const { sendVerificationEmail } = require('../../emails/v1/emailService');
+const { userMustNotExist } = require('../../utils/validations');
+const { createAccountLimiter } = require('../../utils/rateLimit');
+const { generateActivationLink, generatePasswordHash } = require('../../utils/generators');
 const { recordErrorLog } = require('./auditLogMiddleware');
 
 const router = express.Router();
 
 /**
  * @swagger
- * /register:
+ * /v1/register:
  *   post:
  *     summary: Register a new user
  *     description: Create a new user in the system.

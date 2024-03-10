@@ -54,23 +54,23 @@ app.use(helmet.frameguard({ action: 'deny' })); // It instructs the browser to p
 
 
 // Import routes
-const authRoutes = require('./routes/authRoutes');
+const v1AuthRoutes = require('./routes/v1/authRoutes');
 // Use routes
-app.use('/', authRoutes);
+app.use('/v1', v1AuthRoutes);
 
 // Swagger definition
 const swaggerDefinition = {
     openapi: '3.0.0',
     info: {
-        title: 'Express Auth API',
+        title: 'Express Authentication API',
         version: '1.0.0',
-        description: 'A CRUD Auth API application',
+        description: 'A CRUD Authentication API',
     },
     servers: [
         {
-            url: process.env.BASE_URL || localhost,
-            description: 'Authentication microservices',
-        },
+            url: (process.env.BASE_URL || localhost),
+            description: 'Authentication Microservices',
+        }
     ],
     components: {
         securitySchemes: {
@@ -92,14 +92,14 @@ const swaggerDefinition = {
 };
 
 // Options for the swagger docs
-const options = {
+const v1SwaggerOptions = {
     swaggerDefinition,
     // Absolute paths to files containing Swagger annotations
-    apis: ['src/routes/*.js', 'src/utils/*.js'],
+    apis: ['src/routes/v1/*.js', 'src/utils/*.js'],
 };
 
 // Initialize swagger-jsdoc
-const swaggerSpec = swaggerJSDoc(options);
+const v1SwaggerSpec = swaggerJSDoc(v1SwaggerOptions);
 
 if (typeof process.env.DOC_USER === 'undefined' || typeof process.env.DOC_PASS === 'undefined') {
     console.error('Environment variable DOC_USER or DOC_PASS is not defined.');
@@ -113,10 +113,10 @@ const users = {};
 users[process.env.DOC_USER] = process.env.DOC_PASS;
 
 // Use swaggerUi to serve swagger docs
-app.use(process.env.DOC_URL, basicAuth({
-    users: users,
+app.use('/v1' + process.env.DOC_URL, basicAuth({
+    users,
     challenge: true // Causes browsers to show a login dialog
-}), swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}), swaggerUi.serve, swaggerUi.setup(v1SwaggerSpec));
 
 // configure Express to serve static files 
 app.use(express.static('public'));

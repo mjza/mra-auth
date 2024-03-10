@@ -1,16 +1,16 @@
 const express = require('express');
-const db = require('../utils/database');
+const db = require('../../utils/database');
 const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
-const { generateAuthToken, parseJwt } = require('../utils/generators');
-const { apiRequestLimiter } = require('../utils/rateLimit');
+const { generateAuthToken, parseJwt } = require('../../utils/generators');
+const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { recordErrorLog } = require('./auditLogMiddleware');
-const { authenticateToken } = require('../utils/validations');
+const { authenticateToken } = require('../../utils/validations');
 const router = express.Router();
 
 /**
  * @swagger
- * /login:
+ * /v1/login:
  *   post:
  *     summary: Login a user
  *     description: Authenticate a user by username or email and password.
@@ -174,7 +174,7 @@ router.post('/login', apiRequestLimiter,
 
 /**
  * @swagger
- * /logout:
+ * /v1/logout:
  *   post:
  *     summary: Logout a user
  *     description: Refreshes the JWT for a user if the current token is valid and close to expiry.
@@ -224,7 +224,7 @@ router.post('/logout', apiRequestLimiter, [authenticateToken], async (req, res) 
 
 /**
  * @swagger
- * /verify_token:
+ * /v1/verify_token:
  *   post:
  *     summary: Verify the passed JWT token
  *     description: Returns the details of the user whose ID matches the one in the JWT.
@@ -272,7 +272,7 @@ router.post('/verify_token', apiRequestLimiter, [authenticateToken], async (req,
 
 /**
  * @swagger
- * /refresh_token:
+ * /v1/refresh_token:
  *   post:
  *     summary: Refresh the JWT token
  *     description: Refreshes the JWT for a user if the current token is valid and close to expiry.

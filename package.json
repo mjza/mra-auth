@@ -11,7 +11,7 @@
   },
   "keywords": [],
   "author": "Mahdi Jaberzadeh Ansari",
-  "license": "Copyright 2023 ReportCycle Inc.",
+  "license": "Copyright 2023-2024 ReportCycle Inc.",
   "dependencies": {
     "@sendgrid/mail": "^8.1.0",
     "axios": "^1.6.2",

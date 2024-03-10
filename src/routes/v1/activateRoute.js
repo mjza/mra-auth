@@ -1,16 +1,16 @@
 const express = require('express');
 const { query, validationResult } = require('express-validator');
-const db = require('../utils/database');
-const { userMustExist, isValidUrl } = require('../utils/validations');
-const { apiRequestLimiter } = require('../utils/rateLimit');
-const { generateDecryptedObject } = require('../utils/generators');
+const db = require('../../utils/database');
+const { userMustExist, isValidUrl } = require('../../utils/validations');
+const { apiRequestLimiter } = require('../../utils/rateLimit');
+const { generateDecryptedObject } = require('../../utils/generators');
 const { recordErrorLog } = require('./auditLogMiddleware');
 
 const router = express.Router();
 
 /**
  * @swagger
- * /activate:
+ * /v1/activate:
  *   get:
  *     summary: Activate a user account
  *     description: This endpoint is used for activating a user account with a username and activation code.

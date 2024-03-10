@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const sgMail = require('@sendgrid/mail');
-const { recordErrorLog } = require('../routes/auditLogMiddleware');
+const { recordErrorLog } = require('../../routes/v1/auditLogMiddleware');
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 

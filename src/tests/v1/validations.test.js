@@ -1,6 +1,6 @@
-const { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken } = require('../utils/validations');
-const db = require('../utils/database');
-const { generateMockUserDB, generateRandomString, generateAuthToken } = require('../utils/generators');
+const { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken } = require('../../utils/validations');
+const db = require('../../utils/database');
+const { generateMockUserDB, generateRandomString, generateAuthToken } = require('../../utils/generators');
 
 describe('Test validation functions', () => {
 

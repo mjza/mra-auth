@@ -1,4 +1,4 @@
-const gn = require('../utils/generators');
+const gn = require('../../utils/generators');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 

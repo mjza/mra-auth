@@ -1,7 +1,7 @@
 const request = require('supertest');
-const app = require('../app');
-const db = require('../utils/database');
-const { generateMockUserDB, generateRandomString } = require('../utils/generators');
+const app = require('../../app');
+const db = require('../../utils/database');
+const { generateMockUserDB, generateRandomString } = require('../../utils/generators');
 
 describe('Test session endpoints', () => {
 
@@ -10,7 +10,7 @@ describe('Test session endpoints', () => {
         await db.closePool();
     });
 
-    describe('Post /login endpoint', () => {
+    describe('Post /v1/login endpoint', () => {
         let mockUser, testUser;
 
         beforeAll(async () => {
@@ -28,7 +28,7 @@ describe('Test session endpoints', () => {
 
         test('Successful login', async () => {
             const res = await request(app)
-                .post('/login')
+                .post('/v1/login')
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password });
 
             expect(res.statusCode).toBe(200);
@@ -37,7 +37,7 @@ describe('Test session endpoints', () => {
 
         test('Invalid username', async () => {
             const res = await request(app)
-                .post('/login')
+                .post('/v1/login')
                 .send({ usernameOrEmail: mockUser.username + 'x', password: mockUser.password });
 
             expect(res.statusCode).toBe(401);
@@ -46,7 +46,7 @@ describe('Test session endpoints', () => {
 
         test('Invalid password', async () => {
             const res = await request(app)
-                .post('/login')
+                .post('/v1/login')
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password + 'x' });
 
             expect(res.statusCode).toBe(401);
@@ -55,7 +55,7 @@ describe('Test session endpoints', () => {
 
         test('Incorrect username or password', async () => {
             const res = await request(app)
-                .post('/login')
+                .post('/v1/login')
                 .send({ usernameOrEmail: generateRandomString(4), password: generateRandomString(32) });
 
             expect(res.statusCode).toBe(400);
@@ -64,14 +64,14 @@ describe('Test session endpoints', () => {
 
         test('Incorrect username or password', async () => {
             const res = await request(app)
-                .post('/login')
+                .post('/v1/login')
                 .send({ usernameOrEmail: 'nonexistentuser', password: 'wrongpassword' });
 
             expect(res.statusCode).toBe(401);
         });
     });
 
-    describe('/*_token endpoints', () => {
+    describe('/v1/verify_token endpoints', () => {
         let mockUser, testUser, authData, futureTimestamp;
 
         beforeAll(async () => {
@@ -81,7 +81,7 @@ describe('Test session endpoints', () => {
             var user = { username: testUser.username, activationCode: testUser.activation_code };
             await db.activateUser(user);
             authData = (await request(app)
-                .post('/login')
+                .post('/v1/login')
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;
             const oneDayInMilliseconds = 24 * 60 * 60 * 1000 + 1000; // milliseconds in a day + 1 sec
             const currentTimeInMilliseconds = new Date().getTime(); // current time in milliseconds
@@ -93,13 +93,13 @@ describe('Test session endpoints', () => {
             await db.deleteUserByUsername(mockUser.username);
         });
 
-        describe('/verify_token endpoint', () => {
+        describe('/v1/verify_token endpoint', () => {
             it('should confirm a valid JWT token', async () => {
                 // Mock a valid JWT token
                 const validToken = `Bearer ${authData.token}`;
 
                 const res = await request(app)
-                    .post('/verify_token')
+                    .post('/v1/verify_token')
                     .set('Authorization', validToken);
 
                 expect(res.statusCode).toBe(200);
@@ -115,27 +115,30 @@ describe('Test session endpoints', () => {
             });
 
             it('should return 401 as authorization token is missing', async () => {
-                const res = await request(app).post('/verify_token');
+                const res = await request(app)
+                .post('/v1/verify_token');
 
                 expect(res.statusCode).toEqual(401);
                 expect(res.body.message).toEqual('You must provide a valid JWT token.');
             });
 
             it('should return 401 as authorization token is invalid', async () => {
-                const res = await request(app).post('/verify_token').set('Authorization', `Bearer ${authData.token}` + 'x');
+                const res = await request(app)
+                .post('/v1/verify_token')
+                .set('Authorization', `Bearer ${authData.token}` + 'x');
 
                 expect(res.statusCode).toEqual(401);
                 expect(res.body.message).toEqual('Provided JWT token is invalid.');
             });
         });
 
-        describe('/refresh_token endpoint', () => {
+        describe('/v1/refresh_token endpoint', () => {
             it('should refresh a valid JWT token', async () => {
                 // Mock a valid JWT token
                 const validToken = `Bearer ${authData.token}`;
 
                 const res = await request(app)
-                    .post('/refresh_token')
+                    .post('/v1/refresh_token')
                     .set('Authorization', validToken);
 
                 expect(res.statusCode).toBe(200);
@@ -153,14 +156,17 @@ describe('Test session endpoints', () => {
             });
 
             it('should return 401 as token is missing', async () => {
-                const res = await request(app).post('/refresh_token');
+                const res = await request(app)
+                .post('/v1/refresh_token');
 
                 expect(res.statusCode).toEqual(401);
                 expect(res.body.message).toEqual('You must provide a valid JWT token.');
             });
 
             it('should return 401 as token is invalid', async () => {
-                const res = await request(app).post('/refresh_token').set('Authorization', `Bearer ${authData.token}` + 'x');
+                const res = await request(app)
+                .post('/v1/refresh_token')
+                .set('Authorization', `Bearer ${authData.token}` + 'x');
 
                 expect(res.statusCode).toEqual(401);
                 expect(res.body.message).toEqual('Provided JWT token is invalid.');
@@ -168,7 +174,7 @@ describe('Test session endpoints', () => {
         });
     });
 
-    describe('/logout endpoint', () => {
+    describe('/v1/logout endpoint', () => {
 
         let mockUser, testUser, authData;
 
@@ -179,7 +185,7 @@ describe('Test session endpoints', () => {
             var user = { username: testUser.username, activationCode: testUser.activation_code };
             await db.activateUser(user);
             authData = (await request(app)
-                .post('/login')
+                .post('/v1/login')
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;
         });
 
@@ -193,7 +199,7 @@ describe('Test session endpoints', () => {
             const validToken = `Bearer ${authData.token}`;
 
             const res = await request(app)
-                .post('/logout')
+                .post('/v1/logout')
                 .set('Authorization', validToken);
 
             expect(res.statusCode).toBe(200);
@@ -204,7 +210,8 @@ describe('Test session endpoints', () => {
         });
 
         it('should return 400 as token is missing', async () => {
-            const res = await request(app).post('/logout');
+            const res = await request(app)
+            .post('/v1/logout');
 
             expect(res.statusCode).toEqual(401);
             expect(res.body.message).toEqual('You must provide a valid JWT token.');
@@ -212,7 +219,7 @@ describe('Test session endpoints', () => {
 
         it('should return 401 as token is invalid', async () => {
             const res = await request(app)
-                .post('/logout')
+                .post('/v1/logout')
                 .set('Authorization', `Bearer ${authData.token}` + 'x');
 
             expect(res.statusCode).toEqual(401);
