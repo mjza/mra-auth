@@ -15,7 +15,7 @@ For the production:
 2. You must change `YYY` must be replaced via [https://app.sendgrid.com/settings/api_keys](https://app.sendgrid.com/settings/api_keys).
 
 ```bash
-heroku config:set BASE_URL=https://auth.myreport.app --app mra-authentication
+heroku config:set BASE_URL=http://authentication.myreport.app --app mra-authentication
 heroku config:set COMPANY_ADDRESS=4515 Varsity Dr. NW, <br/>Calgary T3A0Z8, Canada --app mra-authentication
 heroku config:set COMPANY_LOGO_URL=https://reportcycle.com/logo512.png --app mra-authentication
 heroku config:set COMPANY_NAME=Report Cycle --app mra-authentication
@@ -36,7 +36,7 @@ heroku config:set NODE_ENV=production --app mra-authentication
 heroku config:set PORT=443 --app mra-authentication
 heroku config:set SECRET_KEY=ZZZ --app mra-authentication
 heroku config:set SENDGRID_API_KEY=YYY --app mra-authentication
-heroku config:set OKENS_TABLE=mra_token_blacklist --app mra-authentication
+heroku config:set TOKENS_TABLE=mra_token_blacklist --app mra-authentication
 heroku config:set TZ=UTC --app mra-authentication
 heroku config:set USER_DETAILS_TABLE=mra_user_details --app mra-authentication
 heroku config:set USERS_TABLE=mra_users --app mra-authentication
@@ -56,7 +56,7 @@ openssl req -x509 -newkey rsa:4096 -keyout localhost.key -out localhost.crt -day
 ```bash 
 openssl rand -hex 32
 ```
-This key is used as SECRET_KEY in .env file. 
+This key is used as SECRET_KEY in .env file. It is used for generating the JWT token.
 
 ## Generate documentations using JSDoc
 ```bash
