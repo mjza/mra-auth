@@ -54,9 +54,9 @@ app.use(helmet.frameguard({ action: 'deny' })); // It instructs the browser to p
 
 
 // Import routes
-const v1AuthRoutes = require('./routes/v1/authRoutes');
+const v1Routes = require('./routes/v1/routes');
 // Use routes
-app.use('/v1', v1AuthRoutes);
+app.use('/v1', v1Routes);
 
 // Swagger definition
 const swaggerDefinition = {
