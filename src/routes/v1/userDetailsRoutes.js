@@ -46,7 +46,9 @@ const secretProperties = [
  *           application/json:
  *             schema:
  *               type: object
- *               properties:                 
+ *               properties:  
+ *                 userId:
+ *                   type: integer               
  *                 firstName:
  *                   type: string
  *                 middleName:
@@ -146,6 +148,8 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken], async (req, 
  *             schema:
  *               type: object
  *               properties:
+ *                 userId:
+ *                   type: integer
  *                 firstName:
  *                   type: string
  *                 middleName:
@@ -390,6 +394,8 @@ router.post('/user_details', apiRequestLimiter,
  *             schema:
  *               type: object
  *               properties:
+ *                 userId:
+ *                   type: integer
  *                 firstName:
  *                   type: string
  *                 middleName:
@@ -471,11 +477,6 @@ router.put('/user_details/:userId', apiRequestLimiter,
       .withMessage('UserId is required.')
       .matches(/^[\d]+$/)
       .withMessage('UserId must be a number.'),
-    body('userId')
-      .notEmpty()
-      .withMessage('User ID is required.')
-      .isInt({ gt: 0 })
-      .withMessage('User ID must be an integer greater than 0.'),
 
     body('firstName')
       .optional()

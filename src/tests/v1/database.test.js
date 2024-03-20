@@ -254,7 +254,6 @@ describe('Test DB functions', () => {
             // Create user details      
             const insertedUserDetails = await db.createUserDetails(userDetails);
             expect(insertedUserDetails).not.toBeNull();
-            expect(insertedUserDetails.user_id).toBeUndefined();
             expect(insertedUserDetails.first_name).toBe(userDetails.firstName);
             expect(insertedUserDetails.middle_name).toBe(userDetails.middleName);
             expect(insertedUserDetails.last_name).toBe(userDetails.lastName);
@@ -269,7 +268,6 @@ describe('Test DB functions', () => {
             // Retrieve user details
             const details = await db.getUserDetails(userDetails.userId);
             expect(details).not.toBeNull();
-            expect(details.user_id).toBeUndefined();
             expect(details.first_name).toBe(userDetails.firstName);
             expect(details.middle_name).toBe(userDetails.middleName);
             expect(details.last_name).toBe(userDetails.lastName);
@@ -295,7 +293,6 @@ describe('Test DB functions', () => {
 
             const updated = await db.updateUserDetails(updatedDetails.userId, updatedDetails);
             expect(updated).not.toBeNull();
-            expect(updated.user_id).toBeUndefined();
             expect(updated.first_name).toBe(updatedDetails.firstName);
             expect(updated.middle_name).toBe(updatedDetails.middleName);
             expect(updated.last_name).toBe(updatedDetails.lastName);

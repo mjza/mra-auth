@@ -72,7 +72,6 @@ describe('/user_details endpoints', () => {
 
             expect(res.statusCode).toEqual(201);
             expect(res.body).not.toBeNull();
-            expect(res.body.userId).toBeUndefined();
             expect(res.body.firstName).toBe(userDetails.firstName);
             expect(res.body.middleName).toBe(userDetails.middleName);
             expect(res.body.lastName).toBe(userDetails.lastName);
@@ -131,7 +130,6 @@ describe('/user_details endpoints', () => {
             const res = await request(app).get('/v1/user_details').set('Authorization', `Bearer ${authData.token}`);
             expect(res.statusCode).toEqual(200);
             expect(res.body).not.toBeNull();
-            expect(res.body.userId).toBeUndefined();
             expect(res.body.firstName).toBe(userDetails.firstName);
             expect(res.body.middleName).toBe(userDetails.middleName);
             expect(res.body.lastName).toBe(userDetails.lastName);
@@ -171,7 +169,6 @@ describe('/user_details endpoints', () => {
 
             expect(res.statusCode).toEqual(200);
             expect(res.body).not.toBeNull();
-            expect(res.body.userId).toBeUndefined();
             expect(res.body.firstName).toBe(userDetails.firstName);
             expect(res.body.middleName).toBe(userDetails.middleName);
             expect(res.body.lastName).toBe(userDetails.lastName);
