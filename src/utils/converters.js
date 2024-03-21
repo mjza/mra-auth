@@ -144,6 +144,12 @@ function convertRequestData(req) {
         cookies: hideSensitiveData(req.cookies, forbiddenProperties)
     };
 
+    // The getCircularReplacer function is designed to be used with JSON.stringify to avoid 
+    // TypeError when attempting to convert a JavaScript object with circular references into 
+    // a JSON string. Circular references occur when an object references itself or when there 
+    // are multiple objects that reference each other, creating a loop. 
+    // JSON.stringify cannot directly serialize objects with circular references because it 
+    // would result in an infinite loop.
     const getCircularReplacer = () => {
         const seen = new WeakSet();
         return (key, value) => {
@@ -157,9 +163,41 @@ function convertRequestData(req) {
         };
     };
 
-    return JSON.stringify(requestData, getCircularReplacer());
+    return JSON.stringify(requestData, getCircularReplacer(), 4);
 }
 
+/**
+ * Hides sensitive data within an object by masking specified properties. This function
+ * iterates through each property of the provided object. If a property's name matches
+ * any of the given forbidden properties (case-insensitive), its value is replaced with
+ * a mask ('****'). Properties not listed as forbidden are left unchanged.
+ *
+ * This function is non-destructive; it returns a new object with the modified values
+ * while leaving the original object intact.
+ *
+ * @param {Object} obj - The object containing potential sensitive data to be masked.
+ * @param {Array<string>} forbiddenProperties - An array of property names (strings)
+ *                   that, if found in the object, should have their values masked.
+ *                   Matching is case-insensitive.
+ * @returns {Object} A new object with sensitive data masked. If the input is not an
+ *                   object, the input is returned unchanged.
+ *
+ * @example
+ * const user = {
+ *   name: 'John Doe',
+ *   email: 'john.doe@example.com',
+ *   password: 'supersecret',
+ * };
+ *
+ * const maskedUser = hideSensitiveData(user, ['password']);
+ * console.log(maskedUser);
+ * // Output:
+ * // {
+ * //   name: 'John Doe',
+ * //   email: 'john.doe@example.com',
+ * //   password: '****',
+ * // }
+ */
 function hideSensitiveData(obj, forbiddenProperties) {
     if (!obj || typeof obj !== 'object') {
         return obj;
