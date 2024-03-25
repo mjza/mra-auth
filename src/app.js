@@ -9,6 +9,7 @@ const cors = require('cors');
 const basicAuth = require('express-basic-auth');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJSDoc = require('swagger-jsdoc');
+const { setupCasbinMiddleware, casbinMiddleware } = require('./casbin/casbinSingleton');
 
 const app = express();
 
@@ -52,6 +53,9 @@ app.use(helmet.noSniff()); // It prevents browsers from trying to guess (“snif
 // X-Frame-Options
 app.use(helmet.frameguard({ action: 'deny' })); // It instructs the browser to prevent any framing of the site, which can help protect against clickjacking attacks.
 
+// Use this middleware before any route definitions
+setupCasbinMiddleware();
+app.use(casbinMiddleware);
 
 // Import routes
 const v1Routes = require('./routes/v1/routes');
@@ -88,6 +92,7 @@ const swaggerDefinition = {
         { name: '4th', description: 'User Details'},
         { name: '5th', description: 'Username'},
         { name: '6th', description: 'Passwords'},
+        { name: '7th', description: 'Authorization'},
     ],
 };
 

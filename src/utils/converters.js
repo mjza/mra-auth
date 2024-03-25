@@ -128,7 +128,8 @@ const toLowerCamelCase = (obj) => {
  * or cookie-parser for `req.cookies`) is set up in your Express application.
  */
 function convertRequestData(req) {
-    const forbiddenProperties = ['password', 'token', 'firstName', 'middleName', 'lastName', 'dateOfBirth', 'profilePictureUrl', 'profilePictureThumbnailUrl']; // Array of properties to hide
+    // Array of properties to hide
+    const forbiddenProperties = ['password', 'token', 'firstName', 'middleName', 'lastName', 'dateOfBirth', 'profilePictureUrl', 'profilePictureThumbnailUrl']; 
 
     const requestData = {
         method: req.method,

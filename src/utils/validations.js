@@ -165,7 +165,8 @@ const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-    if (token == null) {// If no token is provided
+    // If no token is provided
+    if (token == null) {
         return res.status(401).json({ message: 'You must provide a valid JWT token.' });
     }
 
@@ -181,7 +182,8 @@ const authenticateToken = async (req, res, next) => {
             return res.status(401).json({ message: 'Provided JWT token is invalid.' });
         }
 
-        req.user = {userId: tokenData.userId, username: tokenData.username, email: tokenData.email}; // Add user information to request
+        // Add user information to request
+        req.user = {userId: tokenData.userId, username: tokenData.username, email: tokenData.email}; 
         next(); // Proceed to the next middleware or route handler
     } catch (err) {
         recordErrorLog(req, { error: 'Error in validating auth token.', details: err});

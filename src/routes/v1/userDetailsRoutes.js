@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
-const { authenticateToken, authorize } = require('../../utils/validations');
+const { authenticateToken } = require('../../utils/validations');
 const { toLowerCamelCase, encryptObjectItems, decryptObjectItems } = require('../../utils/converters');
 const db = require('../../utils/database');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
@@ -87,8 +87,7 @@ const secretProperties = [
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.get('/user_details', apiRequestLimiter, 
-[authenticateToken],
+router.get('/user_details', apiRequestLimiter, [authenticateToken],
 //[authorize({ dom: '0', obj: process.env.USER_DETAILS_TABLE, act: 'R', attrs: {userId: 'self'}})], 
 async (req, res) => {
   try {
