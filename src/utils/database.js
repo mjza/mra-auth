@@ -430,6 +430,28 @@ async function updateUserDetails(userId, userDetails) {
 }
 
 /**
+ * Retrieves user domains.
+ *
+ * @param {string} username - The user's unique identifier.
+ * @returns {Array} List of user's domains.
+ */
+async function getUserDomains(username) {
+  if (typeof username !== 'string' || username.trim() === '') {
+    return [];
+  }
+  const query = `
+    SELECT v2
+    FROM casbin_rule
+    WHERE ptype = 'g' AND v0 = $1
+  `;
+  const { rows } = await pool.query(query, [username]);
+  
+  // Map over the rows and return an array of the v2 values
+  const domains = rows.map(row => row.v2);
+  return domains;
+}
+
+/**
  * Closes the database connection pool.
  */
 const closePool = async () => {
@@ -456,5 +478,6 @@ module.exports = {
   getUserDetails,
   createUserDetails,
   updateUserDetails,
+  getUserDomains,
   closePool
 };

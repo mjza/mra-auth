@@ -59,7 +59,7 @@ const generateDecryptedObject = (token, data) => {
 const generateActivationLink = (username, activationCode, redirectURL) => {
     const activationObject = generateEncryptedObject(activationCode, redirectURL);
     // Create the activation link
-    const activationLink = `${process.env.BASE_URL}/activate?username=${username}&token=${activationObject.token}&data=${activationObject.data}`;
+    const activationLink = `${process.env.BASE_URL}/v1/activate?username=${username}&token=${activationObject.token}&data=${activationObject.data}`;
     return activationLink;
 };
 

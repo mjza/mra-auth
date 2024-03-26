@@ -1,7 +1,15 @@
 const { newEnforcer } = require('casbin');
 const TypeORMAdapter = require('typeorm-adapter').default;
 const { customeEval } = require('./casbinEvaluation');
-const { deletePoliciesForDomainZero, importPoliciesFromCSV, addRoleForUserInDomain } = require('./casbinRoleManagement');
+const { 
+        deletePoliciesForDomainZero, 
+        importPoliciesFromCSV, 
+        addRoleForUserInDomain: addRoleForUserInDomainWithEnforcer, 
+        removeRoleForUserInDomain: removeRoleForUserInDomainWithEnforcer, 
+        listRolesForUserInDomain: listRolesForUserInDomainWithEnforcer,
+        listRolesForUserInDomains: listRolesForUserInDomainsWithEnforcer,
+        listRolesForUser: listRolesForUserWithEnforcer
+      } = require('./casbinRoleManagement');
 
 /**
  * Asynchronously initializes the Casbin enforcer with a Postgres database adapter,
@@ -44,8 +52,8 @@ async function initCasbin() {
     return customeEval(request, policy);
   });
 
-  await addRoleForUserInDomain(enforcer, 'username1', 'admin', '0'); // TODO remove it.
-  await addRoleForUserInDomain(enforcer, 'username1', 'enduser', '0'); // TODO remove it.
+  await addRoleForUserInDomainWithEnforcer(enforcer, 'username1', 'admin', '0'); // TODO remove it.
+  await addRoleForUserInDomainWithEnforcer(enforcer, 'username1', 'enduser', '0'); // TODO remove it.
 
   return enforcer;
 }
@@ -110,4 +118,117 @@ function casbinMiddleware(req, res, next) {
   }).catch(next);
 }
 
-module.exports = { setupCasbinMiddleware, casbinMiddleware };
+/**
+ * Asynchronously lists roles for a user. This function relies on a globally
+ * available `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's intended for use
+ * in contexts where it's necessary to obtain a user's roles without directly
+ * handling HTTP response objects.
+ *
+ * @param {string} username - The username of the user whose roles are to be listed.
+ * @returns {Promise<Array<string>>} A promise that resolves to an array of role names associated with the user in the given domain.
+ */
+async function listRolesForUser(username) {
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  try {
+    const enforcer = await enforcerPromiseInstance;
+    const roles = await listRolesForUserWithEnforcer(enforcer, username);
+    return roles;
+  } catch (error) {
+    console.error("Error listing roles for user:", error);
+    throw error;
+  }
+}
+
+/**
+ * Asynchronously lists roles for a user within a specific domain. This function relies on a globally
+ * available `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's intended for use
+ * in contexts where it's necessary to obtain a user's roles within a specific domain without directly
+ * handling HTTP response objects.
+ *
+ * @param {string} username - The username of the user whose roles are to be listed.
+ * @param {string} domain - The domain within which the roles are to be listed.
+ * @returns {Promise<Array<string>>} A promise that resolves to an array of role names associated with the user in the given domain.
+ */
+async function listRolesForUserInDomain(username, domain) {
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  try {
+    const enforcer = await enforcerPromiseInstance;
+    const roles = await listRolesForUserInDomainWithEnforcer(enforcer, username, domain);
+    return roles;
+  } catch (error) {
+    console.error("Error listing roles for user:", error);
+    throw error;
+  }
+}
+
+/**
+ * Asynchronously lists roles for a user within all domains. This function relies on a globally
+ * available `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's intended for use
+ * in contexts where it's necessary to obtain a user's roles within all domains without directly
+ * handling HTTP response objects.
+ *
+ * @param {string} username - The username of the user whose roles are to be listed.
+ * @returns {Promise<Array<string, string>>} A promise that resolves to an array of role names within different domains associated for the given username.
+ */
+async function listRolesForUserInDomains(username) {
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  try {
+    const enforcer = await enforcerPromiseInstance;
+    const roles = await listRolesForUserInDomainsWithEnforcer(enforcer, username);
+    return roles;
+  } catch (error) {
+    console.error("Error listing roles for user:", error);
+    throw error;
+  }
+}
+
+/**
+ * Asynchronously adds a role to a user within a specific domain. This function relies on the global
+ * `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's designed to be used in various contexts,
+ * not limited to Express.js middleware or route handlers.
+ * 
+ * @param {string} username - The username of the user to whom the role will be added.
+ * @param {string} role - The role to be added to the user.
+ * @param {string} domain - The domain within which the role is to be added.
+ * @returns {Promise<void>} A promise that resolves when the operation is complete. The promise will reject if an error occurs.
+ */
+async function addRoleForUserInDomain(username, role, domain) {
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  return enforcerPromiseInstance.then(enforcer => {
+    return addRoleForUserInDomainWithEnforcer(enforcer, username, role, domain);
+  });
+}
+
+/**
+ * Asynchronously removes a role from a user within a specific domain. This function depends on the global
+ * `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's adaptable for use across various
+ * contexts, extending beyond just Express.js middleware or route handlers.
+ * 
+ * @param {string} username - The username of the user from whom the role will be removed.
+ * @param {string} role - The role to be removed from the user.
+ * @param {string} domain - The domain within which the role is to be removed.
+ * @returns {Promise<void>} A promise that resolves when the operation is complete. The promise will reject if an error occurs.
+ */
+async function removeRoleForUserInDomain(username, role, domain) {
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  return enforcerPromiseInstance.then(enforcer => {
+    return removeRoleForUserInDomainWithEnforcer(enforcer, username, role, domain);
+  });
+}
+
+module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains };

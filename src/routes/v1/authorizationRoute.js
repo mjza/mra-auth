@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const { recordErrorLog } = require('./auditLogMiddleware');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { authenticateToken } = require('../../utils/validations');
+const { listRolesForUserInDomains } = require('../../casbin/casbinSingleton');
 
 const router = express.Router();
 
@@ -157,8 +158,9 @@ async function authorize(req, res, next) {
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/authorize', apiRequestLimiter, authenticateToken, validateAuthorizationRequest, authorize, (req, res) => {
-    res.json({ user: req.user });
+router.post('/authorize', apiRequestLimiter, authenticateToken, validateAuthorizationRequest, authorize, async (req, res) => {
+    const roles = await listRolesForUserInDomains(req.user.username);
+    res.json({ user: req.user, roles });
 });
 
 module.exports = router;

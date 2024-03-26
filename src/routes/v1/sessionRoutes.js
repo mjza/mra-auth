@@ -134,9 +134,7 @@ router.post('/login', apiRequestLimiter,
         const isMatch = await bcrypt.compare(password, user.password_hash);
 
         if (isMatch) {
-
           found = true;
-
           if (!user.confirmation_at) {
             confirmed = false;
             continue;

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const { parse } = require('csv-parse');
+const db = require('../utils/database');
 
 /**
  * Deletes all policies where the domain is '0'.
@@ -108,6 +109,40 @@ async function listRolesForUserInDomain(enforcer, username, domain) {
 }
 
 /**
+ * Lists all roles for a user across all domains they are associated with.
+ * This function returns a list of domains for the user.
+ *
+ * @param {Enforcer} enforcer - The Casbin enforcer instance.
+ * @param {string} username - The username of the user.
+ * @returns {Promise<Array<{role: string, domain: string}>>} - A promise that resolves to an array of objects, each containing a role and the domain it belongs to.
+ */
+async function listRolesForUserInDomains(enforcer, username) {
+  let domains = await db.getUserDomains(username);
+  let rolesAndDomains = [];
+
+  for (const domain of domains) {
+    // Retrieve roles for the user in the current domain
+    const roles = await enforcer.getRolesForUser(username, domain);
+    
+    // For each role, create an object with role and domain, then add to the result array
+    roles.forEach(role => rolesAndDomains.push({ role, domain }));
+  }
+
+  return rolesAndDomains;
+}
+
+
+/**
+ * Lists all roles a user has.
+ * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {string} username The username of the user.
+ * @returns {Promise<string[]>} An array of role names.
+ */
+async function listRolesForUser(enforcer, username) {
+  return await enforcer.getRolesForUser(username);
+}
+
+/**
  * Gets permissions for a given role within a specific domain.
  * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
  * @param {string} role The role to retrieve permissions for.
@@ -129,4 +164,4 @@ async function getPermissionsForRoleInDomain(enforcer, role, domain) {
 }
 
 // Export the function for use in other parts of your application.
-module.exports = { deletePoliciesForDomainZero, importPoliciesFromCSV, addRoleForUserInDomain, removeRoleForUserInDomain, hasRoleForUserInDomain, listRolesForUserInDomain, getPermissionsForRoleInDomain };
+module.exports = { deletePoliciesForDomainZero, importPoliciesFromCSV, addRoleForUserInDomain, removeRoleForUserInDomain, hasRoleForUserInDomain, listRolesForUserInDomain, listRolesForUserInDomains, getPermissionsForRoleInDomain, listRolesForUser };
