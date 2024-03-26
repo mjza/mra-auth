@@ -1,12 +1,13 @@
 const request = require('supertest');
-const app = require('../../app');
+const {createApp, closeApp} = require('../../app');
 const db = require('../../utils/database');
 const { generateMockUserDB } = require('../../utils/generators');
 
 describe('/user_details endpoints', () => {
-    let mockUser, testUser, authData, userDetails;
+    let app, mockUser, testUser, authData, userDetails;
 
     beforeAll(async () => {
+        app = await createApp();
         mockUser = await generateMockUserDB();
         // Insert a test user into the database
         testUser = await db.insertUser(mockUser);
@@ -23,14 +24,16 @@ describe('/user_details endpoints', () => {
             genderId: 1,
             dateOfBirth: '2023-12-07',
             profilePictureUrl: 'http://example.com/123',
-            profilePictureThumbnailUrl: 'http://example.com/124'
+            profilePictureThumbnailUrl: 'http://example.com/124',
+            creator: testUser.user_id,
+            updator: testUser.user_id
         };
     });
 
     // Ensure the pool is closed after all tests
     afterAll(async () => {
         await db.deleteUserByUsername(mockUser.username);
-        await db.closePool();
+        await closeApp();
     });
 
     describe('GET /user_details before creation', () => {
@@ -80,8 +83,10 @@ describe('/user_details endpoints', () => {
             expect(res.body.dateOfBirth).toBe(userDetails.dateOfBirth);
             expect(res.body.profilePictureUrl).toBe(userDetails.profilePictureUrl);
             expect(res.body.profilePictureThumbnailUrl).toBe(userDetails.profilePictureThumbnailUrl);
-            expect(res.body.updator).toBeUndefined();
-            expect(res.body.updatedAt).toBeUndefined();
+            expect(res.body.creator).toBe(userDetails.creator);
+            expect(res.body.createdAt).toBeDefined();
+            expect(res.body.updator).toBeNull();
+            expect(res.body.updatedAt).toBeNull();
         });
 
         it('should return 401 as token is missing', async () => {
@@ -138,8 +143,10 @@ describe('/user_details endpoints', () => {
             expect(res.body.dateOfBirth).toBe(userDetails.dateOfBirth);
             expect(res.body.profilePictureUrl).toBe(userDetails.profilePictureUrl);
             expect(res.body.profilePictureThumbnailUrl).toBe(userDetails.profilePictureThumbnailUrl);
-            expect(res.body.updator).toBeUndefined();
-            expect(res.body.updatedAt).toBeUndefined();
+            expect(res.body.creator).toBe(userDetails.creator);
+            expect(res.body.createdAt).toBeDefined();
+            expect(res.body.updator).toBeNull();
+            expect(res.body.updatedAt).toBeNull();
         });
 
         it('should return 401 as token is missing', async () => {
@@ -177,8 +184,10 @@ describe('/user_details endpoints', () => {
             expect(res.body.dateOfBirth).toBe(userDetails.dateOfBirth);
             expect(res.body.profilePictureUrl).toBe(userDetails.profilePictureUrl);
             expect(res.body.profilePictureThumbnailUrl).toBe(userDetails.profilePictureThumbnailUrl);
-            expect(res.body.updator).toBeUndefined();
-            expect(res.body.updatedAt).toBeUndefined();
+            expect(res.body.creator).toBe(userDetails.creator);
+            expect(res.body.createdAt).toBeDefined();
+            expect(res.body.updator).toBe(userDetails.updator);
+            expect(res.body.updatedAt).toBeDefined();
         });
 
         it('should return 401 as token is missing', async () => {

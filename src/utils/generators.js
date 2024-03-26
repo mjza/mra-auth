@@ -184,7 +184,7 @@ const generateMockUserDB = async () => {
     var username = generateRandomString();
     return {
         username: username,
-        email: 'test@example.com',
+        email: 'info@reportcycle.com',
         password: 'Pasword1$',
         passwordHash: await generatePasswordHash('Pasword1$')
     };
@@ -201,7 +201,7 @@ const generateMockUserRoute = () => {
     var username = generateRandomString();
     return {
         username: username,
-        email: 'test@example.com',
+        email: 'info@reportcycle.com',
         password: 'Pasword1$',
         loginRedirectURL: 'http://localhost:3000/login'
     }

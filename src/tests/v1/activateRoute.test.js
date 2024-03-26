@@ -1,13 +1,14 @@
 const request = require('supertest');
-const app = require('../../app');
+const {createApp, closeApp} = require('../../app');
 const db = require('../../utils/database');
 const { generateMockUserDB, generateEncryptedObject } = require('../../utils/generators');
 
 describe('GET /v1/activate Endpoint', () => {
 
-  let mockUser;
+  let app, mockUser;
 
   beforeAll(async () => {
+    app = await createApp();
     mockUser = await generateMockUserDB();
   });
 
@@ -122,6 +123,6 @@ describe('GET /v1/activate Endpoint', () => {
 
   // Ensure the pool is closed after all tests
   afterAll(async () => {
-    await db.closePool();
+    await closeApp();
   });
 });

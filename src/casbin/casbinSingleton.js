@@ -10,6 +10,21 @@ const {
         listRolesForUserInDomains: listRolesForUserInDomainsWithEnforcer,
         listRolesForUser: listRolesForUserWithEnforcer
       } = require('./casbinRoleManagement');
+/**
+ * A global instance of a promise that resolves to a Casbin enforcer. This variable
+ * is used to ensure that the initialization of the Casbin enforcer through `initCasbin`
+ * function happens only once and is reused throughout the application. It helps in
+ * managing the asynchronous nature of the Casbin enforcer setup and ensures that the
+ * enforcer is readily available for middleware and other components of the application.
+ *
+ * @type {Promise<import('casbin').Enforcer> | undefined}
+ */
+let enforcerPromiseInstance;
+
+/**
+ * Keep a reference to the database adapter
+ */
+let adapter;
 
 /**
  * Asynchronously initializes the Casbin enforcer with a Postgres database adapter,
@@ -28,7 +43,7 @@ const {
  * @returns {Promise<import('casbin').Enforcer>} A promise that resolves with the initialized Casbin enforcer.
  */
 async function initCasbin() {
-  const adapter = await TypeORMAdapter.newAdapter({
+  adapter = await TypeORMAdapter.newAdapter({
     type: 'postgres',
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
@@ -45,7 +60,7 @@ async function initCasbin() {
   await importPoliciesFromCSV(enforcer, csvFilePath);
 
   // Add custom functions to Casbin's function map
-  enforcer.addFunction('customeEval', (r_sub, r_dom, r_obj, r_act, r_attrs, p_sub, p_dom, p_obj, p_act, p_cond, p_attrs) => {
+  await enforcer.addFunction('customeEval', (r_sub, r_dom, r_obj, r_act, r_attrs, p_sub, p_dom, p_obj, p_act, p_cond, p_attrs) => {
     // Convert Casbin FunctionCall arguments to JavaScript objects
     const request = {sub: r_sub, dom: r_dom, obj: r_obj, act: r_act, attrs: r_attrs};
     const policy = {sub: p_sub, dom: p_dom, obj: p_obj, act: p_act, cond: p_cond, attrs: p_attrs};
@@ -59,15 +74,26 @@ async function initCasbin() {
 }
 
 /**
- * A global instance of a promise that resolves to a Casbin enforcer. This variable
- * is used to ensure that the initialization of the Casbin enforcer through `initCasbin`
- * function happens only once and is reused throughout the application. It helps in
- * managing the asynchronous nature of the Casbin enforcer setup and ensures that the
- * enforcer is readily available for middleware and other components of the application.
+ * Closes the Casbin adapter's database connection.
+ * This function checks if the adapter instance exists and, if so,
+ * initiates the closure of its database connection. It's particularly useful
+ * during the graceful shutdown of the application or in testing environments
+ * where open database connections might prevent clean exits.
+ * 
+ * Note: This function is async and returns a promise, which resolves
+ * once the adapter's connection has been successfully closed.
+ * It should be awaited to ensure proper cleanup.
  *
- * @type {Promise<import('casbin').Enforcer> | undefined}
+ * @async
+ * @function closeCasbinAdapter
+ * @returns {Promise<void>} A promise that resolves when the adapter's connection is closed.
+ *                          If the adapter is not initialized, the function resolves immediately.
  */
-let enforcerPromiseInstance;
+async function closeCasbinAdapter() {
+  if (adapter) {
+    await adapter.close();
+  }
+}
 
 /**
  * Initializes the Casbin enforcer as a middleware component asynchronously.
@@ -231,4 +257,4 @@ async function removeRoleForUserInDomain(username, role, domain) {
   });
 }
 
-module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains };
+module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter };

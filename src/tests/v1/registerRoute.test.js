@@ -1,12 +1,15 @@
 const request = require('supertest');
-const app = require('../../app');
+const {createApp, closeApp} = require('../../app');
 const db = require('../../utils/database');
 const { generateMockUserRoute } = require('../../utils/generators');
 
-
-
 describe('POST /v1/register endpoint', () => {
-  const mockUser = generateMockUserRoute();
+
+  let app, mockUser;
+  beforeAll(async () => {
+      app = await createApp();
+      mockUser = generateMockUserRoute();
+  });
 
   const invalidMockUser = {
     username: 'te', // Invalid username length
@@ -64,7 +67,7 @@ describe('POST /v1/register endpoint', () => {
 
   // Ensure the pool is closed after all tests
   afterAll(async () => {
-    await db.closePool();
+    await closeApp();
   });
 
 });

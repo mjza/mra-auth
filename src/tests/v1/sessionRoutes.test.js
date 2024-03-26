@@ -1,13 +1,14 @@
 const request = require('supertest');
-const app = require('../../app');
+const {createApp, closeApp} = require('../../app');
 const db = require('../../utils/database');
 const { generateMockUserDB, generateRandomString } = require('../../utils/generators');
 
 describe('Test session endpoints', () => {
 
-    // Ensure the pool is closed after all tests
-    afterAll(async () => {
-        await db.closePool();
+    let app;
+    beforeAll(async () => {
+        jest.setTimeout(20000);
+        app = await createApp();
     });
 
     describe('Post /v1/login endpoint', () => {
@@ -225,6 +226,10 @@ describe('Test session endpoints', () => {
             expect(res.statusCode).toEqual(401);
             expect(res.body.message).toEqual('Provided JWT token is invalid.');
         });
+    });
+
+    afterAll(async () => {
+        await closeApp();
     });
 
 });

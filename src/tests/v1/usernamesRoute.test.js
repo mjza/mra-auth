@@ -1,15 +1,15 @@
 const request = require('supertest');
-const app = require('../../app');
+const {createApp, closeApp} = require('../../app');
 const db = require('../../utils/database');
-const { generateMockUserDB, generateEncryptedObject } = require('../../utils/generators');
+const { generateMockUserDB } = require('../../utils/generators');
 
 describe('GET /usernames Endpoint', () => {
 
-    let mockUser, testUser;
+    let app, mockUser, testUser;
 
     beforeAll(async () => {
+        app = await createApp();
         mockUser = await generateMockUserDB();
-        // Insert a test user into the database
         testUser = await db.insertUser(mockUser);
     });
 
@@ -52,6 +52,6 @@ describe('GET /usernames Endpoint', () => {
     // Ensure the pool is closed after all tests
     afterAll(async () => {
         await db.deleteUserByUsername(mockUser.username);
-        await db.closePool();
+        await closeApp();
     });
 });

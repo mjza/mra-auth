@@ -138,25 +138,34 @@ describe('Test DB functions', () => {
         it('should retrieve a user by username or email', async () => {
             // Using the same test user
             const userByUsername = await db.getUserByUsernameOrEmail(mockUser.username);
-            const userByEmail = await db.getUserByUsernameOrEmail(mockUser.email);
+            const usersByEmail = await db.getUserByUsernameOrEmail(mockUser.email);
 
-            expect(userByUsername).not.toBeNull();
-            expect(userByEmail).not.toBeNull();
+            expect(userByUsername).toBeDefined();
+            expect(usersByEmail).toBeDefined();
+
+            expect(userByUsername.length).toBeGreaterThan(0);
+            expect(usersByEmail.length).toBeGreaterThan(0);
+            const foundByEmail = usersByEmail.find(user => user.username === mockUser.username);
+
+            
             expect(userByUsername[0].username).toBe(mockUser.username);
             expect(userByUsername[0].email).toBe(mockUser.email);
-            expect(userByEmail[0].username).toBe(mockUser.username);
-            expect(userByEmail[0].email).toBe(mockUser.email);
+            expect(foundByEmail.username).toBe(mockUser.username);
+            expect(foundByEmail.email).toBe(mockUser.email);
         });
     });
 
     describe('getUsernamesByEmail', () => {
         it('should retrieve some users by email', async () => {
             // Assuming the test user is already inserted from previous test
-            const users = await db.getUsernamesByEmail(mockUser.email);
-            expect(users).not.toBeNull();
-            expect(users[0].username).toBe(mockUser.username);
-            expect(users[0].is_activated).toBeFalsy();
-            expect(users[0].is_suspended).toBeFalsy();
+            const usersByEmail = await db.getUsernamesByEmail(mockUser.email);
+            expect(usersByEmail).toBeDefined();
+            expect(usersByEmail.length).toBeGreaterThan(0);
+            const foundByEmail = usersByEmail.find(user => user.username === mockUser.username);
+
+            expect(foundByEmail.username).toBe(mockUser.username);
+            expect(foundByEmail.is_activated).toBeFalsy();
+            expect(foundByEmail.is_suspended).toBeFalsy();
         });
     });
 
@@ -244,7 +253,8 @@ describe('Test DB functions', () => {
                 "genderId": 1,
                 "dateOfBirth": "2020-02-29",
                 "profilePictureUrl": "http://example.com/123",
-                "profilePictureThumbnailUrl": "https://example.com/124"
+                "profilePictureThumbnailUrl": "https://example.com/124",
+                "creator": insertedUser.user_id
             };
 
             // Retrieve no user details
@@ -262,8 +272,10 @@ describe('Test DB functions', () => {
             expect(insertedUserDetails.date_of_birth).toBe(userDetails.dateOfBirth);
             expect(insertedUserDetails.profile_picture_url).toBe(userDetails.profilePictureUrl);
             expect(insertedUserDetails.profile_picture_thumbnail_url).toBe(userDetails.profilePictureThumbnailUrl);
-            expect(insertedUserDetails.updator).toBeUndefined();
-            expect(insertedUserDetails.updated_at).toBeUndefined();
+            expect(insertedUserDetails.creator).toBe(userDetails.creator);
+            expect(insertedUserDetails.created_at).toBeDefined();
+            expect(insertedUserDetails.updator).toBeNull();
+            expect(insertedUserDetails.updated_at).toBeNull();
 
             // Retrieve user details
             const details = await db.getUserDetails(userDetails.userId);
@@ -276,8 +288,10 @@ describe('Test DB functions', () => {
             expect(details.date_of_birth).toBe(userDetails.dateOfBirth);
             expect(details.profile_picture_url).toBe(userDetails.profilePictureUrl);
             expect(details.profile_picture_thumbnail_url).toBe(userDetails.profilePictureThumbnailUrl);
-            expect(details.updator).toBeUndefined();
-            expect(details.updated_at).toBeUndefined();
+            expect(details.creator).toBe(userDetails.creator);
+            expect(details.created_at).toBeDefined();
+            expect(details.updator).toBeNull();
+            expect(details.updated_at).toBeNull();
 
             // Update user details
             const updatedDetails = {
@@ -288,7 +302,9 @@ describe('Test DB functions', () => {
                 "genderId": 2,
                 "dateOfBirth": "1970-03-28",
                 "profilePictureUrl": "http://example.com/125",
-                "profilePictureThumbnailUrl": "https://example.com/126"
+                "profilePictureThumbnailUrl": "https://example.com/126",
+                "creator": insertedUser.user_id,
+                "updator": insertedUser.user_id
             };
 
             const updated = await db.updateUserDetails(updatedDetails.userId, updatedDetails);
@@ -301,8 +317,10 @@ describe('Test DB functions', () => {
             expect(updated.date_of_birth).toBe(updatedDetails.dateOfBirth);
             expect(updated.profile_picture_url).toBe(updatedDetails.profilePictureUrl);
             expect(updated.profile_picture_thumbnail_url).toBe(updatedDetails.profilePictureThumbnailUrl);
-            expect(updated.updator).toBeUndefined();
-            expect(updated.updated_at).toBeUndefined();
+            expect(details.creator).toBe(userDetails.creator);
+            expect(details.created_at).toBeDefined();
+            expect(updated.updator).toBe(updatedDetails.updator);
+            expect(updated.updated_at).toBeDefined();
         });
     });
 

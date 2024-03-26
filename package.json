@@ -15,11 +15,11 @@
   "dependencies": {
     "@sendgrid/mail": "^8.1.0",
     "axios": "^1.6.2",
-    "basic-auth": "^2.0.1",
     "bcrypt": "^5.1.1",
     "casbin": "^5.28.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "csv-parse": "^5.5.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-basic-auth": "^1.2.1",
@@ -40,6 +40,7 @@
     "supertest": "^6.3.3"
   },
   "jest": {
+    "testTimeout": 20000,
     "setupFiles": [
       "<rootDir>/config/jest.setup.js"
     ],

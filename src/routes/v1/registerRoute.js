@@ -104,7 +104,7 @@ router.post('/register', createAccountLimiter,
       // The insertUser function is hypothetical. Replace it with your actual database logic.
       const user = await db.insertUser(newUser);
 
-      addRoleForUserInDomain(user.username, "enduser", "0");
+      await addRoleForUserInDomain(user.username, "enduser", "0");
 
       // Optional login redirect URL
       const loginRedirectURL = req.body.loginRedirectURL || '';
