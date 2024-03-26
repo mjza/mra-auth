@@ -145,16 +145,35 @@ async function authorize(req, res, next) {
  *           schema:
  *             type: object
  *             properties:
- *               userId:
- *                 type: integer
- *               username:
- *                 type: string
- *               email:
- *                 type: string
+ *               user:
+ *                 type: object
+ *                 properties:
+ *                   userId:
+ *                     type: integer
+ *                     example: 2
+ *                   username:
+ *                     type: string
+ *                     example: "username2"
+ *                   email:
+ *                     type: string
+ *                     example: "username2@example.com"
+ *                 roles:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       role:
+ *                         type: string
+ *                         example: "enduser"
+ *                       domain:
+ *                         type: string
+ *                         example: "0"
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       403:
  *         $ref: '#/components/responses/Forbidden'
+ *       429:
+ *         $ref: '#/components/responses/ApiRateLimitExceeded' 
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */

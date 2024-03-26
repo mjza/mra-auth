@@ -192,21 +192,7 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
-/**
- * @swagger
- * components:
- *   responses:
- *     UnauthorizedAccessInvalidTokenProvided:
- *       description: Unauthorized access - No token provided.
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 example: You are not authorized for this action.|You must provide a valid JWT token.
- */
+
 /**
  * Middleware to check if a user is authorized to perform a task.
  *
@@ -214,6 +200,7 @@ const authenticateToken = async (req, res, next) => {
  * @param {Object} res - The response object from Express.js.
  * @param {function} next - The next middleware function in the Express.js route.
  */
+/*
 const authorize = (extraData) => async (req, res, next) => {
     // Get the token from the request header
     const authHeader = req.headers['authorization'];
@@ -247,5 +234,6 @@ const authorize = (extraData) => async (req, res, next) => {
         return res.sendStatus(500);
     }
 };
+*/
 
-module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken, authorize };
+module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken };
