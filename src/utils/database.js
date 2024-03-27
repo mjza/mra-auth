@@ -1,3 +1,5 @@
+const { User } = require('../models');
+
 const { Pool } = require('pg');
 
 // Use environment variables to configure the database connection
@@ -119,6 +121,7 @@ const deleteUserByUsername = async (username) => {
  * @param {string} username - The username of the user to retrieve.
  * @returns {Object|null} The user object if found, null otherwise.
  */
+/*
 const getUserByUsername = async (username) => {
   if (!username || !username.trim())
     return null;
@@ -130,6 +133,18 @@ const getUserByUsername = async (username) => {
   }
 
   return rows[0]; // Return the user data
+};
+*/
+const getUserByUsername = async (username) => {
+  if (!username || !username.trim()) {
+    return null;
+  }
+
+  const user = await User.findOne({
+    where: { username: username.trim() }
+  });
+
+  return user; // This will return the user instance or null if not found
 };
 
 /**
