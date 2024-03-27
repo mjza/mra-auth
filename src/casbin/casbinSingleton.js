@@ -52,11 +52,11 @@ async function initCasbin() {
     database: process.env.DB_NAME
   });
 
-  const enforcer = await newEnforcer('./config/model.conf', adapter);
+  const enforcer = await newEnforcer('src/config/model.conf', adapter);
 
   await deletePoliciesForDomainZero(enforcer);
 
-  const csvFilePath = './config/policy.csv';
+  const csvFilePath = 'src/config/policy.csv';
   await importPoliciesFromCSV(enforcer, csvFilePath);
 
   // Add custom functions to Casbin's function map

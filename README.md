@@ -4,7 +4,7 @@
 Follow the instructions in this [link](https://devcenter.heroku.com/articles/heroku-cli#verify-your-installation) and install Heroku CLI. 
 
 ## local
-Copy `.env.example` file and rename it to `.env.development`.
+Copy `template.env` file and rename it to `.env`.
 Update its content accordingly with respect to your system. 
 
 ## production

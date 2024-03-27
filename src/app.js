@@ -1,5 +1,5 @@
 require('dotenv').config({
-    path: `config/.env.${process.env.NODE_ENV || 'development'}`
+    path: 'src/config/.env'
 });
 const localhost = 'http://localhost:3000';
 const express = require('express');

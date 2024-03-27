@@ -7,7 +7,7 @@
     "start": "cross-env NODE_ENV=development node src/index.js",
     "local-test": "cross-env NODE_ENV=development jest --detectOpenHandles",
     "github-test": "jest --detectOpenHandles",
-    "generate-docs": "jsdoc -c config/jsdoc.json"
+    "generate-docs": "jsdoc -c src/config/jsdoc.json"
   },
   "keywords": [],
   "author": "Mahdi Jaberzadeh Ansari",
@@ -29,6 +29,8 @@
     "jsonwebtoken": "^9.0.2",
     "moment": "^2.29.4",
     "pg": "^8.11.3",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "typeorm-adapter": "^1.6.2"
@@ -42,7 +44,7 @@
   "jest": {
     "testTimeout": 20000,
     "setupFiles": [
-      "<rootDir>/config/jest.setup.js"
+      "<rootDir>/src/config/jest.setup.js"
     ],
     "testMatch": [
       "**/tests/**/*.js"

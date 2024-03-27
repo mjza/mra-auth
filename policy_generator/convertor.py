@@ -79,5 +79,5 @@ def generate_policies_csv(input_csv_path, output_csv_path):
 
 if __name__ == "__main__":
     input_csv_path = './Roles.csv'  # Adjust as needed
-    output_csv_path = '../config/policy.csv'  # Adjust as needed
+    output_csv_path = '../src/config/policy.csv'  # Adjust as needed
     generate_policies_csv(input_csv_path, output_csv_path)
