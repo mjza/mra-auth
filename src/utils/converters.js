@@ -145,6 +145,7 @@ function convertRequestData(req) {
         cookies: hideSensitiveData(req.cookies, forbiddenProperties)
     };
 
+    // TODO: Remove this function if it can store all requests
     // The getCircularReplacer function is designed to be used with JSON.stringify to avoid 
     // TypeError when attempting to convert a JavaScript object with circular references into 
     // a JSON string. Circular references occur when an object references itself or when there 
@@ -164,7 +165,8 @@ function convertRequestData(req) {
         };
     };
 
-    return JSON.stringify(requestData, getCircularReplacer(), 4);
+    //return JSON.stringify(requestData, getCircularReplacer(), 4);
+    return requestData; // Squelize handles JSON
 }
 
 /**

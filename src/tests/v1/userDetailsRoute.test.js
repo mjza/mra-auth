@@ -15,7 +15,7 @@ describe('/user_details endpoints', () => {
         await db.activateUser(user);
         authData = (await request(app)
             .post('/v1/login')
-            .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;
+            .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;    
         userDetails = {
             userId: testUser.user_id,
             firstName: 'string1',
@@ -32,7 +32,7 @@ describe('/user_details endpoints', () => {
 
     // Ensure the pool is closed after all tests
     afterAll(async () => {
-        await db.deleteUserByUsername(mockUser.username);
+        //await db.deleteUserByUsername(mockUser.username);
         await closeApp();
     });
 

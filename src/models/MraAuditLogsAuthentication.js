@@ -35,7 +35,7 @@ module.exports = function(sequelize, DataTypes) {
 				event_time: {
 						type: DataTypes.DATE,
 						allowNull: true,
-						defaultValue: Sequelize.Sequelize.fn('now')
+						defaultValue: Sequelize.Sequelize.literal("(now() AT TIME ZONE 'UTC')")
 				}
 		}, {
 				sequelize,

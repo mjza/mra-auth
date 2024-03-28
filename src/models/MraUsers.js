@@ -95,11 +95,13 @@ module.exports = function(sequelize, DataTypes) {
 				created_at: {
 						type: DataTypes.DATE,
 						allowNull: false,
-						defaultValue: Sequelize.Sequelize.fn('now')
+						defaultValue: Sequelize.Sequelize.literal("(now() AT TIME ZONE 'UTC')"),
+						comment: "Timestamp of when this record was created."
 				},
 				updator: {
 						type: DataTypes.INTEGER,
 						allowNull: true,
+						comment: "References mra_users, indicating the user who last updated this record.",
 						references: {
 								model: 'mra_users',
 								key: 'user_id'
@@ -107,7 +109,8 @@ module.exports = function(sequelize, DataTypes) {
 				},
 				updated_at: {
 						type: DataTypes.DATE,
-						allowNull: true
+						allowNull: true,
+						comment: "Timestamp of the last update made to this record."
 				}
 		}, {
 				sequelize,

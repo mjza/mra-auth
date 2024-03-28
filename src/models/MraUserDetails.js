@@ -73,8 +73,8 @@ module.exports = function(sequelize, DataTypes) {
 				created_at: {
 						type: DataTypes.DATE,
 						allowNull: false,
-						defaultValue: Sequelize.Sequelize.fn('now'),
-						comment: "Timestamp of when the customer record was created."
+						defaultValue: Sequelize.Sequelize.literal("(now() AT TIME ZONE 'UTC')"),
+						comment: "Timestamp of when this record was created."
 				},
 				updator: {
 						type: DataTypes.INTEGER,
@@ -88,7 +88,7 @@ module.exports = function(sequelize, DataTypes) {
 				updated_at: {
 						type: DataTypes.DATE,
 						allowNull: true,
-						comment: "Timestamp of the last update made to the customer's record."
+						comment: "Timestamp of the last update made to this record."
 				}
 		}, {
 				sequelize,

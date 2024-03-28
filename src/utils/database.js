@@ -74,7 +74,7 @@ const insertAuditLog = async (log) => {
     comments: comments || '',
     user_id: userId,
   });
-  return insertedLog;
+  return insertedLog && insertedLog.get({ plain: true });;
 };
 
 /**
@@ -142,7 +142,7 @@ const deleteUserByUsername = async (username) => {
     },
   });
 
-  return user;
+  return user && user.get({ plain: true });
 };
 
 /**
@@ -160,7 +160,7 @@ const getUserByUsername = async (username) => {
       where: { username: username.trim() }
     });
 
-    return user; // This will return the user instance or null if not found
+    return user && user.get({ plain: true });
   } catch (error) {
     console.error('Error retrieving user by username:', error);
   }
@@ -175,17 +175,20 @@ const getUserByUsername = async (username) => {
 const getUserByUsernameOrEmail = async (usernameOrEmail) => {
   if (!usernameOrEmail || !usernameOrEmail.trim())
     return null;
-  const query = `
-    (SELECT * FROM ${usersTable} WHERE username = $1) 
-     UNION 
-    (SELECT * FROM ${usersTable} WHERE email = $2)`;
-  const { rows } = await pool.query(query, [usernameOrEmail.trim(), usernameOrEmail.trim()]);
+  const users = await MraUsers.findAll({
+    where: {
+      [Sequelize.Op.or]: [
+        { username: usernameOrEmail.trim() },
+        { email: usernameOrEmail.trim() }
+      ]
+    }
+  });
 
-  if (rows.length === 0) {
-    return null; // User not found
+  if (users.length === 0) {
+    return null; // No users found with the given email
   }
 
-  return rows; // Return the user data
+  return users && users.map(user => user.get({ plain: true }));
 };
 
 /**
@@ -195,29 +198,30 @@ const getUserByUsernameOrEmail = async (usernameOrEmail) => {
  * @returns {Object|null} The user object if found, null otherwise.
  */
 const getUsernamesByEmail = async (email) => {
-  if (!email || !email.trim())
+  if (!email || !email.trim()) {
     return null;
-  const query = `
-    SELECT username, 
-           CASE 
-             WHEN confirmation_at IS NULL THEN FALSE 
-             ELSE TRUE 
-           END AS is_activated,
-           CASE 
-             WHEN suspended_at IS NULL THEN FALSE 
-             ELSE TRUE 
-           END AS is_suspended
-    FROM ${usersTable} 
-    WHERE 
-      deleted_at IS NULL AND
-      email = $1`;
-  const { rows } = await pool.query(query, [email.trim()]);
-
-  if (rows.length === 0) {
-    return null; // User not found
   }
 
-  return rows; // Return the user data
+  // Using Sequelize to find users by email and compute is_activated and is_suspended
+  const users = await MraUsers.findAll({
+    attributes: [
+      'username',
+      // Use Sequelize.literal to handle CASE statements
+      [Sequelize.literal('CASE WHEN confirmation_at IS NULL THEN FALSE ELSE TRUE END'), 'is_activated'],
+      [Sequelize.literal('CASE WHEN suspended_at IS NULL THEN FALSE ELSE TRUE END'), 'is_suspended']
+    ],
+    where: {
+      email: email.trim(),
+      deleted_at: { [Sequelize.Op.is]: null } // Ensure the user is not deleted
+    }
+  });
+
+  if (users.length === 0) {
+    return null; // No users found with the given email
+  }
+
+  // Convert Sequelize instances to plain objects
+  return users && users.map(user => user.get({ plain: true }));
 };
 
 /**
@@ -230,9 +234,15 @@ const insertUser = async (user) => {
   const { username, email, passwordHash } = user;
   if (!username || !username.trim() || !email || !email.trim() || !passwordHash || !passwordHash.trim())
     return null;
-  const insertQuery = `INSERT INTO ${usersTable} (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *`;
-  const { rows } = await pool.query(insertQuery, [username.trim(), email.trim(), passwordHash.trim()]);
-  return rows && rows[0]; // Returns the inserted user
+
+  const newUser = await MraUsers.create({
+    username: username.trim(),
+    email: email.trim(),
+    password_hash: passwordHash.trim(),
+  });
+
+  return newUser && newUser.get({ plain: true });
+
 };
 
 /**
@@ -334,20 +344,29 @@ const activateUser = async (user) => {
   const { username, activationCode } = user;
   if (!username || !username.trim() || !activationCode || !activationCode.trim())
     return false;
-  // Check if the user and activation code match
-  const updateUserQuery = `UPDATE ${usersTable} 
-                            SET activation_code = NULL 
-                            WHERE
-                              created_at >= (CURRENT_TIMESTAMP - interval '5 days') AND
-                              created_at <= CURRENT_TIMESTAMP AND
-                              confirmation_at IS NULL AND
-                              username = $1 AND
-                              activation_code = $2
-                            RETURNING *  
-                          `;
 
-  const checkResult = await pool.query(updateUserQuery, [username.trim(), activationCode.trim()]);
-  return checkResult && checkResult.rows.length > 0;
+  // Calculate the date 5 days ago
+  const fiveDaysAgo = new Date();
+  fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+
+  // Update the user if the activation code matches and is within the valid timeframe
+  const [updateCount] = await MraUsers.update(
+    { activation_code: null }, // Set activation_code to NULL
+    {
+      where: {
+        username: username.trim(),
+        activation_code: activationCode.trim(),
+        created_at: {
+          [Sequelize.Op.gte]: fiveDaysAgo, // created_at >= 5 days ago
+          [Sequelize.Op.lte]: new Date()   // created_at <= CURRENT_TIMESTAMP
+        },
+        confirmation_at: null, // confirmation_at IS NULL
+      },
+      returning: true, // This option is specific to PostgreSQL
+    }
+  );
+
+  return updateCount > 0; // Returns true if at least one row was updated  
 };
 
 /**
