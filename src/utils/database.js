@@ -501,6 +501,7 @@ async function updateUserDetails(userId, userDetails) {
 
 /**
  * Retrieves user domains.
+ * WE DO NOT TEST THIS FUNCTION AS CASBIN IS CONTROLLED BY CASBIN ADAPTER.
  *
  * @param {string} username - The user's unique identifier.
  * @returns {Array} List of user's domains.
