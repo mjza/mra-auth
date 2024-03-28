@@ -179,7 +179,7 @@ async function createApp() {
  */
 async function closeApp() {
     await closeCasbinAdapter();
-    await db.closePool();
+    await db.closeDBConnections();
 }
 
 module.exports = { createApp, closeApp };

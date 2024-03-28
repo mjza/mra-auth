@@ -89,7 +89,6 @@ describe('Test session endpoints', () => {
             futureTimestamp = Math.floor((currentTimeInMilliseconds + oneDayInMilliseconds) / 1000); // convert to seconds
         });
 
-        // Ensure the pool is closed after all tests
         afterAll(async () => {
             await db.deleteUserByUsername(mockUser.username);
         });
@@ -190,7 +189,6 @@ describe('Test session endpoints', () => {
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;
         });
 
-        // Ensure the pool is closed after all tests
         afterAll(async () => {
             await db.deleteUserByUsername(mockUser.username);
         });
@@ -228,6 +226,7 @@ describe('Test session endpoints', () => {
         });
     });
 
+    // Ensure the app resources are closed after all tests
     afterAll(async () => {
         await closeApp();
     });

@@ -346,6 +346,6 @@ describe('Test DB functions', () => {
     });
 
     afterAll(async () => {
-        await db.closePool();
+        await db.closeDBConnections();
     });
 });

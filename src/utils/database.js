@@ -1,23 +1,5 @@
 const { Sequelize } = require('sequelize');
-const { MraUsers, MraGenderTypes, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication } = require('../models');
-
-const { Pool } = require('pg');
-
-// Use environment variables to configure the database connection
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-  ssl: process.env.NODE_ENV === 'development' ? false : {
-    rejectUnauthorized: false
-  }
-});
-
-const usersTable = process.env.USERS_TABLE;
-const userDetailsTable = process.env.USER_DETAILS_TABLE;
-const genderTypesTable = process.env.GENDER_TYPES_TABLE;
+const { MraUsers, MraGenderTypes, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, closeSequelize } = require('../models');
 
 /**
  * Inserts a new token into the blacklist database.
@@ -527,24 +509,26 @@ async function getUserDomains(username) {
   if (typeof username !== 'string' || username.trim() === '') {
     return [];
   }
-  const query = `
-    SELECT v2
-    FROM casbin_rule
-    WHERE ptype = 'g' AND v0 = $1
-  `;
-  const { rows } = await pool.query(query, [username]);
+  const casbinRules = await CasbinRule.findAll({
+    where: {
+      ptype: 'g',
+      v0: username
+    },
+    attributes: ['v2'] // Specify that we only want the v2 column
+  });
 
-  // Map over the rows and return an array of the v2 values
-  const domains = rows.map(row => row.v2);
+  // Map over the casbinRules and return an array of the v2 values
+  const domains = casbinRules.map(rule => rule.v2);
   return domains;
 }
 
 /**
  * Closes the database connection pool.
  */
-const closePool = async () => {
-  await pool.end();
+const closeDBConnections = async () => {
+  await closeSequelize();
 };
+
 
 module.exports = {
   insertBlacklistToken,
@@ -567,5 +551,5 @@ module.exports = {
   createUserDetails,
   updateUserDetails,
   getUserDomains,
-  closePool
+  closeDBConnections
 };

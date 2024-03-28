@@ -65,7 +65,7 @@ describe('POST /v1/register endpoint', () => {
     await db.deleteUserByUsername(mockUser.username);
   });
 
-  // Ensure the pool is closed after all tests
+  // Ensure the app resources are closed after all tests
   afterAll(async () => {
     await closeApp();
   });

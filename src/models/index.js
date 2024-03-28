@@ -22,8 +22,15 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 const initModels = require('./init-models');
 const models = initModels(sequelize);
 
+// Function to close the Sequelize connection
+async function closeSequelize() {
+  await sequelize.close();
+}
+
+
 module.exports = {
   ...models,
   sequelize,
   Sequelize,
+  closeSequelize,
 };

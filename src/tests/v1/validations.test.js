@@ -6,7 +6,7 @@ describe('Test validation functions', () => {
 
     // Ensure the pool is closed after all tests
     afterAll(async () => {
-        await db.closePool();
+        await db.closeDBConnections();
     });
 
     describe('User Existence Checks', () => {

@@ -1,4 +1,5 @@
 var DataTypes = require("sequelize").DataTypes;
+var _CasbinRule = require("./CasbinRule");
 var _MraAuditLogsAuthentication = require("./MraAuditLogsAuthentication");
 var _MraGenderTypes = require("./MraGenderTypes");
 var _MraTokenBlacklist = require("./MraTokenBlacklist");
@@ -6,6 +7,7 @@ var _MraUserDetails = require("./MraUserDetails");
 var _MraUsers = require("./MraUsers");
 
 function initModels(sequelize) {
+		var CasbinRule = _CasbinRule(sequelize, DataTypes);
 		var MraAuditLogsAuthentication = _MraAuditLogsAuthentication(sequelize, DataTypes);
 		var MraGenderTypes = _MraGenderTypes(sequelize, DataTypes);
 		var MraTokenBlacklist = _MraTokenBlacklist(sequelize, DataTypes);
@@ -28,6 +30,7 @@ function initModels(sequelize) {
 		MraUsers.hasMany(MraUsers, { as: "updator_mra_users", foreignKey: "updator"});
 
 		return {
+				CasbinRule,
 				MraAuditLogsAuthentication,
 				MraGenderTypes,
 				MraTokenBlacklist,

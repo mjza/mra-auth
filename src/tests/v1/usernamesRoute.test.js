@@ -49,7 +49,7 @@ describe('GET /usernames Endpoint', () => {
     });
 
 
-    // Ensure the pool is closed after all tests
+    // Ensure the app resources are closed after all tests
     afterAll(async () => {
         await db.deleteUserByUsername(mockUser.username);
         await closeApp();
