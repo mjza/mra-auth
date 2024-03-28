@@ -21,7 +21,7 @@ describe('Test DB functions', () => {
         beforeAll(() => {
             mockLog = {
                 methodRoute: 'TEST : /testRoute',
-                req: JSON.stringify({ param: 'test' }),
+                req: { param: 'test' },
                 comments: 'Initial comment',
                 ipAddress: '127.0.0.1',
                 userId: '123'
@@ -40,7 +40,7 @@ describe('Test DB functions', () => {
 
                 expect(insertedLog).toBeDefined();
                 expect(insertedLog.method_route).toBe(mockLog.methodRoute);
-                expect(insertedLog.req).toStrictEqual(JSON.parse(mockLog.req));
+                expect(insertedLog.req).toStrictEqual(mockLog.req);
                 expect(insertedLog.comments).toBe(mockLog.comments);
                 expect(insertedLog.ip_address).toBe(mockLog.ipAddress);
                 expect(insertedLog.user_id).toBe(mockLog.userId);

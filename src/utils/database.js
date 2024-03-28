@@ -1,4 +1,5 @@
-const { mra_users, mra_gender_types, mra_user_details, mra_token_blacklist, mra_audit_logs_authentication } = require('../models');
+const { Sequelize } = require('sequelize');
+const { MraUsers, MraGenderTypes, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication } = require('../models');
 
 const { Pool } = require('pg');
 
@@ -28,15 +29,17 @@ const tokensTable = process.env.TOKENS_TABLE;
  */
 const insertBlacklistToken = async (tokenData) => {
   const { token, expiry } = tokenData;
-  if (!token || !token.trim())
+  if (!token || !token.trim()) {
     return null;
-  const query = `INSERT INTO ${tokensTable} (token, expiry) VALUES ($1, $2) RETURNING *`;
-  const { rows } = await pool.query(query, [token, expiry]);
+  }
 
-  const insertedData = rows[0];
-  insertedData.expiry = parseInt(insertedData.expiry, 10);
+  const insertedToken = await MraTokenBlacklist.create({
+    token: token.trim(),
+    expiry
+  });
 
-  return insertedData;
+  insertedToken.expiry = parseInt(insertedToken.expiry, 10);
+  return insertedToken;
 };
 
 /**
@@ -48,10 +51,12 @@ const insertBlacklistToken = async (tokenData) => {
 const isTokenBlacklisted = async (token) => {
   if (!token || !token.trim())
     return true;
-  const query = `SELECT 1 FROM ${tokensTable} WHERE token = $1`;
-  const { rows } = await pool.query(query, [token]);
-
-  return rows.length > 0;
+  const tokenCount = await MraTokenBlacklist.count({
+    where: {
+      token: token.trim(),
+    },
+  });
+  return tokenCount > 0;
 };
 
 /**
@@ -62,9 +67,14 @@ const isTokenBlacklisted = async (token) => {
  */
 const insertAuditLog = async (log) => {
   const { methodRoute, req, comments, ipAddress, userId } = log;
-  const query = `INSERT INTO ${logsTable} (method_route, req, ip_address, comments, user_id) VALUES ($1, $2, $3, COALESCE($4, ''), $5) RETURNING *`;
-  const { rows } = await pool.query(query, [methodRoute, req, ipAddress, comments, userId]);
-  return rows[0];
+  const insertedLog = await MraAuditLogsAuthentication.create({
+    method_route: methodRoute,
+    req,
+    ip_address: ipAddress,
+    comments: comments || '',
+    user_id: userId,
+  });
+  return insertedLog;
 };
 
 /**
@@ -77,9 +87,16 @@ const updateAuditLog = async (log) => {
   const { logId, comments } = log;
   if (isNaN(logId))
     return null;
-  const query = `UPDATE ${logsTable} SET comments = $1 WHERE log_id = $2 RETURNING log_id, comments`;
-  const { rows } = await pool.query(query, [comments, logId]);
-  return rows[0];
+  const [updateCount, updatedLogs] = await MraAuditLogsAuthentication.update({
+    comments: comments,
+  }, {
+    where: {
+      log_id: logId
+    },
+    returning: true,
+  });
+
+  return updateCount === 0 ? null : updatedLogs[0];
 };
 
 /**
@@ -91,9 +108,16 @@ const updateAuditLog = async (log) => {
 const deleteAuditLog = async (logId) => {
   if (isNaN(logId))
     return { success: false };
-  const query = `DELETE FROM ${logsTable} WHERE method_route LIKE 'TEST %' AND log_id = $1`;
-  const result = await pool.query(query, [logId]);
-  return { success: result.rowCount > 0 };
+
+  const deleteCount = await MraAuditLogsAuthentication.destroy({
+    where: {
+      method_route: {
+        [Sequelize.Op.like]: 'TEST %',
+      },
+      log_id: logId
+    }
+  });
+  return { success: deleteCount > 0 };
 };
 
 
@@ -106,13 +130,19 @@ const deleteAuditLog = async (logId) => {
 const deleteUserByUsername = async (username) => {
   if (!username || !username.trim())
     return null;
-  const query = `DELETE FROM ${usersTable} WHERE username = $1 RETURNING *`; // SQL query to delete user
-  const { rows } = await pool.query(query, [username.trim()]);
 
-  if (rows.length === 0) {
-    return null; // User not found or not deleted
+  const user = await MraUsers.findOne({ where: { username: username.trim() } });
+  if (!user) {
+    return null;
   }
-  return rows[0]; // Return the deleted user data
+
+  await MraUsers.destroy({
+    where: {
+      username: username.trim(),
+    },
+  });
+
+  return user;
 };
 
 /**
@@ -121,30 +151,19 @@ const deleteUserByUsername = async (username) => {
  * @param {string} username - The username of the user to retrieve.
  * @returns {Object|null} The user object if found, null otherwise.
  */
-/*
-const getUserByUsername = async (username) => {
-  if (!username || !username.trim())
-    return null;
-  const query = `SELECT * FROM ${usersTable} WHERE username = $1`;
-  const { rows } = await pool.query(query, [username.trim()]);
-
-  if (rows.length === 0) {
-    return null; // User not found
-  }
-
-  return rows[0]; // Return the user data
-};
-*/
 const getUserByUsername = async (username) => {
   if (!username || !username.trim()) {
     return null;
   }
+  try {
+    const user = await MraUsers.findOne({
+      where: { username: username.trim() }
+    });
 
-  const user = await mra_users.findOne({
-    where: { username: username.trim() }
-  });
-
-  return user; // This will return the user instance or null if not found
+    return user; // This will return the user instance or null if not found
+  } catch (error) {
+    console.error('Error retrieving user by username:', error);
+  }
 };
 
 /**
@@ -460,7 +479,7 @@ async function getUserDomains(username) {
     WHERE ptype = 'g' AND v0 = $1
   `;
   const { rows } = await pool.query(query, [username]);
-  
+
   // Map over the rows and return an array of the v2 values
   const domains = rows.map(row => row.v2);
   return domains;
