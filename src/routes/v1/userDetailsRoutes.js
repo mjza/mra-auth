@@ -88,22 +88,22 @@ const secretProperties = [
  *         $ref: '#/components/responses/ServerInternalError'
  */
 router.get('/user_details', apiRequestLimiter, [authenticateToken],
-//[authorize({ dom: '0', obj: process.env.USER_DETAILS_TABLE, act: 'R', attrs: {userId: 'self'}})], 
-async (req, res) => {
-  try {
-    const userId = req.user.userId; // Adjust depending on how the user ID is stored in the JWT
-    const userDetails = await db.getUserDetails(userId);
+  //[authorize({ dom: '0', obj: process.env.USER_DETAILS_TABLE, act: 'R', attrs: {userId: 'self'}})], 
+  async (req, res) => {
+    try {
+      const userId = req.user.userId; // Adjust depending on how the user ID is stored in the JWT
+      const userDetails = await db.getUserDetails(userId);
 
-    if (!userDetails) {
-      return res.status(404).json({ message: 'User details not found' });
+      if (!userDetails) {
+        return res.status(404).json({ message: 'User details not found' });
+      }
+      const decrpytedData = decryptObjectItems(toLowerCamelCase(userDetails), secretProperties);
+      return res.json(decrpytedData);
+    } catch (err) {
+      recordErrorLog(req, err);
+      return res.status(500).json({ message: err.message });
     }
-
-    return res.json(decryptObjectItems(toLowerCamelCase(userDetails), secretProperties));
-  } catch (err) {
-    recordErrorLog(req, err);
-    return res.status(500).json({ message: err.message });
-  }
-});
+  });
 
 /**
  * @swagger
@@ -333,12 +333,21 @@ router.post('/user_details', apiRequestLimiter,
     } catch (err) {
       recordErrorLog(req, err);
 
-      if (err.code === '23505') { // PostgreSQL foreign key violation error code
+      const errorCode = err.original?.code;
+
+      if (errorCode === '23505') { // PostgreSQL foreign key violation error code
         return res.status(422).json({ message: 'A record exists for the current user in the user details table.', details: err.message });
       }
 
-      if (err.code === '23503') { // PostgreSQL foreign key violation error code
+      if (errorCode === '23503') { // PostgreSQL foreign key violation error code
         return res.status(422).json({ message: 'Invalid foreign key value.', details: err.message });
+      }
+
+      // Handle other types of errors (e.g., validation errors from Sequelize)
+      if (err.name === 'SequelizeValidationError') {
+        // Map through err.errors for detailed messages or handle collectively
+        const message = 'Validation error occurred.';
+        return res.status(400).json({ message, details: err.errors.map(e => e.message) });
       }
 
       return res.status(500).json({ message: err.message });

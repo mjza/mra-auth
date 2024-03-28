@@ -32,7 +32,7 @@ describe('/user_details endpoints', () => {
 
     // Ensure the pool is closed after all tests
     afterAll(async () => {
-        //await db.deleteUserByUsername(mockUser.username);
+        await db.deleteUserByUsername(mockUser.username);
         await closeApp();
     });
 
@@ -79,7 +79,7 @@ describe('/user_details endpoints', () => {
             expect(res.body.middleName).toBe(userDetails.middleName);
             expect(res.body.lastName).toBe(userDetails.lastName);
             expect(res.body.genderId).toBe(userDetails.genderId);
-            expect(res.body.genderName).toBe('Female');
+            expect(res.body.gender.genderName).toBe('Female');
             expect(res.body.dateOfBirth).toBe(userDetails.dateOfBirth);
             expect(res.body.profilePictureUrl).toBe(userDetails.profilePictureUrl);
             expect(res.body.profilePictureThumbnailUrl).toBe(userDetails.profilePictureThumbnailUrl);
@@ -139,7 +139,7 @@ describe('/user_details endpoints', () => {
             expect(res.body.middleName).toBe(userDetails.middleName);
             expect(res.body.lastName).toBe(userDetails.lastName);
             expect(res.body.genderId).toBe(userDetails.genderId);
-            expect(res.body.genderName).toBe('Female');
+            expect(res.body.gender.genderName).toBe('Female');
             expect(res.body.dateOfBirth).toBe(userDetails.dateOfBirth);
             expect(res.body.profilePictureUrl).toBe(userDetails.profilePictureUrl);
             expect(res.body.profilePictureThumbnailUrl).toBe(userDetails.profilePictureThumbnailUrl);
@@ -180,7 +180,7 @@ describe('/user_details endpoints', () => {
             expect(res.body.middleName).toBe(userDetails.middleName);
             expect(res.body.lastName).toBe(userDetails.lastName);
             expect(res.body.genderId).toBe(userDetails.genderId);
-            expect(res.body.genderName).toBe('Male');
+            expect(res.body.gender.genderName).toBe('Male');
             expect(res.body.dateOfBirth).toBe(userDetails.dateOfBirth);
             expect(res.body.profilePictureUrl).toBe(userDetails.profilePictureUrl);
             expect(res.body.profilePictureThumbnailUrl).toBe(userDetails.profilePictureThumbnailUrl);

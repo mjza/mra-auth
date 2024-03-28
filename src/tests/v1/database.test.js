@@ -207,7 +207,7 @@ describe('Test DB functions', () => {
     describe('generateResetToken', () => {
         it('should not  generate a password_reset token for wrong username', async () => {
             const resetResult = await db.generateResetToken(insertedUser.username + 'x');
-            expect(resetResult).toBeUndefined();
+            expect(resetResult).toBeNull();
         });
 
         it('should generate a password_reset token', async () => {
@@ -268,7 +268,8 @@ describe('Test DB functions', () => {
             expect(insertedUserDetails.middle_name).toBe(userDetails.middleName);
             expect(insertedUserDetails.last_name).toBe(userDetails.lastName);
             expect(insertedUserDetails.gender_id).toBe(userDetails.genderId);
-            expect(insertedUserDetails.gender_name).toBe('Female');
+            expect(insertedUserDetails.gender.gender_id).toBe(userDetails.genderId);
+            expect(insertedUserDetails.gender.gender_name).toBe('Female');
             expect(insertedUserDetails.date_of_birth).toBe(userDetails.dateOfBirth);
             expect(insertedUserDetails.profile_picture_url).toBe(userDetails.profilePictureUrl);
             expect(insertedUserDetails.profile_picture_thumbnail_url).toBe(userDetails.profilePictureThumbnailUrl);
@@ -284,7 +285,8 @@ describe('Test DB functions', () => {
             expect(details.middle_name).toBe(userDetails.middleName);
             expect(details.last_name).toBe(userDetails.lastName);
             expect(details.gender_id).toBe(userDetails.genderId);
-            expect(details.gender_name).toBe('Female');
+            expect(details.gender.gender_id).toBe(userDetails.genderId);
+            expect(details.gender.gender_name).toBe('Female');
             expect(details.date_of_birth).toBe(userDetails.dateOfBirth);
             expect(details.profile_picture_url).toBe(userDetails.profilePictureUrl);
             expect(details.profile_picture_thumbnail_url).toBe(userDetails.profilePictureThumbnailUrl);
@@ -313,7 +315,8 @@ describe('Test DB functions', () => {
             expect(updated.middle_name).toBe(updatedDetails.middleName);
             expect(updated.last_name).toBe(updatedDetails.lastName);
             expect(updated.gender_id).toBe(updatedDetails.genderId);
-            expect(updated.gender_name).toBe('Male');
+            expect(updated.gender.gender_id).toBe(updatedDetails.genderId);
+            expect(updated.gender.gender_name).toBe('Male');
             expect(updated.date_of_birth).toBe(updatedDetails.dateOfBirth);
             expect(updated.profile_picture_url).toBe(updatedDetails.profilePictureUrl);
             expect(updated.profile_picture_thumbnail_url).toBe(updatedDetails.profilePictureThumbnailUrl);

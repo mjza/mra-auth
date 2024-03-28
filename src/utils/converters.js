@@ -50,21 +50,37 @@ const decrypt = (base64String) => {
  * @param {Buffer} [iv] - The initialization vector for encryption. If not provided, a random 16-byte IV is generated.
  * @returns {Object} A new object with all string values encrypted. Non-string values are copied as is.
  */
-const encryptObjectItems = (obj, propertiesToEncrypt, iv) => {
-    const convertedObject = {};
-
-    for (let key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            if (typeof obj[key] === 'string' && (!propertiesToEncrypt || propertiesToEncrypt.includes(key))) {
-                convertedObject[key] = encrypt(obj[key], iv);
-            } else {
-                convertedObject[key] = obj[key];
+function encryptObjectItems(obj, propertiesToEncrypt, iv) {
+    // Check if the input is an array and handle it accordingly
+    if (Array.isArray(obj)) {
+        return obj.map(item => encryptObjectItems(item, propertiesToEncrypt, iv));
+    }
+    // Proceed if the input is an object
+    else if (obj !== null && typeof obj === 'object') {
+        const keys = Object.keys(obj);
+        if (keys.length > 0) {
+            const convertedObject = {};
+            for (let key of keys) {
+                if (obj.hasOwnProperty(key)) {
+                    // Check if the current item should be encrypted
+                    const shouldEncrypt = typeof obj[key] === 'string' && (!propertiesToEncrypt || propertiesToEncrypt.includes(key));
+                    if (shouldEncrypt) {
+                        convertedObject[key] = encrypt(obj[key], iv); // Encrypt the string value
+                    } else {
+                        // Recursively apply to nested objects or arrays, or copy other values as is
+                        convertedObject[key] = encryptObjectItems(obj[key], propertiesToEncrypt, iv);
+                    }
+                }
             }
+            return convertedObject;
+        }
+        else {
+            return obj;
         }
     }
-
-    return convertedObject;
-};
+    // Return non-object and non-array values unchanged
+    return obj;
+}
 
 /**
  * Decrypts all string values within an object that were encrypted using encryptObjectItems.
@@ -73,21 +89,37 @@ const encryptObjectItems = (obj, propertiesToEncrypt, iv) => {
  * @param {string[]} [propertiesToDecrypt] - List of property names to decrypt. If not provided, all string properties are decrypted.
  * @returns {Object} A new object with all string values decrypted. Non-string values are copied as is.
  */
-const decryptObjectItems = (obj, propertiesToDecrypt) => {
-    const convertedObject = {};
-
-    for (let key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            if (typeof obj[key] === 'string' && (!propertiesToDecrypt || propertiesToDecrypt.includes(key))) {
-                convertedObject[key] = decrypt(obj[key]);
-            } else {
-                convertedObject[key] = obj[key];
+function decryptObjectItems(obj, propertiesToDecrypt) {
+    // Check if the input is an array and handle it accordingly
+    if (Array.isArray(obj)) {
+        return obj.map(item => decryptObjectItems(item, propertiesToDecrypt));
+    }
+    // Proceed if the input is an object
+    else if (obj !== null && typeof obj === 'object') {
+        const keys = Object.keys(obj);
+        if (keys.length > 0) {
+            const convertedObject = {};
+            for (let key of keys) {
+                if (obj.hasOwnProperty(key)) {
+                    // Check if the current item should be decrypted
+                    const shouldDecrypt = typeof obj[key] === 'string' && (!propertiesToDecrypt || propertiesToDecrypt.includes(key));
+                    if (shouldDecrypt) {
+                        convertedObject[key] = decrypt(obj[key]); // Decrypt the string value
+                    } else {
+                        // Recursively apply to nested objects or arrays, or copy other values as is
+                        convertedObject[key] = decryptObjectItems(obj[key], propertiesToDecrypt);
+                    }
+                }
             }
+            return convertedObject;
+        }
+        else {
+            return obj;
         }
     }
-
-    return convertedObject;
-};
+    // Return non-object and non-array values unchanged
+    return obj;
+}
 
 /**
  * Converts the keys of an object from snake_case to lowerCamelCase.
@@ -96,16 +128,32 @@ const decryptObjectItems = (obj, propertiesToDecrypt) => {
  * @returns {Object} A new object with all keys in lowerCamelCase.
  */
 const toLowerCamelCase = (obj) => {
-    const convertedObject = {};
+    const convertKey = (key) => key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
 
-    for (let key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            const camelCaseKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
-            convertedObject[camelCaseKey] = obj[key];
+    const processValue = (value) => {
+        // Check if the value is a date object
+        if (value instanceof Date) {
+            return value;
         }
-    }
 
-    return convertedObject;
+        // Check if the value is an array and process each item
+        if (Array.isArray(value)) {
+            return value.map(item => processValue(item));
+        }
+
+        // If the value is an object, convert its keys
+        if (typeof value === 'object' && value !== null) {
+            return toLowerCamelCase(value);
+        }
+
+        // For all other values, return them directly
+        return value;
+    };
+
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+        acc[convertKey(key)] = processValue(value);
+        return acc;
+    }, {});
 };
 
 /**
@@ -129,7 +177,7 @@ const toLowerCamelCase = (obj) => {
  */
 function convertRequestData(req) {
     // Array of properties to hide
-    const forbiddenProperties = ['password', 'token', 'firstName', 'middleName', 'lastName', 'dateOfBirth', 'profilePictureUrl', 'profilePictureThumbnailUrl']; 
+    const forbiddenProperties = ['password', 'token', 'firstName', 'middleName', 'lastName', 'dateOfBirth', 'profilePictureUrl', 'profilePictureThumbnailUrl'];
 
     const requestData = {
         method: req.method,
@@ -152,6 +200,7 @@ function convertRequestData(req) {
     // are multiple objects that reference each other, creating a loop. 
     // JSON.stringify cannot directly serialize objects with circular references because it 
     // would result in an infinite loop.
+    /*
     const getCircularReplacer = () => {
         const seen = new WeakSet();
         return (key, value) => {
@@ -165,7 +214,8 @@ function convertRequestData(req) {
         };
     };
 
-    //return JSON.stringify(requestData, getCircularReplacer(), 4);
+    return JSON.stringify(requestData, getCircularReplacer(), 4);
+    */
     return requestData; // Squelize handles JSON
 }
 
@@ -221,4 +271,4 @@ function hideSensitiveData(obj, forbiddenProperties) {
 }
 
 
-module.exports = { toLowerCamelCase, encrypt, decrypt, encryptObjectItems, decryptObjectItems, convertRequestData};
+module.exports = { toLowerCamelCase, encrypt, decrypt, encryptObjectItems, decryptObjectItems, convertRequestData };

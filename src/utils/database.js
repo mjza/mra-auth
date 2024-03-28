@@ -15,11 +15,9 @@ const pool = new Pool({
   }
 });
 
-const logsTable = process.env.LOGS_TABLE;
 const usersTable = process.env.USERS_TABLE;
 const userDetailsTable = process.env.USER_DETAILS_TABLE;
 const genderTypesTable = process.env.GENDER_TYPES_TABLE;
-const tokensTable = process.env.TOKENS_TABLE;
 
 /**
  * Inserts a new token into the blacklist database.
@@ -257,21 +255,16 @@ const isInactiveUser = async (user) => {
     return false;
 
   // Check if the user and activation code match
-  const checkUserQuery =
-    `SELECT * FROM ${usersTable} 
-        WHERE 
-            confirmation_at IS NULL AND
-            username = $1 AND 
-            activation_code = $2
-    `;
+  const foundUser = await MraUsers.findOne({
+    where: {
+      username: username.trim(),
+      activation_code: activationCode.trim(),
+      confirmation_at: null, // Check if the user hasn't been activated yet
+    }
+  });
 
-  const checkResult = await pool.query(checkUserQuery, [username.trim(), activationCode.trim()]);
-
-  if (checkResult.rows.length > 0) {
-    return true;
-  } else {
-    return false;
-  }
+  // Return true if a matching user was found, indicating they are inactive, otherwise false
+  return !!foundUser;
 };
 
 /**
@@ -284,24 +277,20 @@ const isActiveUser = async (username) => {
   if (!username || !username.trim())
     return false;
 
-  // Check if the user and activation code match
-  const checkUserQuery =
-    `SELECT * FROM ${usersTable} 
-        WHERE 
-            confirmation_at IS NOT NULL AND
-            activation_code IS NULL AND
-            deleted_at IS NULL AND
-	          suspended_at IS NULL AND
-            username = $1            
-    `;
+  const foundUser = await MraUsers.findOne({
+    where: {
+      username: username.trim(),
+      confirmation_at: {
+        [Sequelize.Op.ne]: null, // confirmation_at IS NOT NULL
+      },
+      activation_code: null, // activation_code IS NULL
+      deleted_at: null, // deleted_at IS NULL
+      suspended_at: null, // suspended_at IS NULL
+    }
+  });
 
-  const checkResult = await pool.query(checkUserQuery, [username.trim()]);
-
-  if (checkResult.rows.length > 0) {
-    return true;
-  } else {
-    return false;
-  }
+  // Return true if a matching user was found, indicating they are active, otherwise false
+  return !!foundUser;
 };
 
 /**
@@ -314,25 +303,32 @@ const isActivationCodeValid = async (user) => {
   const { username, activationCode } = user;
   if (!username || !username.trim() || !activationCode || !activationCode.trim())
     return false;
-  // Check if the user and activation code match
-  const checkUserQuery =
-    `SELECT * FROM ${usersTable} 
-        WHERE
-            created_at >= (CURRENT_TIMESTAMP - interval '5 days') AND
-            created_at <= CURRENT_TIMESTAMP AND 
-            confirmation_at IS NULL AND
-            username = $1 AND 
-            activation_code = $2
-    `;
 
-  const checkResult = await pool.query(checkUserQuery, [username.trim(), activationCode.trim()]);
+  // Check if the user and activation code match using Sequelize model
+  const foundUser = await MraUsers.findOne({
+    where: {
+      username: username.trim(),
+      activation_code: activationCode.trim(),
+      confirmation_at: null,
+      created_at: {
+        // Checking if the created_at is within the last 5 days
+        [Sequelize.Op.gte]: Sequelize.literal("(now() AT TIME ZONE 'UTC') - INTERVAL '5 days'"),
+        [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')"),
+      },
+    }
+  });
 
-  if (checkResult.rows.length > 0) {
+  if (foundUser) {
+    // Update confirmation_at to current timestamp
+    await foundUser.update({
+      confirmation_at: Sequelize.literal("(now() AT TIME ZONE 'UTC')"),
+    });
     return true;
   } else {
     return false;
   }
 };
+
 
 /**
  * Activates a user in the database based on the provided user information.
@@ -345,10 +341,6 @@ const activateUser = async (user) => {
   if (!username || !username.trim() || !activationCode || !activationCode.trim())
     return false;
 
-  // Calculate the date 5 days ago
-  const fiveDaysAgo = new Date();
-  fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-
   // Update the user if the activation code matches and is within the valid timeframe
   const [updateCount] = await MraUsers.update(
     { activation_code: null }, // Set activation_code to NULL
@@ -357,8 +349,8 @@ const activateUser = async (user) => {
         username: username.trim(),
         activation_code: activationCode.trim(),
         created_at: {
-          [Sequelize.Op.gte]: fiveDaysAgo, // created_at >= 5 days ago
-          [Sequelize.Op.lte]: new Date()   // created_at <= CURRENT_TIMESTAMP
+          [Sequelize.Op.gte]: Sequelize.literal("(now() AT TIME ZONE 'UTC') - INTERVAL '5 days'"), // created_at >= 5 days ago
+          [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')"),   // created_at <= CURRENT_TIMESTAMP
         },
         confirmation_at: null, // confirmation_at IS NULL
       },
@@ -381,9 +373,23 @@ const activateUser = async (user) => {
  *                                 user_id, username, email, and reset_token. Returns null if no user is found.
  */
 const generateResetToken = async (username) => {
-  const query = `UPDATE ${usersTable} SET reset_token = '1' WHERE username = $1 RETURNING user_id, username, email, reset_token`;
-  const { rows } = await pool.query(query, [username]);
-  return rows && rows[0];
+  // Generate a unique reset token, for example, using a library like uuid
+  // Here we're using a static value for demonstration purposes
+  const resetToken = '1'; // Consider using a more secure token generation strategy
+
+  // Update the user's reset_token field
+  await MraUsers.update(
+    { reset_token: resetToken },
+    { where: { username: username }, returning: true } // 'returning: true' is specific to PostgreSQL
+  );
+
+  // Retrieve the updated user details
+  const user = await MraUsers.findOne({
+    where: { username: username },
+    attributes: ['user_id', 'username', 'email', 'reset_token'], // Specify the fields to retrieve
+  });
+
+  return user && user.get({ plain: true });
 }
 
 /**
@@ -405,17 +411,33 @@ const resetPassword = async (user) => {
   const { username, resetToken, passwordHash } = user;
   if (!username || !username.trim() || !resetToken || !resetToken.trim() || !passwordHash || !passwordHash.trim())
     return false;
-  const query = `UPDATE ${usersTable} 
-                 SET reset_token = null, password_hash = $1 
-                 WHERE 
-                    reset_token_created_at >= (CURRENT_TIMESTAMP - interval '5 days') AND
-                    reset_token_created_at <= CURRENT_TIMESTAMP AND
-                    username = $2 AND 
-                    reset_token = $3 
-                 RETURNING *`;
-  const { rows } = await pool.query(query, [passwordHash.trim(), username.trim(), resetToken.trim()]);
-  return rows && rows.length > 0;
+
+  // Use Sequelize model to update the user
+  const [updateCount] = await MraUsers.update(
+    {
+      reset_token: null,
+      password_hash: passwordHash.trim()
+    },
+    {
+      where: {
+        username: username.trim(),
+        reset_token: resetToken.trim(),
+        reset_token_created_at: {
+          [Sequelize.Op.gte]: Sequelize.literal("(now() AT TIME ZONE 'UTC') - INTERVAL '5 days'"), // created_at >= 5 days ago
+          [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')"),   // created_at <= CURRENT_TIMESTAMP
+        },
+      },
+      returning: true, // Note: 'returning: true' is supported by PostgreSQL
+    }
+  );
+
+  // The `returning: true` option in a Sequelize `update` (or `create`, `destroy`) call is a feature specific 
+  // to PostgreSQL that instructs Sequelize to return the affected rows after the execution of the operation. 
+  // In the context of an `UPDATE` operation, this means Sequelize will return the rows that were updated by the query.
+
+  return updateCount > 0; // Returns true if at least one row was updated
 };
+
 
 /**
  * Retrieves user details from the database based on the provided userId.
@@ -426,14 +448,18 @@ const resetPassword = async (user) => {
 async function getUserDetails(userId) {
   if (isNaN(userId))
     return null;
-  const query = `
-    SELECT u.user_id, u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url, u.creator, u.created_at, u.updator, u.updated_at
-    FROM ${userDetailsTable} u 
-    INNER JOIN ${genderTypesTable} g ON u.gender_id = g.gender_id
-    WHERE u.user_id = $1;
-  `;
-  const { rows } = await pool.query(query, [userId]);
-  return undefined === rows[0] ? null : rows[0];
+
+  const userDetails = await MraUserDetails.findOne({
+    where: { user_id: userId },
+    include: [{
+      model: MraGenderTypes,
+      as: "gender",
+      attributes: ['gender_id', 'gender_name'],
+    }],
+    attributes: ['user_id', 'first_name', 'middle_name', 'last_name', 'gender_id', 'date_of_birth', 'profile_picture_url', 'profile_picture_thumbnail_url', 'creator', 'created_at', 'updator', 'updated_at'],
+  });
+
+  return userDetails && userDetails.get({ plain: true });
 }
 
 /**
@@ -443,19 +469,25 @@ async function getUserDetails(userId) {
  * @returns {Object} The created user details object.
  */
 async function createUserDetails(userDetails) {
-  const query = `
-  WITH updated AS (
-    INSERT INTO ${userDetailsTable} (user_id, first_name, middle_name, last_name, gender_id, date_of_birth, profile_picture_url, profile_picture_thumbnail_url, display_name, public_profile_picture_thumbnail_url, creator)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-    RETURNING user_id, first_name, middle_name, last_name, gender_id, date_of_birth as date_of_birth, profile_picture_url, profile_picture_thumbnail_url, display_name, public_profile_picture_thumbnail_url, creator, created_at, updator, updated_at
-    )
-  SELECT u.user_id, u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url, u.display_name, u.public_profile_picture_thumbnail_url, u.creator, u.created_at, u.updator, u.updated_at
-  FROM updated u
-  INNER JOIN ${genderTypesTable} g ON u.gender_id = g.gender_id;
-  `;
-  const values = [userDetails.userId, userDetails.firstName, userDetails.middleName, userDetails.lastName, userDetails.genderId, userDetails.dateOfBirth, userDetails.profilePictureUrl, userDetails.profilePictureThumbnailUrl, userDetails.displayName, userDetails.publicProfilePictureThumbnailUrl, userDetails.creator];
-  const { rows } = await pool.query(query, values);
-  return rows[0];
+  const createdUser = await MraUserDetails.create({
+    user_id: userDetails.userId,
+    first_name: userDetails.firstName,
+    middle_name: userDetails.middleName,
+    last_name: userDetails.lastName,
+    gender_id: userDetails.genderId,
+    date_of_birth: userDetails.dateOfBirth,
+    profile_picture_url: userDetails.profilePictureUrl,
+    profile_picture_thumbnail_url: userDetails.profilePictureThumbnailUrl,
+    display_name: userDetails.displayName,
+    public_profile_picture_thumbnail_url: userDetails.publicProfilePictureThumbnailUrl,
+    creator: userDetails.creator
+  });
+
+  if (createdUser && createdUser.user_id) {
+    return await getUserDetails(userDetails.userId);
+  } else {
+    return null;
+  }
 }
 
 /**
@@ -466,20 +498,23 @@ async function createUserDetails(userDetails) {
  * @returns {Object} The updated user details object.
  */
 async function updateUserDetails(userId, userDetails) {
-  const query = `
-  WITH updated AS (
-      UPDATE ${userDetailsTable}
-      SET first_name = $1, middle_name = $2, last_name = $3, gender_id = $4, date_of_birth = $5, profile_picture_url = $6, profile_picture_thumbnail_url = $7, display_name = $8, public_profile_picture_thumbnail_url = $9, updator = $10
-      WHERE user_id = $11
-      RETURNING user_id, first_name, middle_name, last_name, gender_id, date_of_birth as date_of_birth, profile_picture_url, profile_picture_thumbnail_url, display_name, public_profile_picture_thumbnail_url, creator, created_at, updator, updated_at
-    )
-  SELECT u.user_id, u.first_name, u.middle_name, u.last_name, u.gender_id, g.gender_name, u.date_of_birth, u.profile_picture_url, u.profile_picture_thumbnail_url, u.display_name, u.public_profile_picture_thumbnail_url, u.creator, u.created_at, u.updator, u.updated_at
-  FROM updated u
-  INNER JOIN ${genderTypesTable} g ON u.gender_id = g.gender_id;  
-  `;
-  const values = [userDetails.firstName, userDetails.middleName, userDetails.lastName, userDetails.genderId, userDetails.dateOfBirth, userDetails.profilePictureUrl, userDetails.profilePictureThumbnailUrl, userDetails.displayName, userDetails.publicProfilePictureThumbnailUrl, userId, userId];
-  const { rows } = await pool.query(query, values);
-  return rows[0];
+  await MraUserDetails.update({
+    first_name: userDetails.firstName,
+    middle_name: userDetails.middleName,
+    last_name: userDetails.lastName,
+    gender_id: userDetails.genderId,
+    date_of_birth: userDetails.dateOfBirth,
+    profile_picture_url: userDetails.profilePictureUrl,
+    profile_picture_thumbnail_url: userDetails.profilePictureThumbnailUrl,
+    display_name: userDetails.displayName,
+    public_profile_picture_thumbnail_url: userDetails.publicProfilePictureThumbnailUrl,
+    updator: userDetails.updator
+  }, {
+    where: { user_id: userId }
+  });
+
+  const updatedUserDetails = await getUserDetails(userId);
+  return updatedUserDetails;
 }
 
 /**
