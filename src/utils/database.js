@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const { mra_users, mra_gender_types, mra_user_details, mra_token_blacklist, mra_audit_logs_authentication } = require('../models');
 
 const { Pool } = require('pg');
 
@@ -140,7 +140,7 @@ const getUserByUsername = async (username) => {
     return null;
   }
 
-  const user = await User.findOne({
+  const user = await mra_users.findOne({
     where: { username: username.trim() }
   });
 
