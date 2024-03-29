@@ -26,7 +26,10 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   host: process.env.DB_HOST,
   dialect: 'postgres',
   dialectOptions: {
-    ssl:  process.env.NODE_ENV !== 'development',
+    ssl: process.env.NODE_ENV !== 'development' ? {
+      require: true,
+      rejectUnauthorized: false // Necessary to accept self-signed certificates
+    } : false,
   },
   logging: process.env.NODE_ENV === 'development' ? logToFileStream : false,
 });
