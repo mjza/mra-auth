@@ -28,7 +28,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   dialectOptions: {
     ssl: process.env.NODE_ENV !== 'development' ? {
       require: true,
-      rejectUnauthorized: false // Necessary to accept self-signed certificates
+      rejectUnauthorized: false
     } : false,
   },
   logging: process.env.NODE_ENV === 'development' ? logToFileStream : false,

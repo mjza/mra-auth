@@ -46,10 +46,14 @@ async function initCasbin() {
   adapter = await TypeORMAdapter.newAdapter({
     type: 'postgres',
     host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    port: parseInt(process.env.DB_PORT, 10),
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+    database: process.env.DB_NAME,
+    ssl: process.env.NODE_ENV !== 'development' ? {
+      require: true,
+      rejectUnauthorized: false,
+    } : false,
   });
 
   const enforcer = await newEnforcer('src/config/model.conf', adapter);
