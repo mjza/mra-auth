@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { recordErrorLog } = require('./auditLogMiddleware');
+const { updateEventLog } = require('../../utils/logger');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { authenticateToken } = require('../../utils/validations');
 const { listRolesForUserInDomains } = require('../../casbin/casbinSingleton');
@@ -29,7 +29,7 @@ const validateAuthorizationRequest = [
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            recordErrorLog(req, errors);
+            updateEventLog(req, errors);
             return res.status(400).json({ errors: errors.array() });
         }
         next();
@@ -110,14 +110,14 @@ async function authorize(req, res, next) {
 
         if (!authorized) {
             let  message = 'User is not authorized.';
-            recordErrorLog(req, { error: message });
+            updateEventLog(req, { error: message });
             return res.status(403).json({ message });
         }
         next();
     } catch (error) {
         let message = 'An error occurred while processing your request.'
-        recordErrorLog(req, message);
-        recordErrorLog(req, error);
+        updateEventLog(req, message);
+        updateEventLog(req, error);
         return res.status(500).json({ message });
     }
 }

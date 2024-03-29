@@ -1,10 +1,10 @@
-const db = require('./database');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { Agent } = require('https');
 const { promisify } = require('util');
 const jwtVerify = promisify(jwt.verify);
-const { recordErrorLog } = require('../routes/v1/auditLogMiddleware');
+const db = require('./database');
+const { updateEventLog } = require('./logger');
 
 /**
  * @swagger
@@ -186,7 +186,7 @@ const authenticateToken = async (req, res, next) => {
         req.user = {userId: tokenData.userId, username: tokenData.username, email: tokenData.email}; 
         next(); // Proceed to the next middleware or route handler
     } catch (err) {
-        recordErrorLog(req, { error: 'Error in validating auth token.', details: err});
+        updateEventLog(req, { error: 'Error in validating auth token.', details: err});
         // Handle error (token invalid or other errors)
         return res.status(401).json({ message: 'Provided JWT token is invalid.' });
     }

@@ -4,7 +4,7 @@ const db = require('../../utils/database');
 const { userMustExist, isValidUrl } = require('../../utils/validations');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { generateDecryptedObject } = require('../../utils/generators');
-const { recordErrorLog } = require('./auditLogMiddleware');
+const { updateEventLog } = require('../../utils/logger');
 
 const router = express.Router();
 
@@ -150,7 +150,7 @@ router.get('/activate', apiRequestLimiter,
 
       throw new Exception('Couldn\'t activate a user while the activation link was valid.');
     } catch (err) {
-      recordErrorLog(req, err);
+      updateEventLog(req, err);
       return res.status(500).json({ message: err.message });
     }
   });

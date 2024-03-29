@@ -3,7 +3,7 @@ const { body, validationResult } = require('express-validator');
 const db = require('../../utils/database');
 const { generateResetPasswordLink, generateDecryptedObject, generatePasswordHash } = require('../../utils/generators');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
-const { recordErrorLog } = require('./auditLogMiddleware');
+const { updateEventLog } = require('../../utils/logger');
 const { sendResetPasswordEmail } = require('../../emails/v1/emailService');
 const { userMustExist, testUrlAccessibility } = require('../../utils/validations');
 
@@ -98,7 +98,7 @@ router.post('/reset_token', apiRequestLimiter, [
 
         return res.status(200).json({ message: 'If an account with the provided username exists, a reset token has been successfully generated and sent to the associated email address.' });
     } catch (err) {
-        recordErrorLog(req, err);
+        updateEventLog(req, err);
         // handle error, maybe record error log
         return res.status(500).json({ message: err.message });
     }
@@ -228,7 +228,7 @@ router.put('/reset_password', apiRequestLimiter,
                 return res.status(417).json({ message: 'Could not reset password.' });
             }
         } catch (err) {
-            recordErrorLog(req, err);
+            updateEventLog(req, err);
             return res.status(500).json({ message: err.message });
         }
     });

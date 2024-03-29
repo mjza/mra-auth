@@ -3,7 +3,7 @@ const { query, validationResult } = require('express-validator');
 const { sendEmailWithUsernames } = require('../../emails/v1/emailService');
 const db = require('../../utils/database');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
-const { recordErrorLog } = require('./auditLogMiddleware');
+const { updateEventLog } = require('../../utils/logger');
 const router = express.Router();
 
 /**
@@ -86,7 +86,7 @@ router.get('/usernames', apiRequestLimiter,
       }
       return res.status(200).json({ message: 'If there are any usernames associated with the provided email address, a list of them has been sent to that email address.' });
     } catch (err) {
-      recordErrorLog(req, err);
+      updateEventLog(req, err);
       return res.status(500).json({ message: 'Internal server error.' });
     }
 });

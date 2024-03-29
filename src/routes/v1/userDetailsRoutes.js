@@ -4,7 +4,7 @@ const { authenticateToken } = require('../../utils/validations');
 const { toLowerCamelCase, encryptObjectItems, decryptObjectItems } = require('../../utils/converters');
 const db = require('../../utils/database');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
-const { recordErrorLog } = require('./auditLogMiddleware');
+const { updateEventLog } = require('../../utils/logger');
 const moment = require('moment');
 const router = express.Router();
 
@@ -105,7 +105,7 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken],
       const decrpytedData = decryptObjectItems(toLowerCamelCase(userDetails), secretProperties);
       return res.json(decrpytedData);
     } catch (err) {
-      recordErrorLog(req, err);
+      updateEventLog(req, err);
       return res.status(500).json({ message: err.message });
     }
   });
@@ -341,7 +341,7 @@ router.post('/user_details', apiRequestLimiter,
       const createdUserDetails = await db.createUserDetails(encryptObjectItems(userDetails, secretProperties));
       return res.status(201).json(decryptObjectItems(toLowerCamelCase(createdUserDetails), secretProperties));
     } catch (err) {
-      recordErrorLog(req, err);
+      updateEventLog(req, err);
 
       const errorCode = err.original?.code;
 
@@ -606,7 +606,7 @@ router.put('/user_details/:userId', apiRequestLimiter,
 
       return res.status(200).json(decryptObjectItems(toLowerCamelCase(updatedUserDetails), secretProperties));
     } catch (err) {
-      recordErrorLog(req, err);
+      updateEventLog(req, err);
 
       if (err.code === '23503') { // PostgreSQL foreign key violation error code
         return res.status(422).json({ message: 'Invalid foreign key value.', details: err.message });

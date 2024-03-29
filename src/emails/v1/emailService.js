@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const sgMail = require('@sendgrid/mail');
-const { recordErrorLog } = require('../../routes/v1/auditLogMiddleware');
+const { updateEventLog } = require('../../utils/logger');
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -26,11 +26,11 @@ const sendEmail = async (req, email, subject, htmlContent) => {
         if(email.endsWith('@example.com'))
             return;
         await sgMail.send(msg);
-        recordErrorLog(req, { success: 'Email sent successfully to ' + email});
+        updateEventLog(req, { success: 'Email sent successfully to ' + email});
     } catch (err) {
-        recordErrorLog(req, { error: 'Error sending email to ' + email});
-        recordErrorLog(req, msg);
-        recordErrorLog(req, err);
+        updateEventLog(req, { error: 'Error sending email to ' + email});
+        updateEventLog(req, msg);
+        updateEventLog(req, err);
         throw err;
     }
 };
@@ -69,10 +69,10 @@ const sendVerificationEmail = async (req, username, userEmail, activationLink) =
     // Send the email
     try {
         await sendEmail(req, userEmail, 'Verify Your Email', emailTemplate);
-        recordErrorLog(req, { success: 'Verification email sent successfully for ' + username});
+        updateEventLog(req, { success: 'Verification email sent successfully for ' + username});
     } catch (err) {
-        recordErrorLog(req, { error: 'Error sending verification email.'});
-        recordErrorLog(req, err);
+        updateEventLog(req, { error: 'Error sending verification email.'});
+        updateEventLog(req, err);
         throw err;
     }
 };
@@ -120,10 +120,10 @@ const sendEmailWithUsernames = async (req, users, userEmail) => {
     // Send the email
     try {
         await sendEmail(req, userEmail, 'List of your accounts', emailTemplate);
-        recordErrorLog(req, 'List of emails sent successfully for ' + userEmail);
+        updateEventLog(req, 'List of emails sent successfully for ' + userEmail);
     } catch (err) {
-        recordErrorLog(req, { error: 'Error sending usernames email.'});
-        recordErrorLog(req, err);
+        updateEventLog(req, { error: 'Error sending usernames email.'});
+        updateEventLog(req, err);
         throw err;
     }
 };
@@ -162,10 +162,10 @@ const sendResetPasswordEmail = async (req, username, userEmail, resetPasswordLin
     // Send the email
     try {
         await sendEmail(req, userEmail, 'Reset Your password', emailTemplate);
-        recordErrorLog(req, { success: 'Reset password email sent successfully for ' + username});
+        updateEventLog(req, { success: 'Reset password email sent successfully for ' + username});
     } catch (err) {
-        recordErrorLog(req, { error: 'Error sending reset password email.'});
-        recordErrorLog(req, err);
+        updateEventLog(req, { error: 'Error sending reset password email.'});
+        updateEventLog(req, err);
         throw err;
     }
 };

@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
 const { generateAuthToken, parseJwt } = require('../../utils/generators');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
-const { recordErrorLog } = require('./auditLogMiddleware');
+const { updateEventLog } = require('../../utils/logger');
 const { authenticateToken } = require('../../utils/validations');
 const router = express.Router();
 
@@ -165,7 +165,7 @@ router.post('/login', apiRequestLimiter,
 
       throw new Exception("The login method has a logical error.");
     } catch (err) {
-      recordErrorLog(req, err);
+      updateEventLog(req, err);
       return res.status(500).json({ message: err.message });
     }
   });
@@ -215,7 +215,7 @@ router.post('/logout', apiRequestLimiter, [authenticateToken], async (req, res) 
 
     return res.status(200).json({ message: 'Successfully logged out.' });
   } catch (err) {
-    recordErrorLog(req, err);
+    updateEventLog(req, err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -263,7 +263,7 @@ router.post('/verify_token', apiRequestLimiter, [authenticateToken], async (req,
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
     return res.status(200).json(parseJwt(token));
   } catch (err) {
-    recordErrorLog(req, err);
+    updateEventLog(req, err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -316,7 +316,7 @@ router.post('/refresh_token', apiRequestLimiter, [authenticateToken], async (req
 
     return res.status(200).json({ token: newToken, exp: newTokenData.exp, userId: newTokenData.userId });
   } catch (err) {
-    recordErrorLog(req, err);
+    updateEventLog(req, err);
     return res.status(500).json({ message: err.message });
   }
 });

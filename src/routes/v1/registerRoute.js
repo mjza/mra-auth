@@ -5,7 +5,7 @@ const { sendVerificationEmail } = require('../../emails/v1/emailService');
 const { userMustNotExist } = require('../../utils/validations');
 const { createAccountLimiter } = require('../../utils/rateLimit');
 const { generateActivationLink, generatePasswordHash } = require('../../utils/generators');
-const { recordErrorLog } = require('./auditLogMiddleware');
+const { updateEventLog } = require('../../utils/logger');
 const { addRoleForUserInDomain } = require('../../casbin/casbinSingleton');
 
 const router = express.Router();
@@ -118,7 +118,7 @@ router.post('/register', createAccountLimiter,
       // Send success response
       return res.status(201).json({ message: "User registered successfully", userId: user.user_id });
     } catch (err) {
-      recordErrorLog(req, err);
+      updateEventLog(req, err);
       return res.status(500).json({ message: err.message });
     }
   });
