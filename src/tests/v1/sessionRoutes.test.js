@@ -7,7 +7,6 @@ describe('Test session endpoints', () => {
 
     let app;
     beforeAll(async () => {
-        jest.setTimeout(20000);
         app = await createApp();
     });
 
