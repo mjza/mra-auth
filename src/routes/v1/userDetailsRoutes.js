@@ -57,8 +57,6 @@ const secretProperties = [
  *                   type: string
  *                 genderId:
  *                   type: integer
- *                 genderName:
- *                   type: string
  *                 dateOfBirth:
  *                   type: string
  *                   format: date
@@ -70,6 +68,13 @@ const secretProperties = [
  *                   type: string
  *                 publicProfilePictureThumbnailUrl:
  *                   type: string
+ *                 gender:
+ *                   type: object
+ *                   properties:
+ *                     genderId:
+ *                       type: integer
+ *                     genderName:
+ *                       type: string
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       404:
@@ -160,8 +165,6 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken],
  *                   type: string
  *                 genderId:
  *                   type: integer
- *                 genderName:
- *                   type: string
  *                 dateOfBirth:
  *                   type: string
  *                   format: date
@@ -173,6 +176,13 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken],
  *                   type: string
  *                 publicProfilePictureThumbnailUrl:
  *                   type: string
+ *                 gender:
+ *                   type: object
+ *                   properties:
+ *                     genderId:
+ *                       type: integer
+ *                     genderName:
+ *                       type: string
  *       400:
  *         description: Invalid request parameters.
  *         content:
@@ -428,6 +438,13 @@ router.post('/user_details', apiRequestLimiter,
  *                   type: string
  *                 publicProfilePictureThumbnailUrl:
  *                   type: string
+ *                 gender:
+ *                   type: object
+ *                   properties:
+ *                     genderId:
+ *                       type: integer
+ *                     genderName:
+ *                       type: string
  *       400:
  *         description: UserId is required.
  *         content:
