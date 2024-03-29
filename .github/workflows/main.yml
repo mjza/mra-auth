@@ -28,11 +28,6 @@ jobs:
       COMPANY_NAME: ${{ vars.COMPANY_NAME }}
       COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}
       COMPANY_PHONENUMBER: ${{ vars.COMPANY_PHONENUMBER }}
-      USERS_TABLE: ${{ vars.USERS_TABLE }}
-      USER_DETAILS_TABLE: ${{ vars.USER_DETAILS_TABLE }}
-      GENDER_TYPES_TABLE: ${{ vars.GENDER_TYPES_TABLE }}
-      LOGS_TABLE: ${{ vars.LOGS_TABLE }}
-      TOKENS_TABLE: ${{ vars.TOKENS_TABLE }}
 
     runs-on: ubuntu-latest  
 

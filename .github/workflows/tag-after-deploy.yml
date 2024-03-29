@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-        HEROKU_APP_NAME: mra-authentication
+        HEROKU_APP_NAME: mra-auth
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
     steps:

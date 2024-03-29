@@ -1,5 +1,5 @@
 {
-  "name": "mra-authentication",
+  "name": "mra-auth",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",

@@ -88,7 +88,7 @@ const secretProperties = [
  *         $ref: '#/components/responses/ServerInternalError'
  */
 router.get('/user_details', apiRequestLimiter, [authenticateToken],
-  //[authorize({ dom: '0', obj: process.env.USER_DETAILS_TABLE, act: 'R', attrs: {userId: 'self'}})], 
+  //[authorize({ dom: '0', obj: 'mra_user_details', act: 'R', attrs: {userId: 'self'}})], 
   async (req, res) => {
     try {
       const userId = req.user.userId; // Adjust depending on how the user ID is stored in the JWT
