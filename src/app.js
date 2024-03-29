@@ -38,6 +38,14 @@ async function createApp() {
 
     const app = express();
 
+    // When the Express app is behind a reverse proxy, the X-Forwarded-For header is used to 
+    // identify the original IP address of the client connecting to the app through the proxy. 
+    // However, for security reasons, Express does not trust this header by default. It is needed 
+    // to explicitly enable it by setting trust proxy in the Express configuration. 
+    // Failing to do so can prevent middlewares like express-rate-limit from accurately 
+    // identifying users, leading to potential issues with rate limiting.    
+    app.set('trust proxy', 1);
+    
     // Built-in middleware for parsing JSON and URL-encoded bodies
     app.use(express.json());
     app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
