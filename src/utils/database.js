@@ -1,5 +1,4 @@
-const { Sequelize } = require('sequelize');
-const { MraUsers, MraGenderTypes, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, closeSequelize } = require('../models');
+const { MraUsers, MraGenderTypes, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, closeSequelize, Sequelize } = require('../models');
 
 /**
  * Inserts a new token into the blacklist database.

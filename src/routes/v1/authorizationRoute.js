@@ -141,22 +141,22 @@ async function authorize(req, res, next) {
  *       200:
  *         description: Authorized successfully
  *         content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               user:
- *                 type: object
- *                 properties:
- *                   userId:
- *                     type: integer
- *                     example: 2
- *                   username:
- *                     type: string
- *                     example: "username2"
- *                   email:
- *                     type: string
- *                     example: "username2@example.com"
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: integer
+ *                       example: 2
+ *                     username:
+ *                       type: string
+ *                       example: "username2"
+ *                     email:
+ *                       type: string
+ *                       example: "username2@example.com"
  *                 roles:
  *                   type: array
  *                   items:
