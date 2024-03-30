@@ -105,7 +105,7 @@ async function createApp() {
         servers: [
             {
                 url: (process.env.BASE_URL || localhost),
-                description: 'Authentication Microservices',
+                description: 'Authentication Microservice',
             }
         ],
         components: {
@@ -121,10 +121,10 @@ async function createApp() {
             { name: '1st', description: 'Registeration' },
             { name: '2nd', description: 'Activation' },
             { name: '3rd', description: 'Sessions' },
-            { name: '4th', description: 'User Details' },
+            { name: '4th', description: 'Authorization' },
             { name: '5th', description: 'Username' },
             { name: '6th', description: 'Passwords' },
-            { name: '7th', description: 'Authorization' },
+            { name: '7th', description: 'User Details' },
         ],
     };
 
@@ -152,7 +152,9 @@ async function createApp() {
     app.use('/v1' + process.env.DOC_URL, basicAuth({
         users,
         challenge: true // Causes browsers to show a login dialog
-    }), swaggerUi.serve, swaggerUi.setup(v1SwaggerSpec));
+    }), swaggerUi.serve, swaggerUi.setup(v1SwaggerSpec, {
+        customSiteTitle: "Auth API"
+    }));
 
     // configure Express to serve static files 
     app.use(express.static('public'));

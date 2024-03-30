@@ -128,7 +128,7 @@ async function authorize(req, res, next) {
  *   post:
  *     summary: Authorize a user action on a resource
  *     description: Can be used to check token and previlages.
- *     tags: [7th]
+ *     tags: [4th]
  *     security:
  *       - bearerAuth: []
  *     requestBody:

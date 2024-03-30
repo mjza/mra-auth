@@ -36,7 +36,7 @@ const secretProperties = [
  *   get:
  *     summary: Retrieve user details
  *     description: Get the details of the user whose ID matches the one in the JWT.
- *     tags: [4th]
+ *     tags: [7th]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -116,7 +116,7 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken],
  *   post:
  *     summary: Create user details
  *     description: Create details for the user whose ID matches the one in the JWT.
- *     tags: [4th]
+ *     tags: [7th]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -371,7 +371,7 @@ router.post('/user_details', apiRequestLimiter,
  *   put:
  *     summary: Update user details
  *     description: Update details for the user whose ID matches the one in the JWT.
- *     tags: [4th]
+ *     tags: [7th]
  *     security:
  *       - bearerAuth: []
  *     parameters:
