@@ -3,14 +3,12 @@ const customDataStore = require('../utils/customDataStore');
 /**
 * Evaluates dynamic conditions specified in the policy.
 * @param {Object} request - The request object containing sub, dom, obj, act, and attrs.
-* @param {Object} policy - The policy object containing sub, dom, obj, act, cond, attrs, and eft.
-* @param {string[]} roles - The roles object is an array of strings.
 * @param {string} userType - The user type can be 'public', 'external', 'customer', 'internal'.
 * @param {Object} user - An object representing the user making the request.
 * @param {Object} table - An object representing the table or data source involved in the request.
 * @returns {boolean} - True if the condition is met, false otherwise.
 */
-async function checkOwnership(request, policy, roles, userType, user, table) {
+async function checkOwnership(request, userType, user, table) {
   try {
     if (userType === 'public') {
       // tables with ownerships are closed to public
@@ -18,7 +16,7 @@ async function checkOwnership(request, policy, roles, userType, user, table) {
     }
     const { act, attrs } = request;
     const { owner_column, creator_column, updator_column } = table;
-    const { where, set } = attrs || {where:{}, set:{}};
+    const { where, set } = attrs || { where: {}, set: {} };
 
     if (userType != 'internal') {
       if ('C' === act) {
@@ -31,7 +29,7 @@ async function checkOwnership(request, policy, roles, userType, user, table) {
         if (where[owner_column] && where[owner_column] != user.user_id) {
           return false;
         }
-        where[owner_column]= user.user_id;
+        where[owner_column] = user.user_id;
         customDataStore.setData('where', where);
       } else if ('U' === act) {
         if (!where[owner_column] || where[owner_column] != user.user_id) {
