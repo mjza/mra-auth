@@ -2,8 +2,9 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { updateEventLog } = require('../../utils/logger');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
-const { authenticateToken } = require('../../utils/validations');
+const { authenticateUser } = require('../../utils/validations');
 const { listRolesForUserInDomains } = require('../../casbin/casbinSingleton');
+const customDataStore = require('../../utils/customDataStore');
 
 const router = express.Router();
 
@@ -93,11 +94,6 @@ async function authorize(req, res, next) {
         // Extract dom, obj, and act directly from the request body
         const { dom, obj, act, attrs } = req.body;
 
-        // Check if attrs.userId is 'self' and replace it with the actual userId from req.user
-        if (attrs && attrs.userId === 'self') {
-            attrs.userId = req.user.userId;
-        }
-
         // Extract the subject from the authenticated user information
         // The `req.user` contains sufficient info to identify the subject, like a username or userId
         const sub = req.user.username;
@@ -177,9 +173,10 @@ async function authorize(req, res, next) {
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/authorize', apiRequestLimiter, authenticateToken, validateAuthorizationRequest, authorize, async (req, res) => {
+router.post('/authorize', apiRequestLimiter, validateAuthorizationRequest, authenticateUser, authorize, async (req, res) => {
     const roles = await listRolesForUserInDomains(req.user.username);
-    res.json({ user: req.user, roles });
+    const conditions = customDataStore.getData(); 
+    res.json({ user: req.user, roles, conditions });
 });
 
 module.exports = router;

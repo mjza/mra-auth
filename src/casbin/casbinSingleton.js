@@ -1,15 +1,15 @@
 const { newEnforcer } = require('casbin');
 const TypeORMAdapter = require('typeorm-adapter').default;
 const { customeEval } = require('./casbinEvaluation');
-const { 
-        deletePoliciesForDomainZero, 
-        importPoliciesFromCSV, 
-        addRoleForUserInDomain: addRoleForUserInDomainWithEnforcer, 
-        removeRoleForUserInDomain: removeRoleForUserInDomainWithEnforcer, 
-        listRolesForUserInDomain: listRolesForUserInDomainWithEnforcer,
-        listRolesForUserInDomains: listRolesForUserInDomainsWithEnforcer,
-        listRolesForUser: listRolesForUserWithEnforcer
-      } = require('./casbinRoleManagement');
+const {
+  deletePoliciesForDomainZero,
+  importPoliciesFromCSV,
+  addRoleForUserInDomain: addRoleForUserInDomainWithEnforcer,
+  removeRoleForUserInDomain: removeRoleForUserInDomainWithEnforcer,
+  listRolesForUserInDomain: listRolesForUserInDomainWithEnforcer,
+  listRolesForUserInDomains: listRolesForUserInDomainsWithEnforcer,
+  listRolesForUser: listRolesForUserWithEnforcer
+} = require('./casbinRoleManagement');
 /**
  * A global instance of a promise that resolves to a Casbin enforcer. This variable
  * is used to ensure that the initialization of the Casbin enforcer through `initCasbin`
@@ -64,15 +64,18 @@ async function initCasbin() {
   await importPoliciesFromCSV(enforcer, csvFilePath);
 
   // Add custom functions to Casbin's function map
-  await enforcer.addFunction('customeEval', (r_sub, r_dom, r_obj, r_act, r_attrs, p_sub, p_dom, p_obj, p_act, p_cond, p_attrs) => {
+  await enforcer.addFunction('customeEval', async (r_sub, r_dom, r_obj, r_act, r_attrs, p_sub, p_dom, p_obj, p_act, p_cond, p_attrs) => {
     // Convert Casbin FunctionCall arguments to JavaScript objects
-    const request = {sub: r_sub, dom: r_dom, obj: r_obj, act: r_act, attrs: r_attrs};
-    const policy = {sub: p_sub, dom: p_dom, obj: p_obj, act: p_act, cond: p_cond, attrs: p_attrs};
-    return customeEval(request, policy);
+    const request = { sub: r_sub, dom: r_dom, obj: r_obj, act: r_act, attrs: r_attrs };
+    const policy = { sub: p_sub, dom: p_dom, obj: p_obj, act: p_act, cond: p_cond, attrs: p_attrs };
+    const roles = await listRolesForUserInDomain(r_sub, r_dom);
+    const userTypes = getUserTypesInDomain(roles, parseInt(r_dom, 10));
+    if(userTypes.length === 0)
+      return false;
+    return customeEval(request, policy, roles, userTypes);
   });
 
-  await addRoleForUserInDomainWithEnforcer(enforcer, 'username1', 'admin', '0'); // TODO remove it.
-  await addRoleForUserInDomainWithEnforcer(enforcer, 'username1', 'enduser', '0'); // TODO remove it.
+  await addRoleForUserInDomainWithEnforcer(enforcer, 'public', 'public', '0'); // For public users
 
   return enforcer;
 }
@@ -222,6 +225,124 @@ async function listRolesForUserInDomains(username) {
 }
 
 /**
+ * Determines the user type based on an array of role-domain pairs.
+ * 
+ * The function classifies users as 'internal', 'customer', 'external', or 'public' based on their roles and the domains those roles are associated with.
+ * 
+ * - 'internal': If the user has roles such as 'super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', or 'support' in domain 0.
+ * - 'customer': If the user has any role in a domain greater than 0, or roles 'admin', 'admindata', 'officer', 'agent' in domain 0.
+ * - 'external': If the user has only 'enduser' in domain 0 and no other qualifying roles for 'customer' or 'internal'.
+ * - 'public': If the user has 'public' in domain 0 and no other qualifying roles for 'customer', 'internal', or 'external'.
+ * 
+ * The user type determination prioritizes 'internal', 'customer', and 'external' types over 'public'. If no specific conditions are met, the function returns null.
+ *
+ * @param {Object[]} rolesDomains - An array of objects, each with a 'role' (string) and 'domain' (number) property.
+ * @returns {string|null} The user type ('internal', 'customer', 'external', 'public') based on the provided roles and domains, or null if no type can be determined.
+ */
+function getUserType(rolesDomains) {
+  // Define roles associated with each user type
+  const customerRoles = ['admin', 'admindata', 'officer', 'agent'];
+  const internalRoles = ['super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support'];
+
+  // Flags to determine if the user is external, customer, or internal
+  let isPublic = false;
+  let isExternal = false;
+  let isCustomer = false;
+  let isInternal = false;
+
+  // Iterate through each role-domain pair
+  for (const { role, domain } of rolesDomains) {
+    if (role === 'public' && domain === 0) {
+      isPublic = true;
+    } else if (role === 'enduser' && domain === 0) {
+      isExternal = true;
+    } else if (domain > 0 || customerRoles.includes(role)) {
+      isCustomer = true;
+    } else if (internalRoles.includes(role) && domain === 0) {
+      isInternal = true;
+    }
+  }
+
+  // Determine user type based on flags
+  // Prioritize 'internal', 'customer', and 'external' types over 'public'
+  if (isInternal) {
+    return 'internal';
+  } else if (isCustomer) {
+    return 'customer';
+  } else if (isExternal) {
+    return 'external';
+  } else if (isPublic) {
+    return 'public';
+  }
+
+  return null;
+}
+
+/**
+ * Determines the user type within a specified domain based on their roles.
+ * 
+ * This function classifies users as 'internal', 'customer', 'external', or 'public' by analyzing their roles within the given domain:
+ * - 'internal': User has roles typically associated with internal staff ('super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support') in domain 0.
+ * - 'customer': User has any role in a domain greater than 0, or specific roles ('admin', 'admindata', 'officer', 'agent') in domain 0, indicating they are a customer.
+ * - 'external': User has the 'enduser' role in domain 0 without other roles that would classify them as 'customer' or 'internal'.
+ * - 'public': User has the 'public' role in domain 0 without other roles that would classify them as 'customer', 'internal', or 'external'.
+ * 
+ * The function returns 'internal', 'customer', 'external', or 'public' based on the highest priority user type identified. If no specific conditions are met, it returns null.
+ *
+ * @param {string[]} roles - An array of role identifiers (strings) that the user has.
+ * @param {number} domain - The domain identifier to check the roles against.
+ * @returns {string[]} The determined user types as an array with elements ('internal', 'customer', 'external', 'public') or an empty array if no type can be determined.
+ */
+function getUserTypesInDomain(roles, domain) {
+  // handel exceptional cases first
+  if(domain > 0){
+    return 'customer';
+  } else if (domain < 0){
+    return null;
+  }
+  // Define roles associated with each user type
+  const customerRoles = ['admin', 'admindata', 'officer', 'agent'];
+  const internalRoles = ['super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support'];
+
+  // Flags to determine if the user is external, customer, or internal
+  let isPublic = false;
+  let isExternal = false;
+  let isCustomer = false;
+  let isInternal = false;
+
+  // Iterate through each role-domain pair
+  for (const role of roles) {
+    if (role === 'public') {
+      isPublic = true;
+    } else if (role === 'enduser') {
+      isExternal = true;
+    } else if (customerRoles.includes(role)) {
+      isCustomer = true;
+    } else if (internalRoles.includes(role)) {
+      isInternal = true;
+    }
+  }
+  
+  const types = [];
+  // Determine user type based on flags
+  // Prioritize 'internal', 'customer', and 'external' types over 'public'
+  if (isInternal) {
+    types.push('internal');
+  } 
+  if (isCustomer) {
+    types.push('customer');
+  } 
+  if (isExternal) {
+    types.push('external');
+  } 
+  if (isPublic) {
+    types.push('public');
+  }
+
+  return types;
+}
+
+/**
  * Asynchronously adds a role to a user within a specific domain. This function relies on the global
  * `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's designed to be used in various contexts,
  * not limited to Express.js middleware or route handlers.
@@ -261,4 +382,4 @@ async function removeRoleForUserInDomain(username, role, domain) {
   });
 }
 
-module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter };
+module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter, getUserType, getUserTypesInDomain };

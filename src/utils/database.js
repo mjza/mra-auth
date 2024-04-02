@@ -1,4 +1,11 @@
-const { MraUsers, MraGenderTypes, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, closeSequelize, Sequelize } = require('../models');
+const { Sequelize, closeSequelize, MraUsers, MraGenderTypes, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers } = require('../models');
+
+/**
+ * Closes the database connection pool.
+ */
+const closeDBConnections = async () => {
+  await closeSequelize();
+};
 
 /**
  * Inserts a new token into the blacklist database.
@@ -134,15 +141,11 @@ const getUserByUsername = async (username) => {
   if (!username || !username.trim()) {
     return null;
   }
-  try {
-    const user = await MraUsers.findOne({
-      where: { username: username.trim() }
-    });
+  const user = await MraUsers.findOne({
+    where: { username: username.trim() }
+  });
 
-    return user && user.get({ plain: true });
-  } catch (error) {
-    console.error('Error retrieving user by username:', error);
-  }
+  return user && user.get({ plain: true });
 };
 
 /**
@@ -523,14 +526,60 @@ async function getUserDomains(username) {
 }
 
 /**
- * Closes the database connection pool.
+ * Retrieves a row from the MraTables model based on the provided tableName.
+ *
+ * This function uses Sequelize to query the MraTables model for a single row matching the specified tableName.
+ * It returns a promise that resolves to the model instance if found, or null if no matching row is found.
+ *
+ * @param {string} tableName - The name of the table to retrieve from the MraTables model.
+ * @returns {Promise<Model|null>} A promise that resolves with the found model instance or null if no match is found.
  */
-const closeDBConnections = async () => {
-  await closeSequelize();
-};
+async function getTableByTableName(tableName) {
+  const table = await MraTables.findOne({ where: { table_name: tableName } });
+  return table && table.get({ plain: true });
+}
 
+/**
+ * Retrieves valid relationship between a user and a customer from the database.
+ * 
+ * This function queries the MraUserCustomers table to find one relationship that meet the following criteria:
+ * - The relationship is associated with the specified user ID and customer ID.
+ * - Both the customer and user have accepted the relationship on or before the current UTC time.
+ * - The relationship is valid from a date on or before the current UTC time.
+ * - The 'valid_to' date is null, implying that the relationship is currently valid indefinitely.
+ * - The 'quit_at' date is null, indicating that the relationship has not been terminated.
+ * 
+ * The function ensures that the first relationship meeting all these conditions is considered valid.
+ * It returns one valid relationship as a plain objects, making it easier to work with
+ * outside of Sequelize's model instance context.
+ *
+ * @param {number} userId - The ID of the user whose relationships are to be retrieved.
+ * @param {number} customerId - The ID of the customer involved in the relationships.
+ * @returns {Promise<Object>} A promise that resolves to a plain objects,
+ * which representing a valid relationship between the specified user and customer.
+ */
+async function getValidRelationshipByUserCustomer(userId, customerId) {
+  const relationship = await MraUserCustomers.findOne({
+    where: {
+      user_id: userId,
+      customer_id: customerId,
+      customer_accepted_at: { [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')") },
+      user_accepted_at: { [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')") },
+      valid_from: { [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')") },
+      valid_to: { 
+        [Sequelize.Op.or]: [
+          { [Sequelize.Op.gte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')") },
+          null
+        ]
+      },
+      quit_at: null
+    }
+  });
+  return relationship && relationship.get({ plain: true });
+}
 
 module.exports = {
+  closeDBConnections,
   insertBlacklistToken,
   isTokenBlacklisted,
   insertAuditLog,
@@ -551,5 +600,6 @@ module.exports = {
   createUserDetails,
   updateUserDetails,
   getUserDomains,
-  closeDBConnections
+  getTableByTableName,
+  getValidRelationshipByUserCustomer
 };

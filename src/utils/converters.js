@@ -162,18 +162,6 @@ const toLowerCamelCase = (obj) => {
  * 
  * @param {object} req - The Express request object.
  * @returns {string} A JSON string representing key information from the request object.
- *
- * @example
- * app.use((req, res, next) => {
- *   const requestData = extractRequestData(req);
- *   console.log(requestData); // Logs serialized request data
- *   next();
- * });
- * 
- * The function selectively extracts data such as HTTP method, URL, headers, body, query parameters,
- * IP address, and more. It's designed to be used in middleware for logging or auditing purposes.
- * Note: Ensure that any middleware required for populating these fields (like body-parser for `req.body`, 
- * or cookie-parser for `req.cookies`) is set up in your Express application.
  */
 function convertRequestData(req) {
     // Array of properties to hide
@@ -234,22 +222,6 @@ function convertRequestData(req) {
  *                   Matching is case-insensitive.
  * @returns {Object} A new object with sensitive data masked. If the input is not an
  *                   object, the input is returned unchanged.
- *
- * @example
- * const user = {
- *   name: 'John Doe',
- *   email: 'john.doe@example.com',
- *   password: 'supersecret',
- * };
- *
- * const maskedUser = hideSensitiveData(user, ['password']);
- * console.log(maskedUser);
- * // Output:
- * // {
- * //   name: 'John Doe',
- * //   email: 'john.doe@example.com',
- * //   password: '****',
- * // }
  */
 function hideSensitiveData(obj, forbiddenProperties) {
     if (!obj || typeof obj !== 'object') {

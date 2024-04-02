@@ -69,14 +69,24 @@ router.post('/register', createAccountLimiter,
       .withMessage('Username must be between 5 and 30 characters.')
       .matches(/^[A-Za-z0-9_]+$/)
       .withMessage('Username can only contain letters, numbers, and underscores.')
-      .custom(userMustNotExist),
+      .custom(userMustNotExist)
+      .custom((username) => {
+        // TODO: Make a test for it.
+        const reservedUsernames = ['super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support', 
+        'admin', 'admindata', 'officer', 'agent', 'enduser', 'public', 'administrator', 
+        'manager', 'staff', 'employee', 'user'];
+        if (reservedUsernames.includes(username.toLowerCase())) {
+          throw new Error('Username cannot be a reserved word.');
+        }
+        return true;
+      }),
 
     body('email')
       .isEmail()
       .withMessage('Invalid email address.')
       .isLength({ min: 5, max: 255 })
       .withMessage('Email must be between 5 and 255 characters.'),
-      
+
     body('password')
       .isLength({ min: 8, max: 30 })
       .withMessage('Password must be between 8 and 30 characters.')
@@ -108,7 +118,7 @@ router.post('/register', createAccountLimiter,
 
       // Optional login redirect URL
       const loginRedirectURL = req.body.loginRedirectURL || '';
-      
+
       // Create the activation link
       const activationLink = generateActivationLink(user.username, user.activation_code, loginRedirectURL);
 

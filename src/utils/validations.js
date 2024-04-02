@@ -192,4 +192,50 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
-module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken };
+/**
+ * Middleware to authenticate a JWT token present in the request header.
+ * It verifies the token against a secret key, checks for token expiration or blacklisting in the database,
+ * and conditionally adds the user information to the request object if the token is valid.
+ * 
+ * If the token is not provided, invalid, expired, or blacklisted, the function does not stop the request processing but
+ * sets `req.user` to public user. This allows downstream
+ * middleware or route handlers to make decisions based on the authentication status.
+ *
+ * @param {Object} req - The request object from Express.js, augmented with `user` properties.
+ * @param {Object} res - The response object from Express.js.
+ * @param {Function} next - The next middleware function in the Express.js route.
+ */
+const authenticateUser = async (req, res, next) => {
+    // Get the token from the request header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    // If no token is provided
+    if (!token) {
+        req.user = {userId: 0, username: 'public', email: null};
+        next();
+    } else {
+        try {
+            const secretKeyHex = process.env.SECRET_KEY;
+            const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
+    
+            // Verify JWT Token
+            const tokenData = await jwtVerify(token, secretKeyBuffer);
+            // Check if token is expired in database
+            const isExpired = await db.isTokenBlacklisted(token);
+            if (isExpired) {
+                req.user = {userId: 0, username: 'public', email: null};
+                next();
+            } else {
+                req.user = {userId: tokenData.userId, username: tokenData.username, email: tokenData.email}; 
+                next(); 
+            }
+        } catch (err) {
+            updateEventLog(req, { error: 'Error in validating auth token.', details: err});
+            req.user = {userId: 0, username: 'public', email: null};
+            next();
+        }
+    }
+};
+
+module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken, authenticateUser };
