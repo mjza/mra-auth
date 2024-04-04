@@ -120,11 +120,12 @@ async function createApp() {
         tags: [
             { name: '1st', description: 'Registeration' },
             { name: '2nd', description: 'Activation' },
-            { name: '3rd', description: 'Sessions' },
+            { name: '3rd', description: 'Session' },
             { name: '4th', description: 'Authorization' },
-            { name: '5th', description: 'Username' },
-            { name: '6th', description: 'Passwords' },
+            { name: '5th', description: 'Usernames' },
+            { name: '6th', description: 'Password' },
             { name: '7th', description: 'User Details' },
+            { name: '8th', description: 'Roles' },
         ],
     };
 

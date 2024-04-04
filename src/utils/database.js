@@ -1,4 +1,4 @@
-const { Sequelize, closeSequelize, MraUsers, MraGenderTypes, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers } = require('../models');
+const { Sequelize, closeSequelize, fn, col, MraUsers, MraGenderTypes, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers } = require('../models');
 
 /**
  * Closes the database connection pool.
@@ -517,7 +517,10 @@ async function getUserDomains(username) {
       ptype: 'g',
       v0: username
     },
-    attributes: ['v2'] // Specify that we only want the v2 column
+    attributes: [
+      // Use sequelize.fn and sequelize.col to select distinct `v2` values
+      [fn('DISTINCT', col('v2')), 'v2']
+    ]
   });
 
   // Map over the casbinRules and return an array of the v2 values

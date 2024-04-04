@@ -4,7 +4,7 @@ const { Agent } = require('https');
 const { promisify } = require('util');
 const jwtVerify = promisify(jwt.verify);
 const db = require('./database');
-const { updateEventLog } = require('./logger');
+const { createEventLog, updateEventLog } = require('./logger');
 
 /**
  * @swagger
@@ -161,6 +161,9 @@ const isValidUrl = (inputUrl) => {
  * @param {function} next - The next middleware function in the Express.js route.
  */
 const authenticateToken = async (req, res, next) => {
+    if(req.user){
+        next();
+    }
     // Get the token from the request header
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -206,6 +209,9 @@ const authenticateToken = async (req, res, next) => {
  * @param {Function} next - The next middleware function in the Express.js route.
  */
 const authenticateUser = async (req, res, next) => {
+    if(req.user){
+        next();
+    }
     // Get the token from the request header
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -238,4 +244,70 @@ const authenticateUser = async (req, res, next) => {
     }
 };
 
-module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken, authenticateUser };
+/**
+ * @swagger
+ * components:
+ *   responses:
+ *     UnauthorizedAccessInvalidTokenProvided:
+ *       description: Unauthorized access - No token provided.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 example: You must provide a valid JWT token.
+ */
+/**
+ * Middleware to check if a user is authorized to perform a task.
+ *
+ * @param {Object} req - The request object from Express.js.
+ * @param {Object} res - The response object from Express.js.
+ * @param {function} next - The next middleware function in the Express.js route.
+ */
+const authorizeUser = (extraData) => async (req, res, next) => {
+    try {
+        const body = {
+            dom: extraData.dom,
+            obj: extraData.obj,
+            act: extraData.act,
+            attrs: extraData.attrs
+        };
+        
+        const serviceUrl = process.env.BASE_URL + '/v1/authorize';
+
+        const authHeader = req.headers['authorization'];
+
+        const response = await axios.post(serviceUrl, body, {
+            headers: {
+                Authorization: authHeader
+            }
+        });
+
+        const { user, roles, conditions } = response.data;
+        if(!req.logId) {
+            const logId = await createEventLog(req, user.userId);
+            req.logId = logId;
+            req.user = user;
+            req.roles = roles;
+            req.conditions = conditions;
+        } else {
+            req.user = user;
+            req.roles = roles;
+            req.conditions = conditions;
+            await updateEventLog(req, { success: 'User has been authorized.', details: response.data});
+        }
+        next();
+    } catch (error) {
+        await updateEventLog(req, { error: 'Error in authorize user.', details: error});
+        if (error.response) {
+            // Relay the entire response from the external service
+            return res.status(error.response.status).json(error.response.data);
+        }
+        // Default to a 500 status code if no specific response is available
+        return res.sendStatus(500);
+    }
+};
+
+module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken, authenticateUser, authorizeUser };

@@ -1,9 +1,9 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+const { body, query, validationResult } = require('express-validator');
 const { updateEventLog } = require('../../utils/logger');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
-const { authenticateUser } = require('../../utils/validations');
-const { listRolesForUserInDomains } = require('../../casbin/casbinSingleton');
+const { authenticateUser, authorizeUser } = require('../../utils/validations');
+const { listRolesForUserInDomains, listRolesForUserInDomain } = require('../../casbin/casbinSingleton');
 const customDataStore = require('../../utils/customDataStore');
 
 const router = express.Router();
@@ -105,7 +105,7 @@ async function authorize(req, res, next) {
         const authorized = await enforcer.enforce(sub, dom, obj, act, attrs);
 
         if (!authorized) {
-            let  message = 'User is not authorized.';
+            let message = 'User is not authorized.';
             updateEventLog(req, { error: message });
             return res.status(403).json({ message });
         }
@@ -175,7 +175,7 @@ async function authorize(req, res, next) {
  */
 router.post('/authorize', apiRequestLimiter, validateAuthorizationRequest, authenticateUser, authorize, async (req, res) => {
     const roles = await listRolesForUserInDomains(req.user.username);
-    const conditions = customDataStore.getData(); 
+    const conditions = customDataStore.getData();
     res.json({ user: req.user, roles, conditions });
 });
 

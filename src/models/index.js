@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const Sequelize = require('sequelize');
+const { Sequelize, fn, col } = require('sequelize');
 const process = require('process');
 const initModels = require('./init-models');
 
@@ -52,5 +52,7 @@ module.exports = {
   ...models,
   sequelize,
   Sequelize,
+  fn, 
+  col,
   closeSequelize,
 };

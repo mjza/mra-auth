@@ -93,7 +93,6 @@ const secretProperties = [
  *         $ref: '#/components/responses/ServerInternalError'
  */
 router.get('/user_details', apiRequestLimiter, [authenticateToken],
-  //[authorize({ dom: '0', obj: 'mra_user_details', act: 'R', attrs: {userId: 'self'}})], 
   async (req, res) => {
     try {
       const userId = req.user.userId; // Adjust depending on how the user ID is stored in the JWT
@@ -499,7 +498,6 @@ router.put('/user_details/:userId', apiRequestLimiter,
   [
     authenticateToken,
 
-    // Validate userId
     param('userId')
       .exists()
       .withMessage('UserId is required.')
