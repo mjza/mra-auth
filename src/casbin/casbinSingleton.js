@@ -248,7 +248,10 @@ function getUserType(rolesDomains) {
   let isInternal = false;
 
   // Iterate through each role-domain pair
-  for (const { role, domain } of rolesDomains) {
+  for (let { role, domain } of rolesDomains) {
+    if(typeof domain !== 'number'){
+      domain = parseInt(domain, 10);
+    }
     if (role === 'public' && domain === 0) {
       isPublic = true;
     } else if (role === 'enduser' && domain === 0) {
@@ -291,6 +294,9 @@ function getUserType(rolesDomains) {
  * @returns {string} The determined user type ('internal', 'customer', 'external', 'public') or null if no type can be determined.
  */
 function getUserTypeInDomain(role, domain) {
+  if(typeof domain !== 'number'){
+    domain = parseInt(domain, 10);
+  }
   // handel exceptional cases first
   if (domain > 0) {
     return 'customer';
