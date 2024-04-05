@@ -234,7 +234,7 @@ async function listRolesForUserInDomains(username) {
  * The user type determination prioritizes 'internal', 'customer', and 'external' types over 'public'. If no specific conditions are met, the function returns null.
  *
  * @param {Object[]} rolesDomains - An array of objects, each with a 'role' (string) and 'domain' (number) property.
- * @returns {string|null} The user type ('internal', 'customer', 'external', 'public') based on the provided roles and domains, or null if no type can be determined.
+ * @returns {string|null} The user type ('internal', 'customer', 'external') based on the provided roles and domains, or 'public' if no type can be determined.
  */
 function getUserType(rolesDomains) {
   // Define roles associated with each user type
@@ -249,7 +249,7 @@ function getUserType(rolesDomains) {
 
   // Iterate through each role-domain pair
   for (let { role, domain } of rolesDomains) {
-    if(typeof domain !== 'number'){
+    if (typeof domain !== 'number') {
       domain = parseInt(domain, 10);
     }
     if (role === 'public' && domain === 0) {
@@ -271,11 +271,8 @@ function getUserType(rolesDomains) {
     return 'customer';
   } else if (isExternal) {
     return 'external';
-  } else if (isPublic) {
-    return 'public';
   }
-
-  return null;
+  return 'public';
 }
 
 /**
@@ -291,10 +288,10 @@ function getUserType(rolesDomains) {
  *
  * @param {string} role - The role identifier (strings) that the user has.
  * @param {number} domain - The domain identifier to check the role against.
- * @returns {string} The determined user type ('internal', 'customer', 'external', 'public') or null if no type can be determined.
+ * @returns {string} The determined user type ('internal', 'customer', 'external') or 'public' if no type can be determined.
  */
 function getUserTypeInDomain(role, domain) {
-  if(typeof domain !== 'number'){
+  if (typeof domain !== 'number') {
     domain = parseInt(domain, 10);
   }
   // handel exceptional cases first
@@ -307,9 +304,7 @@ function getUserTypeInDomain(role, domain) {
   const customerRoles = ['admin', 'admindata', 'officer', 'agent'];
   const internalRoles = ['super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support'];
 
-  if (role === 'public') {
-    return 'public';
-  } else if (role === 'enduser') {
+  if (role === 'enduser') {
     return 'external';
   } else if (customerRoles.includes(role)) {
     return 'customer';
@@ -317,7 +312,7 @@ function getUserTypeInDomain(role, domain) {
     return 'internal';
   }
 
-  return null;
+  return 'public';
 }
 
 /**
