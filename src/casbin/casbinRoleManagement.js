@@ -37,7 +37,7 @@ async function importPoliciesFromCSV(enforcer, csvFilePath) {
   // Convert the parse call to be promise-based for proper async handling
   const records = await new Promise((resolve, reject) => {
     parse(csvContent, {
-      from_line: 3, // Skip the header row and seprator line
+      from_line: 2, // Skip the header row and seprator line
       skip_empty_lines: true,
       delimiter: ";"
     }, (err, output) => {
@@ -48,7 +48,10 @@ async function importPoliciesFromCSV(enforcer, csvFilePath) {
 
   for (const record of records) {
     const [sub, dom, obj, act, cond, attrs, eft] = record;
-    const policy = [sub, dom, obj, act, cond, attrs, eft].filter(v => v !== undefined);
+    if ([sub, dom, obj, act, cond, attrs, eft].some(v => v === undefined)) {
+      throw new Error('All parameters are mandatory, but at least one undefined value was provided.');
+    }
+    const policy = [sub, dom, obj, act, cond, attrs, eft];
     await enforcer.addPolicy(...policy);
   }
   await enforcer.savePolicy();

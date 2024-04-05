@@ -242,7 +242,6 @@ function getUserType(rolesDomains) {
   const internalRoles = ['super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support'];
 
   // Flags to determine if the user is external, customer, or internal
-  let isPublic = false;
   let isExternal = false;
   let isCustomer = false;
   let isInternal = false;
@@ -252,9 +251,7 @@ function getUserType(rolesDomains) {
     if (typeof domain !== 'number') {
       domain = parseInt(domain, 10);
     }
-    if (role === 'public' && domain === 0) {
-      isPublic = true;
-    } else if (role === 'enduser' && domain === 0) {
+    if (role === 'enduser' && domain === 0) {
       isExternal = true;
     } else if (domain > 0 || customerRoles.includes(role)) {
       isCustomer = true;
@@ -355,4 +352,43 @@ async function removeRoleForUserInDomain(username, role, domain) {
   });
 }
 
-module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter, getUserType, getUserTypeInDomain };
+/**
+ * Adds a policy to the specified domain using the Casbin enforcer.
+ * 
+ * This function asynchronously adds a new access control policy to the Casbin enforcer,
+ * which defines whether a subject can perform an action on an object within a specific domain,
+ * considering optional conditions and attributes.
+ *
+ * @param {string} sub - The subject (user/role) the policy applies to.
+ * @param {string} dom - The domain/tenant to which the policy belongs.
+ * @param {string} obj - The object/resource the policy pertains to.
+ * @param {string} act - The action permitted or denied by the policy.
+ * @param {string} [cond='none'] - Optional condition for policy enforcement. Defaults to 'none'.
+ * @param {Object} [attrs={}] - Optional JSON object of attributes associated with the policy. Defaults to an empty object.
+ * @param {string} [eft='allow'] - The effect of the policy ('allow' or 'deny'). Defaults to 'allow'.
+ * @returns {Promise<void>} A promise that resolves with no value upon successful addition of the policy.
+ * @throws {Error} If the Casbin enforcer instance is not initialized.
+ */
+async function addPolicyInDomain(sub, dom, obj, act, cond = 'none', attrs = {}, eft = 'allow') {
+
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  const attrsStr = typeof attrs === 'object' && attrs !== null ? (Object.keys(attrs).length === 0 ? 'none' : JSON.stringify(attrs)) : attrs;
+
+  if ([sub, dom, obj, act, cond, attrsStr, eft].some(v => typeof v !== 'string' || v === undefined || v === null)) {
+    throw new Error('All parameters are mandatory and must be of type string. At least one parameter is missing, null, or not a string.');
+  }
+  
+  // If no error was thrown, proceed with the policy addition
+  const policy = [sub, dom, obj, act, cond, attrsStr, eft];
+
+  return enforcerPromiseInstance.then(async enforcer => {
+    await enforcer.addPolicy(...policy);
+    await enforcer.savePolicy();
+  });
+}
+
+
+module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter, getUserType, getUserTypeInDomain, addPolicyInDomain };

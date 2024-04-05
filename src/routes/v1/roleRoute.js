@@ -3,7 +3,7 @@ const { body, query, validationResult } = require('express-validator');
 const { updateEventLog } = require('../../utils/logger');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { authenticateUser, authorizeUser } = require('../../utils/validations');
-const { listRolesForUserInDomain, listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRoleForUserInDomain } = require('../../casbin/casbinSingleton');
+const { listRolesForUserInDomain, listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRoleForUserInDomain, addPolicyInDomain } = require('../../casbin/casbinSingleton');
 
 const router = express.Router();
 
@@ -222,8 +222,7 @@ router.post('/user-role', apiRequestLimiter,
         const middleware = authorizeUser({
             dom: domain,
             obj: 'casbin_rule',
-            act: 'C',
-            attrs: { set: { role: req.body.role } }
+            act: 'C'
         });
         middleware(req, res, next);
     },
@@ -324,8 +323,7 @@ router.delete('/user-role', apiRequestLimiter,
         const middleware = authorizeUser({
             dom: domain,
             obj: 'casbin_rule',
-            act: 'D',
-            attrs: { set: { role: req.body.role } }
+            act: 'D'
         });
         middleware(req, res, next);
     },
@@ -341,6 +339,156 @@ router.delete('/user-role', apiRequestLimiter,
         }
     }
 );
+
+/**
+ * @swagger
+ * /v1/policy:
+ *   post:
+ *     summary: Add a new policy
+ *     description: This endpoint adds a new policy with the given parameters. It is intended to allow fine-grained access control policies to be defined.
+ *     tags: [Policy Management]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               subject:
+ *                 type: string
+ *                 description: "Subject - The role name or username this policy applies to."
+ *                 example: "username1"
+ *               domain:
+ *                 type: string
+ *                 description: "Domain - the scope (i.e., customer ID) within which this policy is applicable."
+ *                 example: "1"
+ *               object:
+ *                 type: string
+ *                 description: "Object - the resource (i.e., table name) this policy pertains to."
+ *                 example: "mra_tickets"
+ *               action:
+ *                 type: string
+ *                 description: "Action - the action allowed or denied by this policy."
+ *                 example: "write"
+ *               condition:
+ *                 type: string
+ *                 description: "Condition - any additional conditions for this policy."
+ *                 example: "attr.value == 'someValue'"
+ *               attributes:
+ *                 type: object
+ *                 additionalProperties: true
+ *                 description: "Attributes - additional data related to the policy."
+ *                 example: { "attr1": "value1", "attr2": "value2" }
+ *               effect:
+ *                 type: string
+ *                 description: "Effect - whether the action is allowed or denied."
+ *                 enum: [allow, deny]
+ *                 example: "allow"
+ *             required:
+ *               - subject
+ *               - domain
+ *               - object
+ *               - act
+ *               - eft
+ *     responses:
+ *       200:
+ *         description: Policy has been added successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Policy added successfully."
+ *       400:
+ *         description: Validation error. One or more fields are missing or incorrectly formatted.
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
+ *       500:
+ *         $ref: '#/components/responses/ServerInternalError'
+ */
+router.post('/v1/policy',
+    [
+        body('subject').not().isEmpty().withMessage('Subject is required.'),
+        body('domain').not().isEmpty().withMessage('Domain is required.'),
+        body('object').not().isEmpty().withMessage('Object is required.'),
+        body('action').isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD']).withMessage('Action is required.'),
+        body('effect').isIn(['allow', 'deny']).withMessage('Effect must be either "allow" or "deny".'),
+        body('condition')
+            .optional({ nullable: true, checkFalsy: true })
+            .default('none')
+            .isIn(['check_relationship', 'check_ownership', 'none'])
+            .withMessage('Condition must be one of "check_relationship", "check_ownership", or "none".'),
+        body('attributes')
+            .optional({ checkFalsy: true })
+            .custom((value) => {
+                try {
+                    JSON.parse(value);
+                } catch (e) {
+                    throw new Error('Attributes must be a valid JSON object.');
+                }
+                return true;
+            })
+            .withMessage('Attributes must be a valid JSON object.'),
+    ],
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    },
+    authenticateUser,
+    async (req, res, next) => {
+        const roles = await listRolesForUserInDomains(req.user.username);
+        const type = getUserType(roles);
+        req.user.type = type;
+        const domain = (type === 'internal' ? '0' : req.body.domain);
+        const middleware = authorizeUser({
+            dom: domain,
+            obj: 'casbin_rule',
+            act: 'C'
+        });
+        middleware(req, res, next);
+    },
+    async (req, res, next) => {
+        const type = req.user.type;
+        if (type === 'internal') {
+            next();
+        } else {
+            // Customer users must have grant permission to be able to create a policy
+            let action = req.body.action;
+            if (['C', 'R', 'U', 'D'].includes(action)) {
+                action = `G${action}`;
+            }
+            const middleware = authorizeUser({
+                dom: domain,
+                obj: req.body.object,
+                act: action
+            });
+            middleware(req, res, next);
+        }
+    },
+    async (req, res) => {
+        try {
+            const { subject, domain, object, action, condition, attributes, effect } = req.body;
+            await addPolicyInDomain(subject, domain, object, action, condition, attributes, effect);
+            return res.status(200).json({ message: 'Policy added successfully.' });
+        } catch (err) {
+            updateEventLog(req, { Error: 'Failed to add policy:' });
+            updateEventLog(req, err);
+            return res.status(500).json({ message: 'Failed to add policy due to an internal error.' });
+        }
+    }
+);
+
+
+
+
+
 
 
 module.exports = router;
