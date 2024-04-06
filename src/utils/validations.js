@@ -7,38 +7,6 @@ const db = require('./database');
 const { createEventLog, updateEventLog } = require('./logger');
 
 /**
- * @swagger
- * components:
- *   responses:
- *     UserMustNotExistError:
- *         description: Invalid request parameters.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       type:
- *                         type: string
- *                         example: field
- *                       value:
- *                         type: string
- *                         example: usernameX
- *                       msg:
- *                         type: string
- *                         example: Username already exists.
- *                       path:
- *                         type: string
- *                         example: username
- *                       location:
- *                         type: string
- *                         example: query
- */
-/**
  * Checks if a user does not exist in the database.
  * If the user exists, it rejects the promise with a specific message.
  *
@@ -54,38 +22,6 @@ const userMustNotExist = async (username) => {
     }
 };
 
-/**
- * @swagger
- * components:
- *   responses:
- *     UserMustExistError:
- *         description: Invalid request parameters.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       type:
- *                         type: string
- *                         example: field
- *                       value:
- *                         type: string
- *                         example: usernameX
- *                       msg:
- *                         type: string
- *                         example: Username does not exist.
- *                       path:
- *                         type: string
- *                         example: username
- *                       location:
- *                         type: string
- *                         example: query
- */
 /**
  * Checks if a user exists in the database.
  * If the user does not exist, it rejects the promise with a specific message.

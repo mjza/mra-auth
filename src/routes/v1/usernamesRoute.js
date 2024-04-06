@@ -32,32 +32,7 @@ const router = express.Router();
  *                   type: string
  *                   example: If there are any usernames associated with the provided email address, a list of them has been sent to that email address.
  *       400:
- *         description: Invalid request parameters.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       type:
- *                         type: string
- *                         example: field
- *                       value:
- *                         type: string
- *                         example: xyz
- *                       msg:
- *                         type: string
- *                         example: Invalid email format.
- *                       path:
- *                         type: string
- *                         example: email
- *                       location:
- *                         type: string
- *                         example: query
+ *         $ref: '#/components/responses/ValidationError'
  *       429:
  *         $ref: '#/components/responses/ApiRateLimitExceeded' 
  *       500:

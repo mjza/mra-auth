@@ -170,23 +170,7 @@ router.get('/user-role', apiRequestLimiter,
  *                   type: string
  *                   example: "Role has been added successfully. User must re-login to have the new role."
  *       400:
- *         description: Validation error. One or more fields are missing or incorrectly formatted.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       msg:
- *                         type: string
- *                       param:
- *                         type: string
- *                       location:
- *                         type: string
+ *         $ref: '#/components/responses/ValidationError'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       403:
@@ -244,7 +228,7 @@ router.post('/user-role', apiRequestLimiter,
         try {
             const { username, role, domain } = req.body;
             const policies = await getPolicyInDomain(role, domain);
-            if(!policies || policies.length === 0){
+            if (!policies || policies.length === 0) {
                 return res.status(404).json({ message: 'The role does not exist in the domain.' });
             }
             await addRoleForUserInDomain(username, role, domain);
@@ -303,7 +287,7 @@ router.post('/user-role', apiRequestLimiter,
  *                   type: string
  *                   example: "Role has been removed successfully."
  *       400:
- *         description: Validation error. One or more fields are missing or incorrectly formatted.
+ *         $ref: '#/components/responses/ValidationError'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       403:
@@ -362,11 +346,149 @@ router.delete('/user-role', apiRequestLimiter,
 
 /**
  * @swagger
- * /v1/policy:
+ * /v1/policy/search:
+ *   post:
+ *     summary: Retrieve policies
+ *     description: This endpoint retrieves policies based on the given parameters within the request body. `subject` and `domain` are mandatory, while other parameters are optional and used to filter the retrieved policies. Using POST method for search operation to accommodate complex query structures.
+ *     tags: [9th]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               subject:
+ *                 type: string
+ *                 description: "Subject - The role name or username this policy applies to."
+ *                 example: "username1"
+ *               domain:
+ *                 type: string
+ *                 description: "Domain - the scope (i.e., customer ID) within which this policy is applicable."
+ *                 example: "1"
+ *               object:
+ *                 type: string
+ *                 description: "Object - the resource (i.e., table name) this policy pertains to."
+ *                 example: ""
+ *               action:
+ *                 type: string
+ *                 description: "Action - the action allowed or denied by this policy."
+ *                 enum: [C, R, U, D, GC, GR, GU, GD, '']
+ *                 example: ""
+ *               condition:
+ *                 type: string
+ *                 description: "Condition - any additional conditions for this policy."
+ *                 enum: [check_relationship, check_ownership, none, '']
+ *                 example: ""
+ *               attributes:
+ *                 type: object
+ *                 additionalProperties: true
+ *                 description: "Attributes - additional data related to the policy."
+ *                 example: null
+ *               effect:
+ *                 type: string
+ *                 description: "Effect - whether the action is allowed or denied."
+ *                 enum: [allow, deny, '']
+ *                 example: "allow"
+ *             required:
+ *               - subject
+ *               - domain
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved policies.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   subject:
+ *                     type: string
+ *                   domain:
+ *                     type: string
+ *                   object:
+ *                     type: string
+ *                   action:
+ *                     type: string
+ *                   condition:
+ *                     type: string
+ *                   attributes:
+ *                     type: object
+ *                     additionalProperties: true
+ *                   effect:
+ *                     type: string
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
+ *       500:
+ *         $ref: '#/components/responses/ServerInternalError'
+ */
+router.post('/policy/search',
+    [
+        body('subject').not().isEmpty().withMessage('Subject is required.'),
+        body('domain').not().isEmpty().withMessage('Domain is required.'),
+        body('object').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Object can be string or null.'),
+        body('action').optional({ nullable: true, checkFalsy: true }).isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null]).withMessage('Action is optional and can be "C", "R", "U", "D", "GC", "GR", "GU", "GD", empty string or null.'),
+        body('effect').optional({ nullable: true, checkFalsy: true }).isIn(['allow', 'deny', '', null]).withMessage('Effect is optional and can be "allow", "deny", empty string or null.'),
+        body('condition').optional({ nullable: true, checkFalsy: true }).isIn(['check_relationship', 'check_ownership', 'none', '', null]).withMessage('Condition is optional and can be one of "check_relationship", "check_ownership", "none", empty string or null.'),
+        body('attributes')
+            .optional({ nullable: true, checkFalsy: true })
+            .custom((value) => {
+                try {
+                    if (typeof value === 'string') {
+                        JSON.parse(value);
+                    }
+                } catch (e) {
+                    throw new Error('Attributes must be a valid JSON object.');
+                }
+                return true;
+            })
+            .withMessage('Attributes must be a valid JSON object.'),
+    ],
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    },
+    authenticateUser,
+    async (req, res, next) => {
+        const roles = await listRolesForUserInDomains(req.user.username);
+        const type = getUserType(roles);
+        req.user.type = type;
+        const domain = (type === 'internal' ? '0' : req.body.domain);
+        const middleware = authorizeUser({
+            dom: domain,
+            obj: 'casbin_rule',
+            act: 'R'
+        });
+        middleware(req, res, next);
+    },
+    async (req, res) => {
+        try {
+            const { subject, domain, object, action, condition, attributes, effect } = req.body;
+
+            const policies = await getPolicyInDomain(subject, domain, object, action, condition, attributes, effect);
+
+            return res.status(200).json(policies);
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Failed to retrieve policies due to an internal error.' });
+        }
+    });
+
+/**
+ * @swagger
+ * /v1/policy/add:
  *   post:
  *     summary: Add a new policy
  *     description: This endpoint adds a new policy with the given parameters. It is intended to allow fine-grained access control policies to be defined.
- *     tags: [Policy Management]
+ *     tags: [9th]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -426,7 +548,7 @@ router.delete('/user-role', apiRequestLimiter,
  *                   type: string
  *                   example: "Policy added successfully."
  *       400:
- *         description: Validation error. One or more fields are missing or incorrectly formatted.
+ *         $ref: '#/components/responses/ValidationError'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       403:
@@ -434,7 +556,7 @@ router.delete('/user-role', apiRequestLimiter,
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/policy',
+router.post('/policy/add',
     [
         body('subject').not().isEmpty().withMessage('Subject is required.'),
         body('domain').not().isEmpty().withMessage('Domain is required.'),
@@ -450,7 +572,7 @@ router.post('/policy',
             .optional({ checkFalsy: true })
             .custom((value) => {
                 try {
-                    if(typeof value === 'string'){
+                    if (typeof value === 'string') {
                         JSON.parse(value);
                     }
                 } catch (e) {
@@ -485,9 +607,9 @@ router.post('/policy',
         if (type === 'internal') {
             next();
         } else {
-            if(req.body.condition !== 'check_relationship'){
-                let error = { message: 'User is not authorized.', details: "Customer users must set condition to 'check_relationship'."};
-                updateEventLog(req, error );
+            if (req.body.condition !== 'check_relationship') {
+                let error = { message: 'User is not authorized.', details: "Customer users must set condition to 'check_relationship'." };
+                updateEventLog(req, error);
                 return res.status(403).json(error);
             }
             // Customer users must have grant permission to be able to create a policy

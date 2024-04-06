@@ -56,7 +56,7 @@ const router = express.Router();
  *                   type: integer
  *                   example: 1
  *       400:
- *         $ref: '#/components/responses/UserMustNotExistError'
+ *         $ref: '#/components/responses/ValidationError'
  *       429:
  *         $ref: '#/components/responses/CreateApiRateLimitExceeded' 
  *       500:

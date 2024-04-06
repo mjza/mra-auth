@@ -54,4 +54,34 @@ module.exports = router;
  *                 example: Customer users must set condition to 'check_relationship'.
  *             required:
  *               - message
+ *     ValidationError:
+ *         description: Validation error. One or more fields are missing or incorrectly formatted.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       type:
+ *                         type: string
+ *                         example: fieldX
+ *                       value:
+ *                         type: string
+ *                         example: abc
+ *                       msg:
+ *                         type: string
+ *                         example: Field is not valid.
+ *                       param:
+ *                         type: string
+ *                         example: fieldX
+ *                       path:
+ *                         type: string
+ *                         example: fieldX
+ *                       location:
+ *                         type: string
+ *                         example: query/body
  */

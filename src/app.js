@@ -126,6 +126,7 @@ async function createApp() {
             { name: '6th', description: 'Password' },
             { name: '7th', description: 'User Details' },
             { name: '8th', description: 'Roles' },
+            { name: '9th', description: 'Policy Management'}
         ],
     };
 

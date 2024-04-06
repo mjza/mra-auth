@@ -44,26 +44,7 @@ const router = express.Router();
  *                   type: string
  *                   example: If an account with the provided username exists, a reset token has been successfully generated and sent to the associated email address.
  *       400:
- *         description: Invalid request parameters.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       msg:
- *                         type: string
- *                         example: Invalid field
- *                       param:
- *                         type: string
- *                         example: username
- *                       location:
- *                         type: string
- *                         example: body
+ *         $ref: '#/components/responses/ValidationError'
  *       429:
  *         $ref: '#/components/responses/CreateApiRateLimitExceeded' 
  *       500:
@@ -152,7 +133,7 @@ router.post('/reset_token', apiRequestLimiter, [
  *                   type: string
  *                   example: Password is reset successfully.
  *       400:
- *         $ref: '#/components/responses/UserMustExistError'
+ *         $ref: '#/components/responses/ValidationError'
  *       417:
  *         description: Could not reset password.
  *         content:

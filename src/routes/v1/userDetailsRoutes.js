@@ -183,26 +183,7 @@ router.get('/user_details', apiRequestLimiter, [authenticateToken],
  *                     genderName:
  *                       type: string
  *       400:
- *         description: Invalid request parameters.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       msg:
- *                         type: string
- *                         example: First name must be a string.
- *                       param:
- *                         type: string
- *                         example: firstName
- *                       location:
- *                         type: string
- *                         example: body
+ *         $ref: '#/components/responses/ValidationError'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       403:
@@ -445,15 +426,7 @@ router.post('/user_details', apiRequestLimiter,
  *                     genderName:
  *                       type: string
  *       400:
- *         description: UserId is required.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: UserId is required.
+ *         $ref: '#/components/responses/ValidationError'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       403:

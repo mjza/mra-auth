@@ -62,26 +62,7 @@ const router = express.Router();
  *                   type: string
  *                   example: Username or password is incorrect
  *       400:
- *         description: Invalid request parameters.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       msg:
- *                         type: string
- *                         example: Invalid field
- *                       param:
- *                         type: string
- *                         example: usernameOrEmail
- *                       location:
- *                         type: string
- *                         example: body
+ *         $ref: '#/components/responses/ValidationError'
  *       429:
  *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:

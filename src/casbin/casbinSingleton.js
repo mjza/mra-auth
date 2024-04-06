@@ -415,26 +415,34 @@ async function getPolicyInDomain(sub, dom, obj = '', act = '', cond = '', attrs 
     throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
   }
 
-  const attrsStr = typeof attrs === 'object' && attrs !== null ? (Object.keys(attrs).length === 0 ? '' : JSON.stringify(attrs)) : attrs;
+  if(!obj) obj = '';
+  if(!act) act = '';
+  if(!cond) cond = '';
+  if(!attrs) attrs = '';
+  if(!eft) eft = '';
 
-  if ([sub, dom, obj, act, cond, attrsStr, eft].some(v => typeof v !== 'string' || v === undefined || v === null)) {
+  attrs = typeof attrs === 'object' ? (Object.keys(attrs).length === 0 ? '' : JSON.stringify(attrs)) : attrs;
+
+  if ([sub, dom, obj, act, cond, attrs, eft].some(v => typeof v !== 'string' || v === undefined || v === null)) {
     throw new Error('All parameters are mandatory and must be of type string except attrs that can be a JSON object. At least one parameter is missing, null, or not a string.');
   }
 
   // If no error was thrown, proceed with the policy addition
-  const policy = [sub, dom, obj, act, cond, attrsStr, eft];
+  const policy = [sub, dom, obj, act, cond, attrs, eft];
 
   const enforcer = await enforcerPromiseInstance;
   const policies = await enforcer.getFilteredPolicy(0, ...policy);
 
+  return policies;
+  /*
   const adjustedPolicies = policies.map(policyArray => ({
-    sub: policyArray[0],
-    dom: policyArray[1],
-    obj: obj === '' ? undefined : policyArray[2],
-    act: act === '' ? undefined : policyArray[3],
-    cond: cond === '' ? undefined : policyArray[4],
-    attrsStr: attrsStr === '' ? undefined : policyArray[5],
-    eft: eft === '' ? undefined : policyArray[6],
+    subject: policyArray[0],
+    domain: policyArray[1],
+    object: obj === '' ? undefined : policyArray[2],
+    action: act === '' ? undefined : policyArray[3],
+    condition: cond === '' ? undefined : policyArray[4],
+    attributes: attrs === '' ? undefined : policyArray[5],
+    effect: eft === '' ? undefined : policyArray[6],
   }));
 
   const uniqueJsonStrings = new Set(adjustedPolicies.map(obj => JSON.stringify(obj)));
@@ -442,6 +450,7 @@ async function getPolicyInDomain(sub, dom, obj = '', act = '', cond = '', attrs 
   const uniquePolicies = Array.from(uniqueJsonStrings).map(jsonStr => JSON.parse(jsonStr));
 
   return uniquePolicies;
+  */
 }
 
 

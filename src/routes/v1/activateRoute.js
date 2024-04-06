@@ -66,7 +66,7 @@ const router = express.Router();
  *             schema:
  *               type: string
  *       400:
- *         $ref: '#/components/responses/UserMustExistError'
+ *         $ref: '#/components/responses/ValidationError'
  *       404:
  *         description: Invalid activation link has been provided.
  *         content:
