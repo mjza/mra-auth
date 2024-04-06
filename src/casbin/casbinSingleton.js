@@ -378,9 +378,9 @@ async function addPolicyInDomain(sub, dom, obj, act, cond = 'none', attrs = {}, 
   const attrsStr = typeof attrs === 'object' && attrs !== null ? (Object.keys(attrs).length === 0 ? 'none' : JSON.stringify(attrs)) : attrs;
 
   if ([sub, dom, obj, act, cond, attrsStr, eft].some(v => typeof v !== 'string' || v === undefined || v === null)) {
-    throw new Error('All parameters are mandatory and must be of type string. At least one parameter is missing, null, or not a string.');
+    throw new Error('All parameters are mandatory and must be of type string except attrs that can be a JSON object. At least one parameter is missing, null, or not a string.');
   }
-  
+
   // If no error was thrown, proceed with the policy addition
   const policy = [sub, dom, obj, act, cond, attrsStr, eft];
 
@@ -390,5 +390,59 @@ async function addPolicyInDomain(sub, dom, obj, act, cond = 'none', attrs = {}, 
   });
 }
 
+/**
+ * Retrieves policies within a specific domain based on provided criteria.
+ * This function asynchronously fetches policies from a Casbin enforcer,
+ * filtering them based on subject, domain, object, action, condition, attributes, and effect.
+ * 
+ * Attributes are expected as a JSON object but are converted to a string representation
+ * for the filtering process. All other parameters must be strings.
+ * 
+ * @param {string} sub - The subject (user/role) the policy applies to.
+ * @param {string} dom - The domain/tenant to which the policy belongs.
+ * @param {string} [obj=''] - Optional object/resource the policy pertains to.
+ * @param {string} [act=''] - Optional action permitted or denied by the policy.
+ * @param {string} [cond=''] - Optional condition for policy enforcement. Defaults to an empty string.
+ * @param {Object} [attrs={}] - Optional JSON object of attributes associated with the policy. Defaults to an empty object.
+ * @param {string} [eft=''] - The effect of the policy ('allow' or 'deny'). Defaults to an empty string.
+ * @returns {Promise<Array>} A promise that resolves to an array of filtered policies matching the criteria.
+ * @throws {Error} If the Casbin enforcer instance is not initialized or if any parameter (except `attrs`) is not a string, is missing, or is `null`.
+ * @async
+ */
+async function getPolicyInDomain(sub, dom, obj = '', act = '', cond = '', attrs = {}, eft = '') {
 
-module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter, getUserType, getUserTypeInDomain, addPolicyInDomain };
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  const attrsStr = typeof attrs === 'object' && attrs !== null ? (Object.keys(attrs).length === 0 ? '' : JSON.stringify(attrs)) : attrs;
+
+  if ([sub, dom, obj, act, cond, attrsStr, eft].some(v => typeof v !== 'string' || v === undefined || v === null)) {
+    throw new Error('All parameters are mandatory and must be of type string except attrs that can be a JSON object. At least one parameter is missing, null, or not a string.');
+  }
+
+  // If no error was thrown, proceed with the policy addition
+  const policy = [sub, dom, obj, act, cond, attrsStr, eft];
+
+  const enforcer = await enforcerPromiseInstance;
+  const policies = await enforcer.getFilteredPolicy(0, ...policy);
+
+  const adjustedPolicies = policies.map(policyArray => ({
+    sub: policyArray[0],
+    dom: policyArray[1],
+    obj: obj === '' ? undefined : policyArray[2],
+    act: act === '' ? undefined : policyArray[3],
+    cond: cond === '' ? undefined : policyArray[4],
+    attrsStr: attrsStr === '' ? undefined : policyArray[5],
+    eft: eft === '' ? undefined : policyArray[6],
+  }));
+
+  const uniqueJsonStrings = new Set(adjustedPolicies.map(obj => JSON.stringify(obj)));
+
+  const uniquePolicies = Array.from(uniqueJsonStrings).map(jsonStr => JSON.parse(jsonStr));
+
+  return uniquePolicies;
+}
+
+
+module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter, getUserType, getUserTypeInDomain, addPolicyInDomain, getPolicyInDomain };

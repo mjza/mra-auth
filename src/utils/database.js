@@ -296,8 +296,8 @@ const isActivationCodeValid = async (user) => {
       confirmation_at: null,
       created_at: {
         // Checking if the created_at is within the last 5 days
-        [Sequelize.Op.gte]: Sequelize.literal("(now() AT TIME ZONE 'UTC') - INTERVAL '5 days'"),
-        [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')"),
+        [Sequelize.Op.gte]: Sequelize.literal("now() - INTERVAL '5 days'"),
+        [Sequelize.Op.lte]: Sequelize.literal("now()"),
       },
     }
   });
@@ -305,7 +305,7 @@ const isActivationCodeValid = async (user) => {
   if (foundUser) {
     // Update confirmation_at to current timestamp
     await foundUser.update({
-      confirmation_at: Sequelize.literal("(now() AT TIME ZONE 'UTC')"),
+      confirmation_at: Sequelize.literal("now()"),
     });
     return true;
   } else {
@@ -333,8 +333,8 @@ const activateUser = async (user) => {
         username: username.trim(),
         activation_code: activationCode.trim(),
         created_at: {
-          [Sequelize.Op.gte]: Sequelize.literal("(now() AT TIME ZONE 'UTC') - INTERVAL '5 days'"), // created_at >= 5 days ago
-          [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')"),   // created_at <= CURRENT_TIMESTAMP
+          [Sequelize.Op.gte]: Sequelize.literal("now() - INTERVAL '5 days'"), // created_at >= 5 days ago
+          [Sequelize.Op.lte]: Sequelize.literal("now()"),   // created_at <= CURRENT_TIMESTAMP
         },
         confirmation_at: null, // confirmation_at IS NULL
       },
@@ -407,8 +407,8 @@ const resetPassword = async (user) => {
         username: username.trim(),
         reset_token: resetToken.trim(),
         reset_token_created_at: {
-          [Sequelize.Op.gte]: Sequelize.literal("(now() AT TIME ZONE 'UTC') - INTERVAL '5 days'"), // created_at >= 5 days ago
-          [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')"),   // created_at <= CURRENT_TIMESTAMP
+          [Sequelize.Op.gte]: Sequelize.literal("now() - INTERVAL '5 days'"), // created_at >= 5 days ago
+          [Sequelize.Op.lte]: Sequelize.literal("now()"),   // created_at <= CURRENT_TIMESTAMP
         },
       },
       returning: true, // Note: 'returning: true' is supported by PostgreSQL
@@ -566,16 +566,17 @@ async function getValidRelationshipByUserCustomer(userId, customerId) {
     where: {
       user_id: userId,
       customer_id: customerId,
-      customer_accepted_at: { [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')") },
-      user_accepted_at: { [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')") },
-      valid_from: { [Sequelize.Op.lte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')") },
+      customer_accepted_at: { [Sequelize.Op.lte]: Sequelize.literal("now()") },
+      user_accepted_at: { [Sequelize.Op.lte]: Sequelize.literal("now()") },
+      valid_from: { [Sequelize.Op.lte]: Sequelize.literal("now()") },
       valid_to: { 
         [Sequelize.Op.or]: [
-          { [Sequelize.Op.gte]: Sequelize.literal("(now() AT TIME ZONE 'UTC')") },
+          { [Sequelize.Op.gte]: Sequelize.literal("now()") },
           null
         ]
       },
-      quit_at: null
+      quit_at: null,
+      suspend_at: null
     }
   });
   return relationship && relationship.get({ plain: true });

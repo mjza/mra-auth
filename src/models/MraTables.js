@@ -37,12 +37,12 @@ module.exports = function(sequelize, DataTypes) {
 				creator_column: {
 						type: DataTypes.STRING(255),
 						allowNull: true,
-						comment: "The column that indicates the creator of the row. "
+						comment: "The column that indicates the creator of the row."
 				},
 				updator_column: {
 						type: DataTypes.STRING(255),
 						allowNull: true,
-						comment: "The column that indicates the updator of the row. "
+						comment: "The column that indicates the updator of the row."
 				}
 		}, {
 				sequelize,

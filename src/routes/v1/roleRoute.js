@@ -3,13 +3,13 @@ const { body, query, validationResult } = require('express-validator');
 const { updateEventLog } = require('../../utils/logger');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { authenticateUser, authorizeUser } = require('../../utils/validations');
-const { listRolesForUserInDomain, listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRoleForUserInDomain, addPolicyInDomain } = require('../../casbin/casbinSingleton');
+const { listRolesForUserInDomain, listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRoleForUserInDomain, addPolicyInDomain, getPolicyInDomain } = require('../../casbin/casbinSingleton');
 
 const router = express.Router();
 
 /**
  * @swagger
- * /v1/roles:
+ * /v1/user-role:
  *   get:
  *     summary: Retrieve roles for a given username or the current user
  *     description: Get the roles for a given username or the current user in a specific domain.
@@ -49,6 +49,8 @@ const router = express.Router();
  *                     example: "0"
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         description: User role not found.
  *         content:
@@ -64,7 +66,7 @@ const router = express.Router();
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.get('/roles', apiRequestLimiter,
+router.get('/user-role', apiRequestLimiter,
     [
         query('username')
             .optional({ checkFalsy: true })
@@ -187,6 +189,18 @@ router.get('/roles', apiRequestLimiter,
  *                         type: string
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         description: The role does not exist in the domain.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: The role does not exist in the domain.
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
@@ -229,6 +243,10 @@ router.post('/user-role', apiRequestLimiter,
     async (req, res) => {
         try {
             const { username, role, domain } = req.body;
+            const policies = await getPolicyInDomain(role, domain);
+            if(!policies || policies.length === 0){
+                return res.status(404).json({ message: 'The role does not exist in the domain.' });
+            }
             await addRoleForUserInDomain(username, role, domain);
             updateEventLog(req, { success: `Added role ${role} in domain ${domain} for the user ${username}.` });
             return res.status(201).json({ message: 'Role has been added successfully. User must relogin to have the new role.' });
@@ -288,6 +306,8 @@ router.post('/user-role', apiRequestLimiter,
  *         description: Validation error. One or more fields are missing or incorrectly formatted.
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
@@ -371,16 +391,18 @@ router.delete('/user-role', apiRequestLimiter,
  *               action:
  *                 type: string
  *                 description: "Action - the action allowed or denied by this policy."
- *                 example: "write"
+ *                 enum: [C, R, U, D, GC, GR, GU, GD]
+ *                 example: "C"
  *               condition:
  *                 type: string
  *                 description: "Condition - any additional conditions for this policy."
- *                 example: "attr.value == 'someValue'"
+ *                 enum: [check_relationship, check_ownership, none]
+ *                 example: "none"
  *               attributes:
  *                 type: object
  *                 additionalProperties: true
  *                 description: "Attributes - additional data related to the policy."
- *                 example: { "attr1": "value1", "attr2": "value2" }
+ *                 example: { "attr1": "value1", "attr2": 3 }
  *               effect:
  *                 type: string
  *                 description: "Effect - whether the action is allowed or denied."
@@ -390,8 +412,8 @@ router.delete('/user-role', apiRequestLimiter,
  *               - subject
  *               - domain
  *               - object
- *               - act
- *               - eft
+ *               - action
+ *               - effect
  *     responses:
  *       200:
  *         description: Policy has been added successfully.
@@ -407,10 +429,12 @@ router.delete('/user-role', apiRequestLimiter,
  *         description: Validation error. One or more fields are missing or incorrectly formatted.
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/v1/policy',
+router.post('/policy',
     [
         body('subject').not().isEmpty().withMessage('Subject is required.'),
         body('domain').not().isEmpty().withMessage('Domain is required.'),
@@ -426,7 +450,9 @@ router.post('/v1/policy',
             .optional({ checkFalsy: true })
             .custom((value) => {
                 try {
-                    JSON.parse(value);
+                    if(typeof value === 'string'){
+                        JSON.parse(value);
+                    }
                 } catch (e) {
                     throw new Error('Attributes must be a valid JSON object.');
                 }
@@ -459,11 +485,17 @@ router.post('/v1/policy',
         if (type === 'internal') {
             next();
         } else {
+            if(req.body.condition !== 'check_relationship'){
+                let error = { message: 'User is not authorized.', details: "Customer users must set condition to 'check_relationship'."};
+                updateEventLog(req, error );
+                return res.status(403).json(error);
+            }
             // Customer users must have grant permission to be able to create a policy
             let action = req.body.action;
             if (['C', 'R', 'U', 'D'].includes(action)) {
                 action = `G${action}`;
             }
+            const domain = (type === 'internal' ? '0' : req.body.domain);
             const middleware = authorizeUser({
                 dom: domain,
                 obj: req.body.object,

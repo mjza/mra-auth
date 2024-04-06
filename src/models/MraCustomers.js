@@ -63,7 +63,7 @@ module.exports = function(sequelize, DataTypes) {
 				inactive_at: {
 						type: DataTypes.DATE,
 						allowNull: false,
-						defaultValue: Sequelize.Sequelize.literal('((now() AT TIME ZONE UTC'),
+						defaultValue: Sequelize.Sequelize.literal('(now() + 1 year'),
 						comment: "The last day that a subscription is active. Set to one year from creation by default."
 				},
 				deletion_at: {
@@ -93,7 +93,7 @@ module.exports = function(sequelize, DataTypes) {
 				created_at: {
 						type: DataTypes.DATE,
 						allowNull: false,
-						defaultValue: Sequelize.Sequelize.literal("(now() AT TIME ZONE 'UTC')"),
+						defaultValue: Sequelize.Sequelize.fn('now'),
 						comment: "Timestamp of when the customer record was created."
 				},
 				updator: {

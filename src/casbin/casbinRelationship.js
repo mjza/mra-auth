@@ -17,13 +17,20 @@ async function checkRelationship(request, userType, user, table) {
     }
     const { dom: customerId } = request;
     const { user_id: userId } = user;
+    const { act, attrs } = request;
+    if (attrs && !attrs.set) {
+      attrs.set = {};
+    }
+    if (attrs && !attrs.where) {
+      attrs.where = {};
+    }
     const relationship = await db.getValidRelationshipByUserCustomer(userId, customerId);
     if (relationship) {
       const { creator_column, updator_column } = table;
       const { where, set } = attrs || { where: {}, set: {} };
-      if ('C' === act) {
+      if ('C' === act && creator_column) {
         set[creator_column] = user.user_id;
-      } else if ('U' === act) {
+      } else if ('U' === act && updator_column) {
         set[updator_column] = user.user_id;
       }
       if (where && Object.keys(where).length > 0) {
@@ -36,8 +43,8 @@ async function checkRelationship(request, userType, user, table) {
     } else {
       return false;
     }
-  } catch {
-    return false;
+  } catch (err) {
+    throw err;
   }
 }
 

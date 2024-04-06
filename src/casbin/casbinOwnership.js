@@ -16,33 +16,45 @@ async function checkOwnership(request, userType, user, table) {
     }
     const { act, attrs } = request;
     const { owner_column, creator_column, updator_column } = table;
+    if (attrs && !attrs.set) {
+      attrs.set = {};
+    }
+    if (attrs && !attrs.where) {
+      attrs.where = {};
+    }
     const { where, set } = attrs || { where: {}, set: {} };
 
     if (userType != 'internal') {
       if ('C' === act) {
-        if (!set[owner_column] || set[owner_column] != user.user_id) {
+        if (owner_column && (!set[owner_column] || set[owner_column] != user.user_id)) {
           return false;
         }
-        set[creator_column] = user.user_id;
+        if (creator_column) {
+          set[creator_column] = user.user_id;
+        }
         customDataStore.setData('set', set);
       } else if ('R' === act) {
-        if (where[owner_column] && where[owner_column] != user.user_id) {
+        if (owner_column && where[owner_column] && where[owner_column] != user.user_id) {
           return false;
         }
-        where[owner_column] = user.user_id;
+        if (owner_column) {
+          where[owner_column] = user.user_id;
+        }
         customDataStore.setData('where', where);
       } else if ('U' === act) {
-        if (!where[owner_column] || where[owner_column] != user.user_id) {
+        if (owner_column && (!where[owner_column] || where[owner_column] != user.user_id)) {
           return false;
         }
-        if (set[owner_column] && set[owner_column] != user.user_id) {
+        if (owner_column && set[owner_column] && set[owner_column] != user.user_id) {
           return false;
         }
-        set[updator_column] = user.user_id;
+        if (updator_column) {
+          set[updator_column] = user.user_id;
+        }
         customDataStore.setData('where', where);
         customDataStore.setData('set', set);
       } else if ('D' === act) {
-        if (!where[owner_column] || where[owner_column] != user.user_id) {
+        if (owner_column && (!where[owner_column] || where[owner_column] != user.user_id)) {
           return false;
         }
         customDataStore.setData('where', where);
@@ -58,8 +70,8 @@ async function checkOwnership(request, userType, user, table) {
       }
     }
     return true;
-  } catch {
-    return false;
+  } catch (err) {
+    throw err;
   }
 }
 

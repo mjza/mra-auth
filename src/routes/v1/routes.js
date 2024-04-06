@@ -49,4 +49,9 @@ module.exports = router;
  *               message:
  *                 type: string
  *                 example: User is not authorized.
+ *               details:
+ *                 type: string
+ *                 example: Customer users must set condition to 'check_relationship'.
+ *             required:
+ *               - message
  */
