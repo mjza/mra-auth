@@ -164,8 +164,6 @@ async function authorize(req, res, next) {
  *                       domain:
  *                         type: string
  *                         example: "0"
- *       401:
- *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  *       429:

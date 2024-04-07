@@ -33,21 +33,33 @@ describe('Test authorization endpoints', () => {
             await db.deleteUserByUsername(mockUser.username);
         });
 
-        it('should return 401 as authorization token is missing', async () => {
-            const res = await request(app)
-                .post('/v1/authorize');
-
-            expect(res.statusCode).toEqual(401);
-            expect(res.body.message).toEqual('You must provide a valid JWT token.');
-        });
-
-        it('should return 401 as authorization token is invalid', async () => {
+        it('should return 403 as authorization token is missing', async () => {
             const res = await request(app)
                 .post('/v1/authorize')
-                .set('Authorization', validToken + 'x');
+                .send({
+                    dom: '0',
+                    obj: 'mra_users',
+                    act: 'R',
+                    attrs: { }
+                });
 
-            expect(res.statusCode).toEqual(401);
-            expect(res.body.message).toEqual('Provided JWT token is invalid.');
+            expect(res.statusCode).toEqual(403);
+            expect(res.body.message).toEqual('User is not authorized.');
+        });
+
+        it('should return 403 as authorization token is invalid', async () => {
+            const res = await request(app)
+                .post('/v1/authorize')
+                .set('Authorization', validToken + 'x')
+                .send({
+                    dom: '0',
+                    obj: 'mra_users',
+                    act: 'R',
+                    attrs: { }
+                });
+
+            expect(res.statusCode).toEqual(403);
+            expect(res.body.message).toEqual('User is not authorized.');
         });
 
         it('should authorize user action when valid parameters are provided', async () => {            
@@ -82,9 +94,9 @@ describe('Test authorization endpoints', () => {
                 .set('Authorization', validToken)
                 .send({
                     dom: '',
-                    obj: 'mra_users',
-                    act: 'R'
-                    // attrs is optional and not included here
+                    obj: '',
+                    act: '',
+                    attrs: null
                 });
             expect(res.statusCode).toBe(400);
             expect(res.body).toHaveProperty('errors');
@@ -92,6 +104,41 @@ describe('Test authorization endpoints', () => {
                 expect.arrayContaining([
                     expect.objectContaining({
                         msg: 'Domain (dom) is required'
+                    }),
+                    expect.objectContaining({
+                        msg: 'Object (obj) is required'
+                    }),
+                    expect.objectContaining({
+                        msg: 'Action (act) is required'
+                    }),
+                    expect.objectContaining({
+                        msg: 'Attributes (attrs) must be a JSON object if provided'
+                    })
+                ])
+            );
+        });
+
+        it('should return 400 Bad Request for passing wrong types for fields', async () => {
+            const res = await request(app)
+                .post('/v1/authorize')
+                .set('Authorization', validToken)
+                .send({
+                    dom: 1,
+                    obj: 2.2,
+                    act: false
+                });
+            expect(res.statusCode).toBe(400);
+            expect(res.body).toHaveProperty('errors');
+            expect(res.body.errors).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        msg: 'Domain (dom) must be a string'
+                    }),
+                    expect.objectContaining({
+                        msg: 'Object (obj) must be a string'
+                    }),
+                    expect.objectContaining({
+                        msg: 'Action (act) must be a string'
                     })
                 ])
             );

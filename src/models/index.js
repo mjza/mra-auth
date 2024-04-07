@@ -11,8 +11,9 @@ const filePath = path.join(__dirname, '../../logs/sequelize.log');
  * Stream for logging Sequelize messages to a file.
  */
 try {
-  fs.truncateSync(filePath, 0);
-  console.log('File truncated successfully.');
+  if (process.env.NODE_ENV === 'development') {
+    fs.truncateSync(filePath, 0);
+  }
 } catch (err) {
   console.error('Error truncating file:', err);
 }
