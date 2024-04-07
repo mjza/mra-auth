@@ -10,10 +10,14 @@ jobs:
   tag:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    
+
     env:
         HEROKU_APP_NAME: mra-auth
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+    strategy:
+      matrix:
+        node-version: [20.x]    
 
     steps:
     - uses: actions/checkout@v3
@@ -57,9 +61,29 @@ jobs:
       with:
         github-token: ${{ secrets.MY_PAT }}
         script: |
+          const baseTagName = `${{ env.HEROKU_VERSION }}`;
+          let tagName = baseTagName;
+          try {
+            // Attempt to fetch the tag to see if it already exists
+            await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `tags/${tagName}`,
+            });
+            // If the tag exists, append a timestamp to make a unique tag
+            const date = new Date();
+            const timestamp = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
+            tagName = `${baseTagName}.${timestamp}`;
+            console.log(`Base tag exists, new tag will be ${tagName}`);
+          } catch (error) {
+            // If the tag does not exist, the original tagName will be used
+            console.log(`Tag ${tagName} does not exist, proceeding to create it.`);
+          }
+          
+          // Create the tag with either the base name or the unique timestamped name
           await github.rest.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            ref: 'refs/tags/${{ env.HEROKU_VERSION }}',
-            sha: context.sha
-          })
+            ref: `refs/tags/${tagName}`,
+            sha: context.sha,
+          });
