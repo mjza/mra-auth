@@ -43,4 +43,4 @@ mra_ticket_reactions;creator;CRUD;R;R;R;R;R;R;R;R;R;R;R;COROUODO;R
 mra_ticket_comments;creator;CRUD;R;R;R;R;R;R;R;R;R;R;R;COROUODO;R
 mra_advisor_customers;creator;CRUD;CRUD;R;R;R;CRUD;R;R;GR*;R*;N;N;N;N
 mra_posts;creator;CRUD;CRUD;R;R;R;R;R;R;GC*RGU*GD*;C*RU*D*;R;R;R;R
-casbin_rule;SYS;CRD;CRD;CRD;CRD;R;N;N;N;C*R*D*;N;N;N;N;N
+mra_authorization;SYS;CRD;CRD;CRD;CRD;R;N;N;N;C*R*D*;N;N;N;N;N

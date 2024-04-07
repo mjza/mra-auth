@@ -38,6 +38,22 @@ const apiRequestLimiter = rateLimit({
 });
 
 /**
+ * Rate limit configuration for the authorization API usage.
+ * Limits the number of requests an IP can make in a set time window.
+ * 
+ * @const
+ * @type {rateLimit}
+ * @property {number} windowMs - The time frame for calculating the number of requests in milliseconds (15 minutes).
+ * @property {number} max - The maximum number of requests allowed per IP in the specified window (100 requests per 15 minutes).
+ * @property {string} message - The message returned when the rate limit is exceeded.
+ */
+const authorizationApiRequestLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minutes in milliseconds
+    max: 60, // Limit each IP to 30 requests per `window` (here, per 15 minutes)
+    message: { message: 'Too many requests from this IP, please try again after 15 minutes.' }
+});
+
+/**
  * @swagger
  * components:
  *   responses:
@@ -75,4 +91,4 @@ const createAccountLimiter = rateLimit({
     message: { message: 'Too many accounts created from this IP, please try again after an hour.' }
 });
 
-module.exports = { apiRequestLimiter, createAccountLimiter };
+module.exports = { apiRequestLimiter, authorizationApiRequestLimiter, createAccountLimiter };

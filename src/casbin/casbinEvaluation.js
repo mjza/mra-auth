@@ -120,14 +120,14 @@ async function evalDynamicCondition(request, condition, userType, user, table) {
  */
 async function setConditions(request, user, table) {
     const { act, attrs } = request;
-    const { creator_column, updator_column } = table;
+    const { creator_column, updator_column } = table || { creator_column: null, updator_column: null };
     const { where, set } = attrs || { where: {}, set: {} };
     if ('C' === act) {
-        if (user && user.user_id > 0 && creator_column != null) {
+        if (user && user.user_id > 0 && creator_column) {
             set[creator_column] = user.user_id;
         }
     } else if ('U' === act) {
-        if (user && user.user_id > 0 && updator_column != null) {
+        if (user && user.user_id > 0 && updator_column) {
             set[updator_column] = user.user_id;
         }
     }

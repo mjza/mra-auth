@@ -26,7 +26,7 @@ async function checkRelationship(request, userType, user, table) {
     }
     const relationship = await db.getValidRelationshipByUserCustomer(userId, customerId);
     if (relationship) {
-      const { creator_column, updator_column } = table;
+      const { creator_column, updator_column } = table || { creator_column: null, updator_column: null };
       const { where, set } = attrs || { where: {}, set: {} };
       if ('C' === act && creator_column) {
         set[creator_column] = user.user_id;

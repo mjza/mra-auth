@@ -3,37 +3,37 @@ const { body, query, validationResult } = require('express-validator');
 const { updateEventLog } = require('../../utils/logger');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { authenticateUser, authorizeUser } = require('../../utils/validations');
-const { listRolesForUserInDomain, listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRoleForUserInDomain, addPolicyInDomain, getPolicyInDomain } = require('../../casbin/casbinSingleton');
+const { listRolesForUserInDomain, listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRoleForUserInDomain, addPolicyInDomain, getPoliciesInDomain, getRolesInDomain, getUsersForRoleInDomain, removePoliciesInDomain } = require('../../casbin/casbinSingleton');
 
 const router = express.Router();
 
 /**
  * @swagger
- * /v1/user-role:
+ * /v1/domain-roles:
  *   get:
- *     summary: Retrieve roles for a given username or the current user
- *     description: Get the roles for a given username or the current user in a specific domain.
+ *     summary: Retrieve roles for a given domain
+ *     description: Get the roles for a given domain.
  *     tags: [8th]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: username
+ *         name: role
  *         required: false
  *         schema:
  *           type: string
- *           example: "username1"
- *         description: Mandatory username to retrieve its roles.
+ *           example: "admin"
+ *         description: Optional role for checking its existance.
  *       - in: query
  *         name: domain
  *         required: false
  *         schema:
  *           type: integer
  *           example: "0"
- *         description: Optional domain number. Use domain 0 if not provided.
+ *         description: Optional domain number.
  *     responses:
  *       200:
- *         description: User's roles retrieved successfully.
+ *         description: Domain's roles retrieved successfully.
  *         content:
  *           application/json:
  *             schema:
@@ -51,22 +51,178 @@ const router = express.Router();
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       403:
  *         $ref: '#/components/responses/Forbidden'
- *       404:
- *         description: User role not found.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: User role not found.
  *       429:
  *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.get('/user-role', apiRequestLimiter,
+router.get('/domain-roles', apiRequestLimiter,
+    [
+        query('role')
+            .optional({ checkFalsy: true })
+            .isString().withMessage('If you provide the role, it must be a string.'),
+
+        query('domain')
+            .optional({ checkFalsy: true })
+            .isNumeric().withMessage('Domain must be a number.'),
+    ],
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    },
+    authenticateUser,
+    async (req, res, next) => {
+        const roles = await listRolesForUserInDomains(req.user.username);
+        const type = getUserType(roles);
+        const domain = (type === 'internal' ? '0' : (req.query.domain ? req.query.domain : '0'));
+        const middleware = authorizeUser({
+            dom: domain,
+            obj: 'mra_authorization',
+            act: 'R',
+            attrs: {
+                where: {
+                    role: req.query.role,
+                    domain: req.query.domain
+                }
+            }
+        });
+        middleware(req, res, next);
+    },
+    async (req, res) => {
+        try {
+            const rolesDomainArray = await getRolesInDomain(req.conditions.where.role, req.conditions.where.domain);
+            return res.json(rolesDomainArray);
+        } catch (err) {
+            updateEventLog(req, err);
+            return res.status(500).json({ message: err.message });
+        }
+    });
+
+/**
+* @swagger
+* /v1/my-roles:
+*   get:
+*     summary: Retrieve roles for the current user
+*     description: Get the roles forthe current user in all domains.
+*     tags: [8th]
+*     security:
+*       - bearerAuth: []
+*     parameters:
+*       - in: query
+*         name: domain
+*         required: false
+*         schema:
+*           type: integer
+*         description: Optional domain number.
+*     responses:
+*       200:
+*         description: User's roles retrieved successfully.
+*         content:
+*           application/json:
+*             schema:
+*               type: array
+*               items:
+*                 type: object
+*                 properties:
+*                   role:
+*                     type: string
+*                     example: "enduser"
+*                   domain:
+*                     type: string
+*                     example: "0"
+*       401:
+*         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
+*       429:
+*         $ref: '#/components/responses/ApiRateLimitExceeded'
+*       500:
+*         $ref: '#/components/responses/ServerInternalError'
+*/
+router.get('/my-roles', apiRequestLimiter,
+    [
+        query('domain')
+            .optional({ checkFalsy: true })
+            .isNumeric().withMessage('Domain must be a number.')
+            .default('0'),
+    ],
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    },
+    authenticateUser,
+    async (req, res) => {
+        try {
+            const username = req.user.username;
+            const domain = req.query.domain;
+            let userRolesArray;
+            if (!domain) {
+                userRolesArray = await listRolesForUserInDomains(username);
+            } else {
+                userRolesArray = await listRolesForUserInDomain(username, domain);
+            }
+
+            return res.json(userRolesArray);
+        } catch (err) {
+            updateEventLog(req, err);
+            return res.status(500).json({ message: err.message });
+        }
+    });
+
+/**
+* @swagger
+* /v1/user-roles:
+*   get:
+*     summary: Retrieve roles for a given username or the current user
+*     description: Get the roles for a given username or the current user in a specific domain.
+*     tags: [8th]
+*     security:
+*       - bearerAuth: []
+*     parameters:
+*       - in: query
+*         name: username
+*         required: false
+*         schema:
+*           type: string
+*           example: "username1"
+*         description: Optional username to retrieve its roles.
+*       - in: query
+*         name: domain
+*         required: false
+*         schema:
+*           type: integer
+*           example: "0"
+*         description: Optional domain number. Use domain 0 if not provided.
+*     responses:
+*       200:
+*         description: User's roles retrieved successfully.
+*         content:
+*           application/json:
+*             schema:
+*               type: array
+*               items:
+*                 type: object
+*                 properties:
+*                   role:
+*                     type: string
+*                     example: "enduser"
+*                   domain:
+*                     type: string
+*                     example: "0"
+*       401:
+*         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
+*       403:
+*         $ref: '#/components/responses/Forbidden'
+*       429:
+*         $ref: '#/components/responses/ApiRateLimitExceeded'
+*       500:
+*         $ref: '#/components/responses/ServerInternalError'
+*/
+router.get('/user-roles', apiRequestLimiter,
     [
         query('username')
             .optional({ checkFalsy: true })
@@ -88,11 +244,11 @@ router.get('/user-role', apiRequestLimiter,
     },
     authenticateUser,
     (req, res, next) => {
-        const username = req.query && req.query.username ? req.query.username : req.user.username;
-        const domain = req.query && req.query.domain ? req.query.domain : '0';
+        const username = req.query.username ? req.query.username : req.user.username;
+        const domain = req.query.domain ? req.query.domain : '0';
         const middleware = authorizeUser({
             dom: domain,
-            obj: 'casbin_rule',
+            obj: 'mra_authorization',
             act: 'R',
             attrs: {
                 where: {
@@ -108,21 +264,12 @@ router.get('/user-role', apiRequestLimiter,
 
             const userRolesArray = await listRolesForUserInDomain(req.conditions.where.username, req.conditions.where.domain);
 
-            if (!userRolesArray || userRolesArray.length === 0) {
-                return res.status(404).json({ message: 'User role not found' });
-            }
-
-            const userRolesDomainArray = userRolesArray.map((role) => {
-                return { role, domain: req.conditions.where.domain };
-            });
-
-            return res.json(userRolesDomainArray);
+            return res.json(userRolesArray);
         } catch (err) {
             updateEventLog(req, err);
             return res.status(500).json({ message: err.message });
         }
     });
-
 
 /**
  * @swagger
@@ -219,7 +366,7 @@ router.post('/user-role', apiRequestLimiter,
         const domain = (type === 'internal' ? '0' : req.body.domain);
         const middleware = authorizeUser({
             dom: domain,
-            obj: 'casbin_rule',
+            obj: 'mra_authorization',
             act: 'C'
         });
         middleware(req, res, next);
@@ -227,7 +374,7 @@ router.post('/user-role', apiRequestLimiter,
     async (req, res) => {
         try {
             const { username, role, domain } = req.body;
-            const policies = await getPolicyInDomain(role, domain);
+            const policies = await getRolesInDomain(role, domain);
             if (!policies || policies.length === 0) {
                 return res.status(404).json({ message: 'The role does not exist in the domain.' });
             }
@@ -326,7 +473,7 @@ router.delete('/user-role', apiRequestLimiter,
         const domain = (type === 'internal' ? '0' : req.body.domain);
         const middleware = authorizeUser({
             dom: domain,
-            obj: 'casbin_rule',
+            obj: 'mra_authorization',
             act: 'D'
         });
         middleware(req, res, next);
@@ -346,7 +493,7 @@ router.delete('/user-role', apiRequestLimiter,
 
 /**
  * @swagger
- * /v1/policy/search:
+ * /v1/policies:
  *   post:
  *     summary: Retrieve policies
  *     description: This endpoint retrieves policies based on the given parameters within the request body. `subject` and `domain` are mandatory, while other parameters are optional and used to filter the retrieved policies. Using POST method for search operation to accommodate complex query structures.
@@ -427,10 +574,10 @@ router.delete('/user-role', apiRequestLimiter,
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/policy/search',
+router.post('/policies',
     [
-        body('subject').not().isEmpty().withMessage('Subject is required.'),
         body('domain').not().isEmpty().withMessage('Domain is required.'),
+        body('subject').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Subject is optional and can be string or null.'),
         body('object').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Object can be string or null.'),
         body('action').optional({ nullable: true, checkFalsy: true }).isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null]).withMessage('Action is optional and can be "C", "R", "U", "D", "GC", "GR", "GU", "GD", empty string or null.'),
         body('effect').optional({ nullable: true, checkFalsy: true }).isIn(['allow', 'deny', '', null]).withMessage('Effect is optional and can be "allow", "deny", empty string or null.'),
@@ -464,7 +611,7 @@ router.post('/policy/search',
         const domain = (type === 'internal' ? '0' : req.body.domain);
         const middleware = authorizeUser({
             dom: domain,
-            obj: 'casbin_rule',
+            obj: 'mra_authorization',
             act: 'R'
         });
         middleware(req, res, next);
@@ -473,7 +620,7 @@ router.post('/policy/search',
         try {
             const { subject, domain, object, action, condition, attributes, effect } = req.body;
 
-            const policies = await getPolicyInDomain(subject, domain, object, action, condition, attributes, effect);
+            const policies = await getPoliciesInDomain(subject, domain, object, action, condition, attributes, effect);
 
             return res.status(200).json(policies);
         } catch (err) {
@@ -484,7 +631,7 @@ router.post('/policy/search',
 
 /**
  * @swagger
- * /v1/policy/add:
+ * /v1/policy:
  *   post:
  *     summary: Add a new policy
  *     description: This endpoint adds a new policy with the given parameters. It is intended to allow fine-grained access control policies to be defined.
@@ -556,7 +703,7 @@ router.post('/policy/search',
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/policy/add',
+router.post('/policy',
     [
         body('subject').not().isEmpty().withMessage('Subject is required.'),
         body('domain').not().isEmpty().withMessage('Domain is required.'),
@@ -597,7 +744,7 @@ router.post('/policy/add',
         const domain = (type === 'internal' ? '0' : req.body.domain);
         const middleware = authorizeUser({
             dom: domain,
-            obj: 'casbin_rule',
+            obj: 'mra_authorization',
             act: 'C'
         });
         middleware(req, res, next);
@@ -639,7 +786,137 @@ router.post('/policy/add',
     }
 );
 
+/**
+ * @swagger
+ * /v1/policies:
+ *   delete:
+ *     summary: Delete policies
+ *     description: This endpoint deletes policies based on the given parameters within the request body. `subject` and `domain` are mandatory, while other parameters are optional and used to specify the policies to be deleted.
+ *     tags: [9th]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               subject:
+ *                 type: string
+ *                 description: "Subject - The role name or username the policy applies to."
+ *                 example: "username1"
+ *               domain:
+ *                 type: string
+ *                 description: "Domain - the scope (i.e., customer ID) within which this policy is applicable."
+ *                 example: "1"
+ *               object:
+ *                 type: string
+ *                 description: "Object - the resource (i.e., table name) this policy pertains to."
+ *                 example: ""
+ *               action:
+ *                 type: string
+ *                 description: "Action - the action allowed or denied by this policy."
+ *                 enum: [C, R, U, D, GC, GR, GU, GD, '', null]
+ *                 example: ""
+ *               condition:
+ *                 type: string
+ *                 description: "Condition - any additional conditions for this policy."
+ *                 enum: [check_relationship, check_ownership, none, '', null]
+ *                 example: ""
+ *               attributes:
+ *                 type: object
+ *                 additionalProperties: true
+ *                 description: "Attributes - additional data related to the policy."
+ *                 example: null
+ *               effect:
+ *                 type: string
+ *                 description: "Effect - whether the action is allowed or denied."
+ *                 enum: [allow, deny, '', null]
+ *                 example: ""
+ *             required:
+ *               - subject
+ *               - domain
+ *     responses:
+ *       200:
+ *         description: Deleted policies process was successful.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 result:
+ *                   type: boolean
+ *                   example: true
+ *                   description: True if deleted successfuly, false otherwise.
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
+ *       500:
+ *         $ref: '#/components/responses/ServerInternalError'
+ */
+router.delete('/policies', [
+    body('domain').not().isEmpty().withMessage('Domain is required.'),
+    body('subject').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Subject is optional and can be string or null.'),
+    body('object').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Object can be string or null.'),
+    body('action').optional({ nullable: true, checkFalsy: true }).isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null]).withMessage('Action is optional.'),
+    body('effect').optional({ nullable: true, checkFalsy: true }).isIn(['allow', 'deny', '', null]).withMessage('Effect is optional.'),
+    body('condition').optional({ nullable: true, checkFalsy: true }).isIn(['check_relationship', 'check_ownership', 'none', '', null]).withMessage('Condition is optional.'),
+    body('attributes')
+        .optional({ nullable: true, checkFalsy: true })
+        .custom((value) => {
+            if (typeof value === 'object') {
+                return true; // Directly pass through objects without attempting to parse
+            }
+            try {
+                if (typeof value === 'string') {
+                    JSON.parse(value);
+                }
+            } catch (e) {
+                throw new Error('Attributes must be a valid JSON object.');
+            }
+            return true;
+        })
+        .withMessage('Attributes must be a valid JSON object.'),
+],
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    },
+    authenticateUser,
+    async (req, res, next) => {
+        const roles = await listRolesForUserInDomains(req.user.username);
+        const type = getUserType(roles);
+        req.user.type = type;
+        const domain = (type === 'internal' ? '0' : req.body.domain);
+        const middleware = authorizeUser({
+            dom: domain,
+            obj: 'mra_authorization',
+            act: 'D'
+        });
+        middleware(req, res, next);
+    },
+    async (req, res) => {
+        try {
+            const { subject, domain, object, action, condition, attributes, effect } = req.body;            
+            const users = await getUsersForRoleInDomain(subject, domain);
 
+            if(users && users.length > 0){
+                return res.status(404).json({ message: 'Some users are using this policy and cannot be changed or removed.' });
+            }
+
+            const result = await removePoliciesInDomain(subject, domain, object, action, condition, attributes, effect);
+
+            return res.status(200).json({result});
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Failed to delete policies due to an internal error.' });
+        }
+    });
 
 
 

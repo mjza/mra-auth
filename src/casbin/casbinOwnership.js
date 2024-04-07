@@ -15,7 +15,7 @@ async function checkOwnership(request, userType, user, table) {
       return false;
     }
     const { act, attrs } = request;
-    const { owner_column, creator_column, updator_column } = table;
+    const { owner_column, creator_column, updator_column } = table || { owner_column: null, creator_column: null, updator_column: null };
     if (attrs && !attrs.set) {
       attrs.set = {};
     }

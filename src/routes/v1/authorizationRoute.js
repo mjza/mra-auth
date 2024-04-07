@@ -1,9 +1,9 @@
 const express = require('express');
-const { body, query, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const { updateEventLog } = require('../../utils/logger');
-const { apiRequestLimiter } = require('../../utils/rateLimit');
-const { authenticateUser, authorizeUser } = require('../../utils/validations');
-const { listRolesForUserInDomains, listRolesForUserInDomain } = require('../../casbin/casbinSingleton');
+const { authorizationApiRequestLimiter } = require('../../utils/rateLimit');
+const { authenticateUser } = require('../../utils/validations');
+const { listRolesForUserInDomains } = require('../../casbin/casbinSingleton');
 const customDataStore = require('../../utils/customDataStore');
 
 const router = express.Router();
@@ -173,7 +173,7 @@ async function authorize(req, res, next) {
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/authorize', apiRequestLimiter, validateAuthorizationRequest, authenticateUser, authorize, async (req, res) => {
+router.post('/authorize', authorizationApiRequestLimiter, validateAuthorizationRequest, authenticateUser, authorize, async (req, res) => {
     const roles = await listRolesForUserInDomains(req.user.username);
     const conditions = customDataStore.getData();
     res.json({ user: req.user, roles, conditions });

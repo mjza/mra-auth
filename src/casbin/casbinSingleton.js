@@ -180,7 +180,7 @@ async function listRolesForUser(username) {
  *
  * @param {string} username - The username of the user whose roles are to be listed.
  * @param {string} domain - The domain within which the roles are to be listed.
- * @returns {Promise<Array<string>>} A promise that resolves to an array of role names associated with the user in the given domain.
+ * @returns {Promise<Array<string, string>>} A promise that resolves to an array of role names within the passed domain associated for the given username.
  */
 async function listRolesForUserInDomain(username, domain) {
   if (!enforcerPromiseInstance) {
@@ -190,7 +190,12 @@ async function listRolesForUserInDomain(username, domain) {
   try {
     const enforcer = await enforcerPromiseInstance;
     const roles = await listRolesForUserInDomainWithEnforcer(enforcer, username, domain);
-    return roles;
+
+    const userRolesDomainArray = roles.map((role) => {
+      return { role, domain };
+    });
+
+    return userRolesDomainArray;
   } catch (error) {
     console.error("Error listing roles for user:", error);
     throw error;
@@ -409,17 +414,18 @@ async function addPolicyInDomain(sub, dom, obj, act, cond = 'none', attrs = {}, 
  * @throws {Error} If the Casbin enforcer instance is not initialized or if any parameter (except `attrs`) is not a string, is missing, or is `null`.
  * @async
  */
-async function getPolicyInDomain(sub, dom, obj = '', act = '', cond = '', attrs = {}, eft = '') {
+async function getPoliciesInDomain(sub, dom, obj = '', act = '', cond = '', attrs = {}, eft = '') {
 
   if (!enforcerPromiseInstance) {
     throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
   }
 
-  if(!obj) obj = '';
-  if(!act) act = '';
-  if(!cond) cond = '';
-  if(!attrs) attrs = '';
-  if(!eft) eft = '';
+  if (!sub) sub = '';
+  if (!obj) obj = '';
+  if (!act) act = '';
+  if (!cond) cond = '';
+  if (!attrs) attrs = '';
+  if (!eft) eft = '';
 
   attrs = typeof attrs === 'object' ? (Object.keys(attrs).length === 0 ? '' : JSON.stringify(attrs)) : attrs;
 
@@ -433,25 +439,133 @@ async function getPolicyInDomain(sub, dom, obj = '', act = '', cond = '', attrs 
   const enforcer = await enforcerPromiseInstance;
   const policies = await enforcer.getFilteredPolicy(0, ...policy);
 
-  return policies;
-  /*
   const adjustedPolicies = policies.map(policyArray => ({
     subject: policyArray[0],
     domain: policyArray[1],
-    object: obj === '' ? undefined : policyArray[2],
-    action: act === '' ? undefined : policyArray[3],
-    condition: cond === '' ? undefined : policyArray[4],
-    attributes: attrs === '' ? undefined : policyArray[5],
-    effect: eft === '' ? undefined : policyArray[6],
+    object: policyArray[2],
+    action: policyArray[3],
+    condition: policyArray[4],
+    attributes: policyArray[5],
+    effect: policyArray[6],
   }));
 
-  const uniqueJsonStrings = new Set(adjustedPolicies.map(obj => JSON.stringify(obj)));
+  return adjustedPolicies;
+}
 
-  const uniquePolicies = Array.from(uniqueJsonStrings).map(jsonStr => JSON.parse(jsonStr));
+/**
+ * Retrieves roles within a specific domain based on provided criteria.
+ * This function asynchronously fetches roles from a Casbin enforcer,
+ * filtering them based on subject, domain.
+ * 
+ * 
+ * @param {string} sub - The rolename.
+ * @param {string} dom - The domain to which the role belongs.
+ * @returns {Promise<Array>} A promise that resolves to an array of filtered roles matching the criteria.
+ * @throws {Error} If the Casbin enforcer instance is not initialized or if any parameter is not a string, is missing.
+ * @async
+ */
+async function getRolesInDomain(sub = '', dom) {
 
-  return uniquePolicies;
-  */
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  if (!sub) sub = '';
+
+  if ([sub, dom].some(v => typeof v !== 'string' || v === undefined || v === null)) {
+    throw new Error('All parameters are mandatory and must be of type string. At least one parameter is missing, null, or not a string.');
+  }
+
+  const policy = [sub, dom];
+
+  const enforcer = await enforcerPromiseInstance;
+  const roles = await enforcer.getFilteredPolicy(0, ...policy);
+
+  const adjustedRoles = roles.map(policyArray => ({
+    role: policyArray[0],
+    domain: policyArray[1]
+  }));
+
+  const uniqueJsonStrings = new Set(adjustedRoles.map(obj => JSON.stringify(obj)));
+
+  const uniqueRoles = Array.from(uniqueJsonStrings).map(jsonStr => JSON.parse(jsonStr));
+
+  return uniqueRoles;
+}
+
+/**
+ * Retrieves users related to a specific role in a domain based on provided criteria.
+ * This function asynchronously fetches users from a Casbin enforcer,
+ * filtering them based on role, domain.
+ * 
+ * 
+ * @param {string} sub - The rolename.
+ * @param {string} dom - The domain to which the role belongs.
+ * @returns {Promise<Array>} A promise that resolves to an array of filtered roles matching the criteria.
+ * @throws {Error} If the Casbin enforcer instance is not initialized or if any parameter is not a string, is missing.
+ * @async
+ */
+async function getUsersForRoleInDomain(sub, dom) {
+
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  if ([sub, dom].some(v => typeof v !== 'string' || v === undefined || v === null)) {
+    throw new Error('All parameters are mandatory and must be of type string. At least one parameter is missing, null, or not a string.');
+  }
+
+  const enforcer = await enforcerPromiseInstance;
+  const users = await enforcer.getUsersForRoleInDomain(sub, dom);
+
+  return users;
+}
+
+/**
+ * Remove policies within a specific domain based on provided criteria.
+ * This function asynchronously removes policies from a Casbin enforcer,
+ * filtering them based on subject, domain, object, action, condition, attributes, and effect.
+ * 
+ * Attributes are expected as a JSON object but are converted to a string representation
+ * for the filtering process. All other parameters must be strings.
+ * 
+ * @param {string} sub - The subject (user/role) the policy applies to.
+ * @param {string} dom - The domain/tenant to which the policy belongs.
+ * @param {string} [obj=''] - Optional object/resource the policy pertains to.
+ * @param {string} [act=''] - Optional action permitted or denied by the policy.
+ * @param {string} [cond=''] - Optional condition for policy enforcement. Defaults to an empty string.
+ * @param {Object} [attrs={}] - Optional JSON object of attributes associated with the policy. Defaults to an empty object.
+ * @param {string} [eft=''] - The effect of the policy ('allow' or 'deny'). Defaults to an empty string.
+ * @returns {Promise<Array>} A promise that resolves to an array of filtered policies matching the criteria.
+ * @throws {Error} If the Casbin enforcer instance is not initialized or if any parameter (except `attrs`) is not a string, is missing, or is `null`.
+ * @async
+ */
+async function removePoliciesInDomain(sub, dom, obj = '', act = '', cond = '', attrs = {}, eft = '') {
+
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  if (!obj) obj = '';
+  if (!act) act = '';
+  if (!cond) cond = '';
+  if (!attrs) attrs = '';
+  if (!eft) eft = '';
+
+  attrs = typeof attrs === 'object' ? (Object.keys(attrs).length === 0 ? '' : JSON.stringify(attrs)) : attrs;
+
+  if ([sub, dom, obj, act, cond, attrs, eft].some(v => typeof v !== 'string' || v === undefined || v === null)) {
+    throw new Error('All parameters are mandatory and must be of type string except attrs that can be a JSON object. At least one parameter is missing, null, or not a string.');
+  }
+
+  // If no error was thrown, proceed with the policy addition
+  const policy = [sub, dom, obj, act, cond, attrs, eft];
+
+  const enforcer = await enforcerPromiseInstance;
+  const result = await enforcer.removeFilteredPolicy(0, ...policy);
+
+  return result;
 }
 
 
-module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter, getUserType, getUserTypeInDomain, addPolicyInDomain, getPolicyInDomain };
+module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter, getUserType, getUserTypeInDomain, addPolicyInDomain, getPoliciesInDomain, getRolesInDomain, getUsersForRoleInDomain, removePoliciesInDomain };
