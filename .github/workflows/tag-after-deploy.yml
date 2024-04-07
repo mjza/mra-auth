@@ -1,12 +1,16 @@
 name: Tag After Heroku Deployment
 
 on:
-    workflow_dispatch:
+  workflow_run:
+    workflows: ["Node.js CI"]
+    types: 
+      - completed
 
 jobs:
   tag:
     runs-on: ubuntu-latest
-
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
     env:
         HEROKU_APP_NAME: mra-auth
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
