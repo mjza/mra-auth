@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=development node src/index.js",
-    "local-test": "cross-env NODE_ENV=development jest --detectOpenHandles --verbose",
-    "github-test": "jest --detectOpenHandles --verbose",
+    "local-test": "cross-env NODE_ENV=development jest --detectOpenHandles --verbose --bail",
+    "github-test": "jest --detectOpenHandles --verbose --bail",
     "generate-docs": "jsdoc -c src/config/jsdoc.json"
   },
   "keywords": [],
