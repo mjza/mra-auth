@@ -224,7 +224,7 @@ describe('/user_details endpoints', () => {
         it('should return 429 after some attempts', async () => {
             var res;
 
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 61; i++) {
                 res = await request(app).put('/v1/user_details/1');
             }
 
