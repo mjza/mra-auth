@@ -53,7 +53,7 @@ async function createApp() {
     app.use(cookieParser());
 
     // This will enable CORS for all routes
-    const allowedOrigins = [process.env.BASE_URL || localhost, 'https://myreportapp.com'];
+    const allowedOrigins = [process.env.BASE_URL, localhost, 'https://myreportapp.com'];
 
     const corsOptions = {
         origin: function (origin, callback) {
