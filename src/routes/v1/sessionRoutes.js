@@ -156,26 +156,21 @@ router.post('/login', apiRequestLimiter,
  * /v1/logout:
  *   post:
  *     summary: Logout a user
- *     description: Refreshes the JWT for a user if the current token is valid and close to expiry.
+ *     description: Gets the JWT for a user if the current token is valid and records it as a logged out user.
  *     tags: [3rd]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Token refreshed successfully.
+ *         description: When logged out successfully.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 token:
- *                   type: string
  *                 exp:
- *                   type: integer
- *                   description: Expiration Time of the new token
- *                 userId:
- *                   type: integer
- *                   example: 1
+ *                   type: string
+ *                   description: Successfully logged out.
  *       401:
  *         $ref: '#/components/responses/UnauthorizedAccessInvalidTokenProvided'
  *       429:
