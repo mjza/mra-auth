@@ -3,7 +3,7 @@ name: Tag After Heroku Deployment
 on:
   workflow_run:
     workflows: ["Node.js CI"]
-    types: 
+    types:
       - completed
 
 jobs:
@@ -12,78 +12,78 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     env:
-        HEROKU_APP_NAME: mra-auth
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      HEROKU_APP_NAME: mra-auth
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
     strategy:
       matrix:
-        node-version: [20.x]    
+        node-version: [20.x]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install Heroku CLI
-      id: install-heroku-cli
-      run: |
-        curl https://cli-assets.heroku.com/install.sh | sh
+      - name: Install Heroku CLI
+        id: install-heroku-cli
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
 
-    - name: Check Heroku Deployment Status
-      id: check-status
-      run: |
-        # Check app status
-        # This is a basic script to check the status. Adjust as necessary for your app.
-        MAX_ATTEMPTS=30
-        for ((i=1;i<=MAX_ATTEMPTS;i++)); do
-          STATUS=$(heroku ps -a $HEROKU_APP_NAME | grep 'web.1: up')
-          if [ ! -z "$STATUS" ]; then
-            echo "Deployment successful"
-            break
-          fi
-          if [ $i -eq $MAX_ATTEMPTS ]; then
-            echo "Deployment check failed" >&2
-            exit 1
-          fi
-          sleep 10
-        done        
+      - name: Check Heroku Deployment Status
+        id: check-status
+        run: |
+          # Check app status
+          # This is a basic script to check the status. Adjust as necessary for your app.
+          MAX_ATTEMPTS=30
+          for ((i=1;i<=MAX_ATTEMPTS;i++)); do
+            STATUS=$(heroku ps -a $HEROKU_APP_NAME | grep 'web.1: up')
+            if [ ! -z "$STATUS" ]; then
+              echo "Deployment successful"
+              break
+            fi
+            if [ $i -eq $MAX_ATTEMPTS ]; then
+              echo "Deployment check failed" >&2
+              exit 1
+            fi
+            sleep 10
+          done
 
-    - name: Check Deployment and Get Version from Heroku
-      id: heroku
-      if: steps.check-status.outcome == 'success'
-      run: |
-        # Retrieve the version number
-        HEROKU_VERSION=$(heroku releases -a $HEROKU_APP_NAME | sed -n '2p' | awk '{print $1}')
-        echo "Heroku Version: $HEROKU_VERSION"
-        echo "HEROKU_VERSION=$HEROKU_VERSION" >> $GITHUB_ENV
+      - name: Check Deployment and Get Version from Heroku
+        id: heroku
+        if: steps.check-status.outcome == 'success'
+        run: |
+          # Retrieve the version number
+          HEROKU_VERSION=$(heroku releases -a $HEROKU_APP_NAME | sed -n '2p' | awk '{print $1}')
+          echo "Heroku Version: $HEROKU_VERSION"
+          echo "HEROKU_VERSION=$HEROKU_VERSION" >> $GITHUB_ENV
 
-    - name: Tag the commit
-      if: steps.check-status.outcome == 'success' && env.HEROKU_VERSION
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.MY_PAT }}
-        script: |
-          const baseTagName = `${{ env.HEROKU_VERSION }}`;
-          let tagName = baseTagName;
-          try {
-            // Attempt to fetch the tag to see if it already exists
-            await github.rest.git.getRef({
+      - name: Tag the commit
+        if: steps.check-status.outcome == 'success' && env.HEROKU_VERSION
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.MY_PAT }}
+          script: |
+            const baseTagName = `${{ env.HEROKU_VERSION }}`;
+            let tagName = baseTagName;
+            try {
+              // Attempt to fetch the tag to see if it already exists
+              await github.rest.git.getRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `tags/${tagName}`,
+              });
+              // If the tag exists, append a timestamp to make a unique tag
+              const date = new Date();
+              const timestamp = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
+              tagName = `${baseTagName}.${timestamp}`;
+              console.log(`Base tag exists, new tag will be ${tagName}`);
+            } catch (error) {
+              // If the tag does not exist, the original tagName will be used
+              console.log(`Tag ${tagName} does not exist, proceeding to create it.`);
+            }
+
+            // Create the tag with either the base name or the unique timestamped name
+            await github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: `tags/${tagName}`,
+              ref: `refs/tags/${tagName}`,
+              sha: context.sha,
             });
-            // If the tag exists, append a timestamp to make a unique tag
-            const date = new Date();
-            const timestamp = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
-            tagName = `${baseTagName}.${timestamp}`;
-            console.log(`Base tag exists, new tag will be ${tagName}`);
-          } catch (error) {
-            // If the tag does not exist, the original tagName will be used
-            console.log(`Tag ${tagName} does not exist, proceeding to create it.`);
-          }
-          
-          // Create the tag with either the base name or the unique timestamped name
-          await github.rest.git.createRef({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            ref: `refs/tags/${tagName}`,
-            sha: context.sha,
-          });

@@ -3,19 +3,18 @@ name: Node.js CI
 on:
   push:
     branches:
-      - 'main'
+      - "main"
     tags-ignore:
-      - '**'
+      - "**"
   pull_request:
     branches:
-      - 'main'
+      - "main"
 
 jobs:
   build:
-    
     env:
-      NODE_ENV: 'test'
-      TZ: 'UTC'
+      NODE_ENV: "test"
+      TZ: "UTC"
       # Set environment variable from secret
       DB_USER: ${{ secrets.DB_USER }}
       DB_HOST: ${{ secrets.DB_HOST }}
@@ -37,22 +36,22 @@ jobs:
       COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}
       COMPANY_PHONENUMBER: ${{ vars.COMPANY_PHONENUMBER }}
 
-    runs-on: ubuntu-latest  
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [20.x]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Run tests on GitHub
-      run: npm run github-test
+      - name: Run tests on GitHub
+        run: npm run github-test
