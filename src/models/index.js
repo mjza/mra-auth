@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { Sequelize, fn, col } = require('sequelize');
+const { Sequelize, fn, col, where } = require('sequelize');
 const process = require('process');
 const initModels = require('./init-models');
 const filePath = path.join(__dirname, '../../logs/sequelize.log');
@@ -77,5 +77,6 @@ module.exports = {
   Sequelize,
   fn,
   col,
+  where,
   closeSequelize,
 };

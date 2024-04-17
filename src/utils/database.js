@@ -117,14 +117,14 @@ const deleteUserByUsername = async (username) => {
   if (!username || !username.trim())
     return null;
 
-  const user = await MraUsers.findOne({ where: { username: username.trim() } });
+  const user = await MraUsers.findOne({ where: { username: username.trim().toLowerCase() } });
   if (!user) {
     return null;
   }
 
   await MraUsers.destroy({
     where: {
-      username: username.trim(),
+      username: username.trim().toLowerCase(),
     },
   });
 
@@ -142,7 +142,7 @@ const getUserByUsername = async (username) => {
     return null;
   }
   const user = await MraUsers.findOne({
-    where: { username: username.trim() }
+    where: { username: username.trim().toLowerCase() }
   });
 
   return user && user.get({ plain: true });
@@ -160,8 +160,8 @@ const getUserByUsernameOrEmail = async (usernameOrEmail) => {
   const users = await MraUsers.findAll({
     where: {
       [Sequelize.Op.or]: [
-        { username: usernameOrEmail.trim() },
-        { email: usernameOrEmail.trim() }
+        { username: usernameOrEmail.trim().toLowerCase() },
+        { email: usernameOrEmail.trim().toLowerCase() }
       ]
     }
   });
@@ -193,7 +193,7 @@ const getUsernamesByEmail = async (email) => {
       [Sequelize.literal('CASE WHEN suspended_at IS NULL THEN FALSE ELSE TRUE END'), 'is_suspended']
     ],
     where: {
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       deleted_at: { [Sequelize.Op.is]: null } // Ensure the user is not deleted
     }
   });
@@ -218,8 +218,8 @@ const insertUser = async (user) => {
     return null;
 
   const newUser = await MraUsers.create({
-    username: username.trim(),
-    email: email.trim(),
+    username: username.trim().toLowerCase(),
+    email: email.trim().toLowerCase(),
     password_hash: passwordHash.trim(),
   });
 
@@ -241,7 +241,7 @@ const isInactiveUser = async (user) => {
   // Check if the user and activation code match
   const foundUser = await MraUsers.findOne({
     where: {
-      username: username.trim(),
+      username: username.trim().toLowerCase(),
       activation_code: activationCode.trim(),
       confirmation_at: null, // Check if the user hasn't been activated yet
     }
@@ -263,7 +263,7 @@ const isActiveUser = async (username) => {
 
   const foundUser = await MraUsers.findOne({
     where: {
-      username: username.trim(),
+      username: username.trim().toLowerCase(),
       confirmation_at: {
         [Sequelize.Op.ne]: null, // confirmation_at IS NOT NULL
       },
@@ -291,7 +291,7 @@ const isActivationCodeValid = async (user) => {
   // Check if the user and activation code match using Sequelize model
   const foundUser = await MraUsers.findOne({
     where: {
-      username: username.trim(),
+      username: username.trim().toLowerCase(),
       activation_code: activationCode.trim(),
       confirmation_at: null,
       created_at: {
@@ -330,7 +330,7 @@ const activateUser = async (user) => {
     { activation_code: null }, // Set activation_code to NULL
     {
       where: {
-        username: username.trim(),
+        username: username.trim().toLowerCase(),
         activation_code: activationCode.trim(),
         created_at: {
           [Sequelize.Op.gte]: Sequelize.literal("now() - INTERVAL '5 days'"), // created_at >= 5 days ago
@@ -357,6 +357,8 @@ const activateUser = async (user) => {
  *                                 user_id, username, email, and reset_token. Returns null if no user is found.
  */
 const generateResetToken = async (username) => {
+  if (!username || !username.trim())
+    return null;
   // Generate a unique reset token, for example, using a library like uuid
   // Here we're using a static value for demonstration purposes
   const resetToken = '1'; // Consider using a more secure token generation strategy
@@ -364,12 +366,17 @@ const generateResetToken = async (username) => {
   // Update the user's reset_token field
   await MraUsers.update(
     { reset_token: resetToken },
-    { where: { username: username }, returning: true } // 'returning: true' is specific to PostgreSQL
+    { where: { 
+      username: username.trim().toLowerCase() 
+    }, 
+    returning: true } // 'returning: true' is specific to PostgreSQL
   );
 
   // Retrieve the updated user details
   const user = await MraUsers.findOne({
-    where: { username: username },
+    where: { 
+      username: username.trim().toLowerCase() 
+    },
     attributes: ['user_id', 'username', 'email', 'reset_token'], // Specify the fields to retrieve
   });
 
@@ -404,7 +411,7 @@ const resetPassword = async (user) => {
     },
     {
       where: {
-        username: username.trim(),
+        username: username.trim().toLowerCase(),
         reset_token: resetToken.trim(),
         reset_token_created_at: {
           [Sequelize.Op.gte]: Sequelize.literal("now() - INTERVAL '5 days'"), // created_at >= 5 days ago
@@ -515,7 +522,7 @@ async function getUserDomains(username) {
   const casbinRules = await CasbinRule.findAll({
     where: {
       ptype: 'g',
-      v0: username
+      v0: username.trim().toLowerCase()
     },
     attributes: [
       // Use sequelize.fn and sequelize.col to select distinct `v2` values

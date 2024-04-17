@@ -118,8 +118,8 @@ describe('Test DB functions', () => {
             insertedUser = await db.insertUser(mockUser);
 
             expect(insertedUser).toBeDefined();
-            expect(insertedUser.username).toBe(mockUser.username);
-            expect(insertedUser.email).toBe(mockUser.email);
+            expect(insertedUser.username).toBe(mockUser.username.toLowerCase());
+            expect(insertedUser.email).toBe(mockUser.email.toLowerCase());
             expect(insertedUser.password_hash).toBe(mockUser.passwordHash);
             expect(Number.isInteger(insertedUser.user_id)).toBeTruthy();
         });
@@ -130,7 +130,7 @@ describe('Test DB functions', () => {
             // Assuming the test user is already inserted from previous test
             const user = await db.getUserByUsername(mockUser.username);
             expect(user).not.toBeNull();
-            expect(user.username).toBe(mockUser.username);
+            expect(user.username).toBe(mockUser.username.toLowerCase());
         });
     });
 
@@ -145,13 +145,13 @@ describe('Test DB functions', () => {
 
             expect(userByUsername.length).toBeGreaterThan(0);
             expect(usersByEmail.length).toBeGreaterThan(0);
-            const foundByEmail = usersByEmail.find(user => user.username === mockUser.username);
+            const foundByEmail = usersByEmail.find(user => user.username === mockUser.username.toLowerCase());
 
             
-            expect(userByUsername[0].username).toBe(mockUser.username);
-            expect(userByUsername[0].email).toBe(mockUser.email);
-            expect(foundByEmail.username).toBe(mockUser.username);
-            expect(foundByEmail.email).toBe(mockUser.email);
+            expect(userByUsername[0].username).toBe(mockUser.username.toLowerCase());
+            expect(userByUsername[0].email).toBe(mockUser.email.toLowerCase());
+            expect(foundByEmail.username).toBe(mockUser.username.toLowerCase());
+            expect(foundByEmail.email).toBe(mockUser.email.toLowerCase());
         });
     });
 
@@ -161,9 +161,9 @@ describe('Test DB functions', () => {
             const usersByEmail = await db.getUsernamesByEmail(mockUser.email);
             expect(usersByEmail).toBeDefined();
             expect(usersByEmail.length).toBeGreaterThan(0);
-            const foundByEmail = usersByEmail.find(user => user.username === mockUser.username);
+            const foundByEmail = usersByEmail.find(user => user.username === mockUser.username.toLowerCase());
 
-            expect(foundByEmail.username).toBe(mockUser.username);
+            expect(foundByEmail.username).toBe(mockUser.username.toLowerCase());
             expect(foundByEmail.is_activated).toBeFalsy();
             expect(foundByEmail.is_suspended).toBeFalsy();
         });
@@ -333,10 +333,10 @@ describe('Test DB functions', () => {
 
             // Delete the mock user
             const deletedUser = await db.deleteUserByUsername(mockUser.username);
-            expect(deletedUser.username).toBe(mockUser.username);
+            expect(deletedUser.username).toBe(mockUser.username.toLowerCase());
 
             // Try to fetch the deleted user
-            const fetchedUser = await db.getUserByUsername(mockUser.username);
+            const fetchedUser = await db.getUserByUsername(mockUser.username.toLowerCase());
             expect(fetchedUser).toBeNull();
 
             // Retrieve no user details, as it must be deleted cascadely 

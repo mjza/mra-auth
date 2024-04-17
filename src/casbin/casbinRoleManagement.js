@@ -65,7 +65,7 @@ async function importPoliciesFromCSV(enforcer, csvFilePath) {
  * @param {string} domain The domain within which the role is added.
  */
 async function addRoleForUserInDomain(enforcer, username, role, domain) {
-    const added = await enforcer.addRoleForUser(username, role, domain);
+    const added = await enforcer.addRoleForUser(username.trim().toLowerCase(), role, domain);
     if (added) {
         console.log(`Role ${role} added to user ${username} in domain ${domain}.`);
         await enforcer.savePolicy();
@@ -80,7 +80,7 @@ async function addRoleForUserInDomain(enforcer, username, role, domain) {
  * @param {string} domain The domain within which the role is removed.
  */
 async function removeRoleForUserInDomain(enforcer, username, role, domain) {
-    const removed = await enforcer.deleteRoleForUser(username, role, domain);
+    const removed = await enforcer.deleteRoleForUser(username.trim().toLowerCase(), role, domain);
     if (removed) {
         console.log(`Role ${role} removed from user ${username} in domain ${domain}.`);
         await enforcer.savePolicy();
@@ -96,7 +96,7 @@ async function removeRoleForUserInDomain(enforcer, username, role, domain) {
  * @returns {Promise<boolean>} True if the user has the role, false otherwise.
  */
 async function hasRoleForUserInDomain(enforcer, username, role, domain) {
-    const roles = await enforcer.getRolesForUser(username, domain);
+    const roles = await enforcer.getRolesForUser(username.trim().toLowerCase(), domain);
     return roles.includes(role);
 }
 
@@ -108,7 +108,7 @@ async function hasRoleForUserInDomain(enforcer, username, role, domain) {
  * @returns {Promise<string[]>} An array of role names.
  */
 async function listRolesForUserInDomain(enforcer, username, domain) {
-    return await enforcer.getRolesForUser(username, domain);
+    return await enforcer.getRolesForUser(username.trim().toLowerCase(), domain);
 }
 
 /**
@@ -120,12 +120,12 @@ async function listRolesForUserInDomain(enforcer, username, domain) {
  * @returns {Promise<Array<{role: string, domain: string}>>} - A promise that resolves to an array of objects, each containing a role and the domain it belongs to.
  */
 async function listRolesForUserInDomains(enforcer, username) {
-  let domains = await db.getUserDomains(username);
+  let domains = await db.getUserDomains(username.trim().toLowerCase());
   let rolesAndDomains = [];
 
   for (const domain of domains) {
     // Retrieve roles for the user in the current domain
-    const roles = await enforcer.getRolesForUser(username, domain);
+    const roles = await enforcer.getRolesForUser(username.trim().toLowerCase(), domain);
     
     // For each role, create an object with role and domain, then add to the result array
     roles.forEach(role => rolesAndDomains.push({ role, domain }));
@@ -142,7 +142,7 @@ async function listRolesForUserInDomains(enforcer, username) {
  * @returns {Promise<string[]>} An array of role names.
  */
 async function listRolesForUser(enforcer, username) {
-  return await enforcer.getRolesForUser(username);
+  return await enforcer.getRolesForUser(username.trim().toLowerCase());
 }
 
 /**
