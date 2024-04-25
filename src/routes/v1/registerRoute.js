@@ -120,10 +120,12 @@ router.post('/register', createAccountLimiter,
       const loginRedirectURL = req.body.loginRedirectURL || '';
 
       // Create the activation link
-      const activationLink = generateActivationLink(user.username, user.activation_code, loginRedirectURL);
+      // Let's use the original username to respect its cases
+      const activationLink = generateActivationLink(username, user.activation_code, loginRedirectURL);
 
       // Send verification email
-      await sendVerificationEmail(req, user.username, user.email, activationLink);
+      // Let's use the original username to respect its cases
+      await sendVerificationEmail(req, username, user.email, activationLink);
 
       // Send success response
       return res.status(201).json({ message: "User registered successfully", userId: user.user_id });
