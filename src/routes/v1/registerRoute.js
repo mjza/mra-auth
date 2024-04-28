@@ -96,7 +96,7 @@ router.post('/register', createAccountLimiter,
       .withMessage('Password must contain at least one lowercase letter')
       .matches(/\d/)
       .withMessage('Password must contain at least one digit')
-      .matches(/[!@#$%^&*(),.?":{}|<>]/)
+      .matches(/[`~!@#$%^&*()-_=+{}|\\[\]:";'<>?,./]/)
       .withMessage('Password must contain at least one symbol')
   ], async (req, res) => {
     const errors = validationResult(req);
