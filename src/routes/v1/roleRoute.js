@@ -13,7 +13,7 @@ const router = express.Router();
  *   get:
  *     summary: Retrieve roles for a given domain
  *     description: Get the roles for a given domain.
- *     tags: [8th]
+ *     tags: [7th]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -107,7 +107,7 @@ router.get('/domain-roles', apiRequestLimiter,
 *   get:
 *     summary: Retrieve roles for the current user
 *     description: Get the roles forthe current user in all domains.
-*     tags: [8th]
+*     tags: [7th]
 *     security:
 *       - bearerAuth: []
 *     parameters:
@@ -179,7 +179,7 @@ router.get('/my-roles', apiRequestLimiter,
 *   get:
 *     summary: Retrieve roles for a given username or the current user
 *     description: Get the roles for a given username or the current user in a specific domain.
-*     tags: [8th]
+*     tags: [7th]
 *     security:
 *       - bearerAuth: []
 *     parameters:
@@ -277,7 +277,7 @@ router.get('/user-roles', apiRequestLimiter,
  *   post:
  *     summary: Assign a role to a specific user in a domain
  *     description: This endpoint assigns a new role to the specified user in the given domain. If the domain is not provided, a default value is used. The username is optional and, if not provided, the current user is assumed.
- *     tags: [8th]
+ *     tags: [7th]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -394,7 +394,7 @@ router.post('/user-role', apiRequestLimiter,
  *   delete:
  *     summary: Remove a role from a specific user in a domain
  *     description: This endpoint removes an existing role from the specified user in the given domain. If the domain is not provided, a default value is used. The username is optional and, if not provided, the current user is assumed.
- *     tags: [8th]
+ *     tags: [7th]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -497,7 +497,7 @@ router.delete('/user-role', apiRequestLimiter,
  *   post:
  *     summary: Retrieve policies
  *     description: This endpoint retrieves policies based on the given parameters within the request body. `subject` and `domain` are mandatory, while other parameters are optional and used to filter the retrieved policies. Using POST method for search operation to accommodate complex query structures.
- *     tags: [9th]
+ *     tags: [8th]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -635,7 +635,7 @@ router.post('/policies',
  *   post:
  *     summary: Add a new policy
  *     description: This endpoint adds a new policy with the given parameters. It is intended to allow fine-grained access control policies to be defined.
- *     tags: [9th]
+ *     tags: [8th]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -792,7 +792,7 @@ router.post('/policy',
  *   delete:
  *     summary: Delete policies
  *     description: This endpoint deletes policies based on the given parameters within the request body. `subject` and `domain` are mandatory, while other parameters are optional and used to specify the policies to be deleted.
- *     tags: [9th]
+ *     tags: [8th]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
