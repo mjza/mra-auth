@@ -243,91 +243,6 @@ describe('Test DB functions', () => {
         });
     });
 
-    describe('User Details', () => {
-        it('should create, retrieve, and update user details', async () => {
-            const userDetails = {
-                "userId": insertedUser.user_id,
-                "firstName": "string1",
-                "middleName": "string2",
-                "lastName": "string3",
-                "genderId": 1,
-                "dateOfBirth": "2020-02-29",
-                "profilePictureUrl": "http://example.com/123",
-                "profilePictureThumbnailUrl": "https://example.com/124",
-                "creator": insertedUser.user_id
-            };
-
-            // Retrieve no user details
-            const results = await db.getUserDetails(userDetails.userId);
-            expect(results).toBeNull();
-
-            // Create user details      
-            const insertedUserDetails = await db.createUserDetails(userDetails);
-            expect(insertedUserDetails).not.toBeNull();
-            expect(insertedUserDetails.first_name).toBe(userDetails.firstName);
-            expect(insertedUserDetails.middle_name).toBe(userDetails.middleName);
-            expect(insertedUserDetails.last_name).toBe(userDetails.lastName);
-            expect(insertedUserDetails.gender_id).toBe(userDetails.genderId);
-            expect(insertedUserDetails.gender.gender_id).toBe(userDetails.genderId);
-            expect(insertedUserDetails.gender.gender_name).toBe('Female');
-            expect(insertedUserDetails.date_of_birth).toBe(userDetails.dateOfBirth);
-            expect(insertedUserDetails.profile_picture_url).toBe(userDetails.profilePictureUrl);
-            expect(insertedUserDetails.profile_picture_thumbnail_url).toBe(userDetails.profilePictureThumbnailUrl);
-            expect(insertedUserDetails.creator).toBe(userDetails.creator);
-            expect(insertedUserDetails.created_at).toBeDefined();
-            expect(insertedUserDetails.updator).toBeNull();
-            expect(insertedUserDetails.updated_at).toBeNull();
-
-            // Retrieve user details
-            const details = await db.getUserDetails(userDetails.userId);
-            expect(details).not.toBeNull();
-            expect(details.first_name).toBe(userDetails.firstName);
-            expect(details.middle_name).toBe(userDetails.middleName);
-            expect(details.last_name).toBe(userDetails.lastName);
-            expect(details.gender_id).toBe(userDetails.genderId);
-            expect(details.gender.gender_id).toBe(userDetails.genderId);
-            expect(details.gender.gender_name).toBe('Female');
-            expect(details.date_of_birth).toBe(userDetails.dateOfBirth);
-            expect(details.profile_picture_url).toBe(userDetails.profilePictureUrl);
-            expect(details.profile_picture_thumbnail_url).toBe(userDetails.profilePictureThumbnailUrl);
-            expect(details.creator).toBe(userDetails.creator);
-            expect(details.created_at).toBeDefined();
-            expect(details.updator).toBeNull();
-            expect(details.updated_at).toBeNull();
-
-            // Update user details
-            const updatedDetails = {
-                "userId": insertedUser.user_id,
-                "firstName": "string4",
-                "middleName": "string5",
-                "lastName": "string6",
-                "genderId": 2,
-                "dateOfBirth": "1970-03-28",
-                "profilePictureUrl": "http://example.com/125",
-                "profilePictureThumbnailUrl": "https://example.com/126",
-                "creator": insertedUser.user_id,
-                "updator": insertedUser.user_id
-            };
-
-            const updated = await db.updateUserDetails(updatedDetails.userId, updatedDetails);
-            expect(updated).not.toBeNull();
-            expect(updated.first_name).toBe(updatedDetails.firstName);
-            expect(updated.middle_name).toBe(updatedDetails.middleName);
-            expect(updated.last_name).toBe(updatedDetails.lastName);
-            expect(updated.gender_id).toBe(updatedDetails.genderId);
-            expect(updated.gender.gender_id).toBe(updatedDetails.genderId);
-            expect(updated.gender.gender_name).toBe('Male');
-            expect(updated.date_of_birth).toBe(updatedDetails.dateOfBirth);
-            expect(updated.profile_picture_url).toBe(updatedDetails.profilePictureUrl);
-            expect(updated.profile_picture_thumbnail_url).toBe(updatedDetails.profilePictureThumbnailUrl);
-            expect(details.creator).toBe(userDetails.creator);
-            expect(details.created_at).toBeDefined();
-            expect(updated.updator).toBe(updatedDetails.updator);
-            expect(updated.updated_at).toBeDefined();
-        });
-    });
-
-
     describe('deleteUserByUsername', () => {
         it('should delete an existing user and return the deleted user data', async () => {
 
@@ -338,10 +253,6 @@ describe('Test DB functions', () => {
             // Try to fetch the deleted user
             const fetchedUser = await db.getUserByUsername(mockUser.username.toLowerCase());
             expect(fetchedUser).toBeNull();
-
-            // Retrieve no user details, as it must be deleted cascadely 
-            const results = await db.getUserDetails(insertedUser.user_id);
-            expect(results).toBeNull();
         });
     });
 

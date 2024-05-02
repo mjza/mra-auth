@@ -1,4 +1,4 @@
-const { Sequelize, closeSequelize, fn, col, MraUsers, MraGenderTypes, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers } = require('../models');
+const { Sequelize, closeSequelize, fn, col, MraUsers, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers } = require('../models');
 
 /**
  * Closes the database connection pool.
@@ -213,7 +213,7 @@ const getUsernamesByEmail = async (email) => {
  * @returns {Object} The inserted user object.
  */
 const insertUser = async (user) => {
-  const { username, email, passwordHash } = user;
+  const { username, email, passwordHash, displayName } = user;
   if (!username || !username.trim() || !email || !email.trim() || !passwordHash || !passwordHash.trim())
     return null;
 
@@ -221,6 +221,7 @@ const insertUser = async (user) => {
     username: username.trim().toLowerCase(),
     email: email.trim().toLowerCase(),
     password_hash: passwordHash.trim(),
+    display_name: displayName || username
   });
 
   return newUser && newUser.get({ plain: true });
@@ -429,85 +430,6 @@ const resetPassword = async (user) => {
   return updateCount > 0; // Returns true if at least one row was updated
 };
 
-
-/**
- * Retrieves user details from the database based on the provided userId.
- *
- * @param {number} userId - The user's unique identifier.
- * @returns {Object} The user details object.
- */
-async function getUserDetails(userId) {
-  if (isNaN(userId))
-    return null;
-
-  const userDetails = await MraUserDetails.findOne({
-    where: { user_id: userId },
-    include: [{
-      model: MraGenderTypes,
-      as: "gender",
-      attributes: ['gender_id', 'gender_name'],
-    }],
-    attributes: ['user_id', 'first_name', 'middle_name', 'last_name', 'gender_id', 'date_of_birth', 'profile_picture_url', 'profile_picture_thumbnail_url', 'creator', 'created_at', 'updator', 'updated_at'],
-  });
-
-  return userDetails && userDetails.get({ plain: true });
-}
-
-/**
- * Creates new user details in the database.
- *
- * @param {Object} userDetails - The user details object.
- * @returns {Object} The created user details object.
- */
-async function createUserDetails(userDetails) {
-  const createdUser = await MraUserDetails.create({
-    user_id: userDetails.userId,
-    first_name: userDetails.firstName,
-    middle_name: userDetails.middleName,
-    last_name: userDetails.lastName,
-    gender_id: userDetails.genderId,
-    date_of_birth: userDetails.dateOfBirth,
-    profile_picture_url: userDetails.profilePictureUrl,
-    profile_picture_thumbnail_url: userDetails.profilePictureThumbnailUrl,
-    display_name: userDetails.displayName,
-    public_profile_picture_thumbnail_url: userDetails.publicProfilePictureThumbnailUrl,
-    creator: userDetails.creator
-  });
-
-  if (createdUser && createdUser.user_id) {
-    return await getUserDetails(userDetails.userId);
-  } else {
-    return null;
-  }
-}
-
-/**
- * Updates user details in the database based on the provided userId and userDetails.
- *
- * @param {number} userId - The user's unique identifier.
- * @param {Object} userDetails - The new user details object.
- * @returns {Object} The updated user details object.
- */
-async function updateUserDetails(userId, userDetails) {
-  await MraUserDetails.update({
-    first_name: userDetails.firstName,
-    middle_name: userDetails.middleName,
-    last_name: userDetails.lastName,
-    gender_id: userDetails.genderId,
-    date_of_birth: userDetails.dateOfBirth,
-    profile_picture_url: userDetails.profilePictureUrl,
-    profile_picture_thumbnail_url: userDetails.profilePictureThumbnailUrl,
-    display_name: userDetails.displayName,
-    public_profile_picture_thumbnail_url: userDetails.publicProfilePictureThumbnailUrl,
-    updator: userDetails.updator
-  }, {
-    where: { user_id: userId }
-  });
-
-  const updatedUserDetails = await getUserDetails(userId);
-  return updatedUserDetails;
-}
-
 /**
  * Retrieves user domains.
  * WE DO NOT TEST THIS FUNCTION AS CASBIN IS CONTROLLED BY CASBIN ADAPTER.
@@ -607,9 +529,6 @@ module.exports = {
   activateUser,
   resetPassword,
   generateResetToken,
-  getUserDetails,
-  createUserDetails,
-  updateUserDetails,
   getUserDomains,
   getTableByTableName,
   getValidRelationshipByUserCustomer

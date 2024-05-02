@@ -4,12 +4,10 @@ var _MraActions = require("./MraActions");
 var _MraAuditLogsAuthentication = require("./MraAuditLogsAuthentication");
 var _MraCustomerTypes = require("./MraCustomerTypes");
 var _MraCustomers = require("./MraCustomers");
-var _MraGenderTypes = require("./MraGenderTypes");
 var _MraRoles = require("./MraRoles");
 var _MraTables = require("./MraTables");
 var _MraTokenBlacklist = require("./MraTokenBlacklist");
 var _MraUserCustomers = require("./MraUserCustomers");
-var _MraUserDetails = require("./MraUserDetails");
 var _MraUsers = require("./MraUsers");
 var _MragCities = require("./MragCities");
 var _MragCountries = require("./MragCountries");
@@ -20,12 +18,10 @@ function initModels(sequelize) {
 		var MraAuditLogsAuthentication = _MraAuditLogsAuthentication(sequelize, DataTypes);
 		var MraCustomerTypes = _MraCustomerTypes(sequelize, DataTypes);
 		var MraCustomers = _MraCustomers(sequelize, DataTypes);
-		var MraGenderTypes = _MraGenderTypes(sequelize, DataTypes);
 		var MraRoles = _MraRoles(sequelize, DataTypes);
 		var MraTables = _MraTables(sequelize, DataTypes);
 		var MraTokenBlacklist = _MraTokenBlacklist(sequelize, DataTypes);
 		var MraUserCustomers = _MraUserCustomers(sequelize, DataTypes);
-		var MraUserDetails = _MraUserDetails(sequelize, DataTypes);
 		var MraUsers = _MraUsers(sequelize, DataTypes);
 		var MragCities = _MragCities(sequelize, DataTypes);
 		var MragCountries = _MragCountries(sequelize, DataTypes);
@@ -36,8 +32,6 @@ function initModels(sequelize) {
 		MraCustomers.hasMany(MraCustomers, { as: "mra_customers", foreignKey: "parent_customer_id"});
 		MraUserCustomers.belongsTo(MraCustomers, { as: "customer", foreignKey: "customer_id"});
 		MraCustomers.hasMany(MraUserCustomers, { as: "mra_user_customers", foreignKey: "customer_id"});
-		MraUserDetails.belongsTo(MraGenderTypes, { as: "gender", foreignKey: "gender_id"});
-		MraGenderTypes.hasMany(MraUserDetails, { as: "mra_user_details", foreignKey: "gender_id"});
 		MraCustomers.belongsTo(MraUsers, { as: "creator_mra_user", foreignKey: "creator"});
 		MraUsers.hasMany(MraCustomers, { as: "mra_customers", foreignKey: "creator"});
 		MraCustomers.belongsTo(MraUsers, { as: "updator_mra_user", foreignKey: "updator"});
@@ -48,12 +42,6 @@ function initModels(sequelize) {
 		MraUsers.hasMany(MraUserCustomers, { as: "updator_mra_user_customers", foreignKey: "updator"});
 		MraUserCustomers.belongsTo(MraUsers, { as: "user", foreignKey: "user_id"});
 		MraUsers.hasMany(MraUserCustomers, { as: "user_mra_user_customers", foreignKey: "user_id"});
-		MraUserDetails.belongsTo(MraUsers, { as: "creator_mra_user", foreignKey: "creator"});
-		MraUsers.hasMany(MraUserDetails, { as: "mra_user_details", foreignKey: "creator"});
-		MraUserDetails.belongsTo(MraUsers, { as: "user", foreignKey: "user_id"});
-		MraUsers.hasOne(MraUserDetails, { as: "user_mra_user_detail", foreignKey: "user_id"});
-		MraUserDetails.belongsTo(MraUsers, { as: "updator_mra_user", foreignKey: "updator"});
-		MraUsers.hasMany(MraUserDetails, { as: "updator_mra_user_details", foreignKey: "updator"});
 		MraUsers.belongsTo(MraUsers, { as: "creator_mra_user", foreignKey: "creator"});
 		MraUsers.hasMany(MraUsers, { as: "mra_users", foreignKey: "creator"});
 		MraUsers.belongsTo(MraUsers, { as: "suspender_mra_user", foreignKey: "suspender"});
@@ -71,12 +59,10 @@ function initModels(sequelize) {
 				MraAuditLogsAuthentication,
 				MraCustomerTypes,
 				MraCustomers,
-				MraGenderTypes,
 				MraRoles,
 				MraTables,
 				MraTokenBlacklist,
 				MraUserCustomers,
-				MraUserDetails,
 				MraUsers,
 				MragCities,
 				MragCountries,

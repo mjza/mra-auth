@@ -33,6 +33,9 @@ describe('Test session endpoints', () => {
 
             expect(res.statusCode).toBe(200);
             expect(res.body).toHaveProperty('token');
+            expect(res.body).toHaveProperty('exp');
+            expect(res.body).toHaveProperty('userId');
+            expect(res.body).toHaveProperty('displayName');
         });
 
         test('Invalid username', async () => {

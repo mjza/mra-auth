@@ -13,6 +13,11 @@ module.exports = function(sequelize, DataTypes) {
 						comment: "Username of the user, must be unique. It must be between 5 and 30 characters and can only contain alphanumeric characters and underscores.",
 						unique: "mra_users_username_key"
 				},
+				display_name: {
+						type: DataTypes.TEXT,
+						allowNull: true,
+						comment: "Not encrypted data, contains the name that user wants to display for other people publicly"
+				},
 				email: {
 						type: DataTypes.STRING(255),
 						allowNull: false,

@@ -110,7 +110,7 @@ router.post('/register', createAccountLimiter,
       const passwordHash = await generatePasswordHash(password);
 
       // Insert the user into the database
-      const newUser = { username, email, passwordHash };
+      const newUser = { username, email, passwordHash, displayName: username };
       // The insertUser function is hypothetical. Replace it with your actual database logic.
       const user = await db.insertUser(newUser);
 

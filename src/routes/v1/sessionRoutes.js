@@ -51,6 +51,9 @@ const router = express.Router();
  *                 userId:
  *                   type: integer
  *                   example: 1
+ *                 displayName:
+ *                   type: string
+ *                   example: "Admin"
  *       401:
  *         description: Unauthorized - Invalid username/email or password.
  *         content:
@@ -130,7 +133,7 @@ router.post('/login', apiRequestLimiter,
           // Generate JWT Token for the matched user
           const token = generateAuthToken({ userId: user.user_id, username: user.username, email: user.email });
           const tokenData = parseJwt(token);
-          return res.status(200).json({ token, exp: tokenData.exp, userId: tokenData.userId });
+          return res.status(200).json({ token, exp: tokenData.exp, userId: tokenData.userId, displayName: user.display_name });
         }
       }
 
