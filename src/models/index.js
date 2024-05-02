@@ -12,10 +12,14 @@ const filePath = path.join(__dirname, '../../logs/sequelize.log');
  */
 try {
   if (process.env.NODE_ENV === 'development') {
-    fs.truncateSync(filePath, 0);
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, '');
+    } else {
+      fs.truncateSync(filePath, 0);
+    }
   }
 } catch (err) {
-  console.error('Error truncating file:', err);
+  console.error('Error creating or truncating log file:', err);
 }
 const logStream = fs.createWriteStream(filePath, { flags: 'a' });
 
