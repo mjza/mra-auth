@@ -20,7 +20,7 @@ describe('GET /v1/activate Endpoint', () => {
   });
 
   it('should activate a user and return redirect code', async () => {
-    const activationObject = generateEncryptedObject(testUser.activation_code, 'https://example.com/login');
+    const activationObject = generateEncryptedObject(testUser.activationCode, 'https://example.com/login');
 
     const res = await request(app)
       .get('/v1/activate')
@@ -39,7 +39,7 @@ describe('GET /v1/activate Endpoint', () => {
   });
 
   it('should activate a user and return 200 code', async () => {
-    const activationObject = generateEncryptedObject(testUser.activation_code, '');
+    const activationObject = generateEncryptedObject(testUser.activationCode, '');
 
     const res = await request(app)
       .get('/v1/activate')
@@ -58,7 +58,7 @@ describe('GET /v1/activate Endpoint', () => {
   });
 
   it('should try to activate an activate user and return 202 code', async () => {
-    const activationObject = generateEncryptedObject(testUser.activation_code, '');
+    const activationObject = generateEncryptedObject(testUser.activationCode, '');
 
     let res = await request(app)
       .get('/v1/activate')
@@ -98,7 +98,7 @@ describe('GET /v1/activate Endpoint', () => {
   });
 
   it('should try to activate with an invalid link and return 404 code', async () => {
-    const activationObject = generateEncryptedObject(testUser.activation_code, '');
+    const activationObject = generateEncryptedObject(testUser.activationCode, '');
 
     const res = await request(app)
       .get('/v1/activate')

@@ -17,7 +17,7 @@ describe('Test session endpoints', () => {
             mockUser = await generateMockUserDB();
             // Insert a test user into the database
             testUser = await db.insertUser(mockUser);
-            var user = { username: testUser.username, activationCode: testUser.activation_code };
+            var user = { username: testUser.username, activationCode: testUser.activationCode };
             await db.activateUser(user);
         });
 
@@ -81,7 +81,7 @@ describe('Test session endpoints', () => {
             mockUser = await generateMockUserDB();
             // Insert a test user into the database
             testUser = await db.insertUser(mockUser);
-            var user = { username: testUser.username, activationCode: testUser.activation_code };
+            var user = { username: testUser.username, activationCode: testUser.activationCode };
             await db.activateUser(user);
             authData = (await request(app)
                 .post('/v1/login')
@@ -105,7 +105,7 @@ describe('Test session endpoints', () => {
                     .set('Authorization', validToken);
 
                 expect(res.statusCode).toBe(200);
-                expect(res.body.userId).toBe(testUser.user_id);
+                expect(res.body.userId).toBe(testUser.userId);
                 expect(res.body.username).toBe(testUser.username);
                 expect(res.body.email).toBe(testUser.email);
                 expect(Number.isInteger(res.body.iat)).toBe(true);
@@ -150,7 +150,7 @@ describe('Test session endpoints', () => {
                 const futureTimestamp = Math.floor((currentTimeInMilliseconds + oneDayInMilliseconds) / 1000); // convert to seconds
 
                 expect(res.body).toHaveProperty('token');
-                expect(res.body.userId).toBe(testUser.user_id);
+                expect(res.body.userId).toBe(testUser.userId);
                 expect(Number.isInteger(res.body.exp)).toBe(true);
                 expect(res.body.exp).toBeGreaterThanOrEqual(0);
                 expect(res.body.exp).toBeLessThan(futureTimestamp);
@@ -184,7 +184,7 @@ describe('Test session endpoints', () => {
             mockUser = await generateMockUserDB();
             // Insert a test user into the database
             testUser = await db.insertUser(mockUser);
-            var user = { username: testUser.username, activationCode: testUser.activation_code };
+            var user = { username: testUser.username, activationCode: testUser.activationCode };
             await db.activateUser(user);
             authData = (await request(app)
                 .post('/v1/login')
