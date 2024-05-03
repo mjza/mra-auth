@@ -113,22 +113,22 @@ async function evalDynamicCondition(request, condition, userType, user, table) {
  * @param {Object} request - The request object, expected to contain an 'act' (action type)
  * and 'attrs' (attributes for the database operation) properties.
  * @param {Object} user - An object representing the user performing the operation.
- * The function expects this object to at least contain a 'user_id' property.
+ * The function expects this object to at least contain a 'userId' property.
  * @param {Object} table - An object representing the table being operated on.
- * Expected to contain 'creator_column' and 'updator_column' properties, which are used
+ * Expected to contain 'creatorColumn' and 'updatorColumn' properties, which are used
  * to attribute the creation or modification of data to the current user.
  */
 async function setConditions(request, user, table) {
     const { act, attrs } = request;
-    const { creator_column, updator_column } = table || { creator_column: null, updator_column: null };
+    const { creatorColumn, updatorColumn } = table || { creatorColumn: null, updatorColumn: null };
     const { where, set } = attrs || { where: {}, set: {} };
     if ('C' === act) {
-        if (user && user.user_id > 0 && creator_column) {
-            set[creator_column] = user.user_id;
+        if (user && user.userId > 0 && creatorColumn) {
+            set[creatorColumn] = user.userId;
         }
     } else if ('U' === act) {
-        if (user && user.user_id > 0 && updator_column) {
-            set[updator_column] = user.user_id;
+        if (user && user.userId > 0 && updatorColumn) {
+            set[updatorColumn] = user.userId;
         }
     }
     if (where && Object.keys(where).length > 0) {
