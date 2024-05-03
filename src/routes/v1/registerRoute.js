@@ -31,6 +31,9 @@ const router = express.Router();
  *               username:
  *                 type: string
  *                 default: "username1"
+ *               displayName:
+ *                 type: string
+ *                 default: "Alex"
  *               email:
  *                 type: string
  *                 format: email
@@ -104,13 +107,13 @@ router.post('/register', createAccountLimiter,
       return res.status(400).json({ errors: errors.array() });
     }
     try {
-      const { username, email, password } = req.body;
+      const { username, email, password, displayName } = req.body;
 
       // Hash the password
       const passwordHash = await generatePasswordHash(password);
 
       // Insert the user into the database
-      const newUser = { username, email, passwordHash, displayName: username };
+      const newUser = { username, email, passwordHash, displayName: displayName || username };
       // The insertUser function is hypothetical. Replace it with your actual database logic.
       const user = await db.insertUser(newUser);
 

@@ -7,7 +7,7 @@ const base64Encrypted = 'eyJpdiI6ImIxNmJmMzYxODkzYTlhODc0NjcxMDkwYTRjOTY5YmE2Iiw
 
 // Keep thos lines above this import, otherwise the environment SECRET_KEY will be used.
 // Tests are designed with this secret key to see the expected results.
-const { toLowerCamelCase, encrypt, decrypt, encryptObjectItems, decryptObjectItems } = require('../../utils/converters');
+const { encrypt, decrypt, toLowerCamelCase, toSnakeCase, convertRequestData } = require('../../utils/converters');
 describe('Test converters', () => {
     describe('Encryption and Decryption Tests', () => {
 
@@ -23,38 +23,176 @@ describe('Test converters', () => {
             expect(typeof decryted).toBe('string');
             expect(decryted).toBe(rawString);
         });
-
     });
 
-    describe('Object Encryption and Decryption Tests', () => {
-        const testObject = { key1: 'string', key2: 'notstring' };
-        const secretProperties = [
-            'key1'
-          ];
-
-        test('encryptObjectItems should encrypt all string values', () => {
-            const encryptedObject = encryptObjectItems(testObject, secretProperties, iv);
-            expect(encryptedObject.key1).not.toBe(testObject.key1);
-            expect(encryptedObject.key2).toBe(testObject.key2);
-            expect(encryptedObject.key1).toBe(base64Encrypted);
-            expect(encryptedObject.key2).not.toBe(base64Encrypted);
+    describe('toLowerCamelCase', () => {
+        test('should convert keys from snake_case to lowerCamelCase', () => {
+            const inputObj = {
+                first_name: 'John',
+                last_name: 'Doe',
+                contact_info: {
+                    email_address: 'john.doe@example.com',
+                    phone_number: '1234567890'
+                }
+            };
+            const expectedOutput = {
+                firstName: 'John',
+                lastName: 'Doe',
+                contactInfo: {
+                    emailAddress: 'john.doe@example.com',
+                    phoneNumber: '1234567890'
+                }
+            };
+            expect(toLowerCamelCase(inputObj)).toEqual(expectedOutput);
         });
 
-        test('decryptObjectItems should decrypt all string values', () => {
-            const encryptedObject = encryptObjectItems(testObject, secretProperties, iv);
-            const decryptedObject = decryptObjectItems(encryptedObject, secretProperties);
-            expect(decryptedObject).toEqual(testObject);
+        test('should handle date objects correctly', () => {
+            const date = new Date();
+            const inputObj = { created_at: date };
+            expect(toLowerCamelCase(inputObj)).toEqual({ createdAt: date });
         });
 
+        test('should handle arrays correctly', () => {
+            const inputObj = { user_ids: [1, 2, 3] };
+            expect(toLowerCamelCase(inputObj)).toEqual({ userIds: [1, 2, 3] });
+        });
     });
 
-    describe('toLowerCamelCase Tests', () => {
-        const testObject = { first_key: 'value1', second_key: 'value2' };
-
-        test('should convert object keys to camelCase', () => {
-            const camelCaseObject = toLowerCamelCase(testObject);
-            expect(camelCaseObject).toEqual({ firstKey: 'value1', secondKey: 'value2' });
+    describe('toSnakeCase', () => {
+        test('should convert keys from lowerCamelCase to snake_case', () => {
+            const inputObj = {
+                firstName: 'John',
+                lastName: 'Doe',
+                contactInfo: {
+                    emailAddress: 'john.doe@example.com',
+                    phoneNumber: '1234567890'
+                }
+            };
+            const expectedOutput = {
+                first_name: 'John',
+                last_name: 'Doe',
+                contact_info: {
+                    email_address: 'john.doe@example.com',
+                    phone_number: '1234567890'
+                }
+            };
+            expect(toSnakeCase(inputObj)).toEqual(expectedOutput);
         });
 
+        test('should handle date objects correctly', () => {
+            const date = new Date();
+            const inputObj = { createdAt: date };
+            expect(toSnakeCase(inputObj)).toEqual({ created_at: date });
+        });
+
+        test('should handle arrays correctly', () => {
+            const inputObj = { userIds: [1, 2, 3] };
+            expect(toSnakeCase(inputObj)).toEqual({ user_ids: [1, 2, 3] });
+        });
     });
+
+    describe('convertRequestData', () => {
+        test('should convert request data correctly', () => {
+            const req = {
+                method: 'GET',
+                originalUrl: '/api/users/123',
+                headers: {
+                    'authorization': 'Bearer xyz123',
+                    'content-type': 'application/json'
+                },
+                body: {
+                    password: 'secret',
+                    email: 'test@example.com',
+                    dateOfBirth: new Date(), 
+                    profilePictureUrl: 'abc', 
+                    profilePictureThumbnailUrl: 'def',
+                },                
+                query: {
+                    token: 'abcdef',
+                    page: 1
+                },
+                params: {
+                    id: '123'
+                },
+                ip: '127.0.0.1',
+                hostname: 'localhost',
+                protocol: 'http',
+                path: '/api/users/124',
+                cookies: {
+                    sessionId: 'abc123',
+                    userId: '456',
+                    firstName: 'Mahdi',
+                    middleName: 'Jaberzadeh',
+                    lastName: 'Ansari'
+                }
+            };
+
+            const expectedOutput = {
+                method: 'GET',
+                url: '/api/users/123',
+                headers: {
+                    'authorization': '****',
+                    'content-type': 'application/json'
+                },
+                body: {
+                    password: '****',
+                    email: '****',
+                    dateOfBirth: '****', 
+                    profilePictureUrl: '****', 
+                    profilePictureThumbnailUrl: '****',
+                },                
+                query: {
+                    token: '****',
+                    page: 1
+                },
+                params: {
+                    id: '123'
+                },
+                ip: '127.0.0.1',
+                hostname: 'localhost',
+                protocol: 'http',
+                path: '/api/users/124',
+                cookies: {
+                    sessionId: 'abc123',
+                    userId: '456',
+                    firstName: '****',
+                    middleName: '****',
+                    lastName: '****'
+                }
+            };
+
+            expect(convertRequestData(req)).toEqual(expectedOutput);
+        });
+
+        test('should handle circular references gracefully', () => {
+            const obj = { a: 1 };
+            obj.b = obj;
+            const req = { body: obj };
+
+            const result = convertRequestData(req);
+
+            expect(result.body).toEqual(obj);
+        });
+
+        test('should handle non-object values', () => {
+            const req = {
+                method: 'GET',
+                body: 'text',
+                query: 123,
+                params: null,
+                cookies: undefined
+            };
+
+            const expectedOutput = {
+                method: 'GET',
+                body: 'text',
+                query: 123,
+                params: null,
+                cookies: undefined
+            };
+
+            expect(convertRequestData(req)).toEqual(expectedOutput);
+        });
+    });
+
 });
