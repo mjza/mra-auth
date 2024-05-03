@@ -34,7 +34,7 @@ describe('POST /v1/register endpoint', () => {
     // Use your database querying method here to check
     const userInDb = await db.getUserByUsername(mockUser.username);
     expect(userInDb).toBeDefined();
-    expect(userInDb.display_name).toBe(mockUser.username);
+    expect(userInDb.displayName).toBe(mockUser.username);
   });
 
   it('should return 400 for invalid data', async () => {

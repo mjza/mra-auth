@@ -30,7 +30,7 @@ describe('Test DB functions', () => {
 
         afterAll(async () => {
             if (insertedLog) {
-                await db.deleteAuditLog(insertedLog.log_id);
+                await db.deleteAuditLog(insertedLog.logId);
             }
         });
 
@@ -39,23 +39,23 @@ describe('Test DB functions', () => {
                 insertedLog = await db.insertAuditLog(mockLog);
 
                 expect(insertedLog).toBeDefined();
-                expect(insertedLog.method_route).toBe(mockLog.methodRoute);
+                expect(insertedLog.methodRoute).toBe(mockLog.methodRoute);
                 expect(insertedLog.req).toStrictEqual(mockLog.req);
                 expect(insertedLog.comments).toBe(mockLog.comments);
-                expect(insertedLog.ip_address).toBe(mockLog.ipAddress);
-                expect(insertedLog.user_id).toBe(mockLog.userId);
+                expect(insertedLog.ipAddress).toBe(mockLog.ipAddress);
+                expect(insertedLog.userId).toBe(mockLog.userId);
             });
         });
 
         describe('updateAuditLog', () => {
             it('should update an existing audit log', async () => {
                 const updateData = {
-                    logId: insertedLog.log_id,
+                    logId: insertedLog.logId,
                     comments: 'Updated comment'
                 };
                 updatedLog = await db.updateAuditLog(updateData);
 
-                expect(updatedLog).toBeDefined();
+                expect(updatedLog).toBeDefined();                
                 expect(updatedLog.comments).toContain('Initial comment');
                 expect(updatedLog.comments).toContain('Updated comment');
             });
@@ -165,8 +165,8 @@ describe('Test DB functions', () => {
             const foundByEmail = usersByEmail.find(user => user.username === mockUser.username.toLowerCase());
 
             expect(foundByEmail.username).toBe(mockUser.username.toLowerCase());
-            expect(foundByEmail.is_activated).toBeFalsy();
-            expect(foundByEmail.is_suspended).toBeFalsy();
+            expect(foundByEmail.isActivated).toBeFalsy();
+            expect(foundByEmail.isSuspended).toBeFalsy();
         });
     });
 
@@ -206,38 +206,38 @@ describe('Test DB functions', () => {
     });
 
     describe('generateResetToken', () => {
-        it('should not  generate a password_reset token for wrong username', async () => {
+        it('should not  generate a passwordReset token for wrong username', async () => {
             const resetResult = await db.generateResetToken(insertedUser.username + 'x');
             expect(resetResult).toBeNull();
         });
 
-        it('should generate a password_reset token', async () => {
+        it('should generate a passwordReset token', async () => {
             const resetResult = await db.generateResetToken(insertedUser.username);
             expect(resetResult).toBeDefined();
-            expect(resetResult.user_id).toBe(insertedUser.userId);
+            expect(resetResult.userId).toBe(insertedUser.userId);
             expect(resetResult.username).toBe(insertedUser.username);
             expect(resetResult.email).toBe(insertedUser.email);
-            expect(resetResult.reset_token).toBeDefined();
-            expect(typeof resetResult.reset_token).toBe('string');
-            expect(resetResult.reset_token.length).toBe(64);
-            insertedUser.resetToken = resetResult.reset_token;
+            expect(resetResult.resetToken).toBeDefined();
+            expect(typeof resetResult.resetToken).toBe('string');
+            expect(resetResult.resetToken.length).toBe(64);
+            insertedUser.resetToken = resetResult.resetToken;
         });
     });
 
     describe('resetPassword', () => {
-        it('should set a new password_hash for the user', async () => {
+        it('should set a new passwordHash for the user', async () => {
             const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.resetToken, passwordHash: mockUser.passwordHash + 'x'};
             const resetResult = await db.resetPassword(userToResetItsPassowrd);
             expect(resetResult).toBeTruthy();
         });
 
-        it('should not set a new password_hash for wrong username', async () => {
+        it('should not set a new passwordHash for wrong username', async () => {
             const userToResetItsPassowrd = { username: insertedUser.username + 'x', resetToken: insertedUser.resetToken, passwordHash: mockUser.passwordHash + 'x'};
             const resetResult = await db.resetPassword(userToResetItsPassowrd);
             expect(resetResult).toBeFalsy();
         });
 
-        it('should not set a new password_hash for wrong reset token', async () => {
+        it('should not set a new passwordHash for wrong reset token', async () => {
             const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.resetToken + 'x', passwordHash: mockUser.passwordHash + 'x'};
             const resetResult = await db.resetPassword(userToResetItsPassowrd);
             expect(resetResult).toBeFalsy();

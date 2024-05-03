@@ -115,25 +115,25 @@ router.post('/login', apiRequestLimiter,
       let found = false, confirmed = true, deleted = false, suspended = false;
       // Iterate over users and check password
       for (const user of users) {
-        const isMatch = await bcrypt.compare(password, user.password_hash);
+        const isMatch = await bcrypt.compare(password, user.passwordHash);
 
         if (isMatch) {
           found = true;
-          if (!user.confirmation_at) {
+          if (!user.confirmationAt) {
             confirmed = false;
             continue;
-          } else if (user.deleted_at) {
+          } else if (user.deletedAt) {
             deleted = true;
             continue;
-          } else if (user.suspended_at) {
+          } else if (user.suspendedAt) {
             suspended = true;
             continue;
           }
 
           // Generate JWT Token for the matched user
-          const token = generateAuthToken({ userId: user.user_id, username: user.username, email: user.email });
+          const token = generateAuthToken({ userId: user.userId, username: user.username, email: user.email });
           const tokenData = parseJwt(token);
-          return res.status(200).json({ token, exp: tokenData.exp, userId: tokenData.userId, displayName: user.display_name });
+          return res.status(200).json({ token, exp: tokenData.exp, userId: tokenData.userId, displayName: user.displayName });
         }
       }
 

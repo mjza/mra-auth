@@ -1,5 +1,5 @@
 const { Sequelize, closeSequelize, fn, col, MraUsers, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers } = require('../models');
-const { toLowerCamelCase, toSnakeCase } = require('../utils/converters');
+const { toLowerCamelCase } = require('../utils/converters');
 
 /**
  * Closes the database connection pool.
@@ -61,7 +61,7 @@ const insertAuditLog = async (log) => {
     comments: comments || '',
     user_id: userId,
   });
-  return insertedLog && insertedLog.get({ plain: true });;
+  return insertedLog && toLowerCamelCase(insertedLog.get({ plain: true }));
 };
 
 /**
@@ -83,7 +83,7 @@ const updateAuditLog = async (log) => {
     returning: true,
   });
 
-  return updateCount === 0 ? null : updatedLogs[0];
+  return updateCount === 0 ? null : toLowerCamelCase(updatedLogs[0].get({ plain: true }));
 };
 
 /**
@@ -129,7 +129,7 @@ const deleteUserByUsername = async (username) => {
     },
   });
 
-  return user && user.get({ plain: true });
+  return user && toLowerCamelCase(user.get({ plain: true }));
 };
 
 /**
@@ -146,7 +146,7 @@ const getUserByUsername = async (username) => {
     where: { username: username.trim().toLowerCase() }
   });
 
-  return user && user.get({ plain: true });
+  return user && toLowerCamelCase(user.get({ plain: true }));
 };
 
 /**
@@ -171,7 +171,7 @@ const getUserByUsernameOrEmail = async (usernameOrEmail) => {
     return null; // No users found with the given email
   }
 
-  return users && users.map(user => user.get({ plain: true }));
+  return users && users.map(user => toLowerCamelCase(user.get({ plain: true })));
 };
 
 /**
@@ -204,7 +204,7 @@ const getUsernamesByEmail = async (email) => {
   }
 
   // Convert Sequelize instances to plain objects
-  return users && users.map(user => user.get({ plain: true }));
+  return users && users.map(user => toLowerCamelCase(user.get({ plain: true })));
 };
 
 /**
@@ -225,8 +225,7 @@ const insertUser = async (user) => {
     display_name: displayName
   });
 
-  const lowerCamelCaseUser = toLowerCamelCase(newUser && newUser.get({ plain: true }));
-  return lowerCamelCaseUser;
+  return newUser && toLowerCamelCase(newUser.get({ plain: true }));
 };
 
 /**
@@ -381,10 +380,10 @@ const generateResetToken = async (username) => {
     where: {
       username: username.trim().toLowerCase()
     },
-    attributes: ['user_id', 'username', 'email', 'reset_token'], // Specify the fields to retrieve
+    attributes: ['user_id', 'username', 'email', 'display_name', 'reset_token'], // Specify the fields to retrieve
   });
 
-  return user && user.get({ plain: true });
+  return user && toLowerCamelCase(user.get({ plain: true }));
 }
 
 /**
@@ -471,7 +470,7 @@ async function getUserDomains(username) {
  */
 async function getTableByTableName(tableName) {
   const table = await MraTables.findOne({ where: { table_name: tableName } });
-  return table && table.get({ plain: true });
+  return table && toLowerCamelCase(table.get({ plain: true }));
 }
 
 /**
@@ -511,7 +510,7 @@ async function getValidRelationshipByUserCustomer(userId, customerId) {
       suspend_at: null
     }
   });
-  return relationship && relationship.get({ plain: true });
+  return relationship && toLowerCamelCase(relationship.get({ plain: true }));
 }
 
 module.exports = {
