@@ -60,7 +60,7 @@ const insertAuditLog = async (log) => {
     comments: comments || '',
     user_id: userId,
   });
-  return insertedLog && insertedLog.get({ plain: true });;
+  return insertedLog && insertedLog.get({ plain: true });
 };
 
 /**
@@ -82,7 +82,7 @@ const updateAuditLog = async (log) => {
     returning: true,
   });
 
-  return updateCount === 0 ? null : updatedLogs[0];
+  return updateCount === 0 ? null : updatedLogs[0].get({ plain: true });
 };
 
 /**
@@ -221,7 +221,7 @@ const insertUser = async (user) => {
     username: username.trim().toLowerCase(),
     email: email.trim().toLowerCase(),
     password_hash: passwordHash.trim(),
-    display_name: displayName || username
+    display_name: displayName
   });
 
   return newUser && newUser.get({ plain: true });
