@@ -124,14 +124,14 @@ router.post('/register', createAccountLimiter,
 
       // Create the activation link
       // Let's use the original username to respect its cases
-      const activationLink = generateActivationLink(username, user.activationCode, loginRedirectURL);
+      const activationLink = generateActivationLink(username, user.activation_code, loginRedirectURL);
 
       // Send verification email
       // Let's use the original username to respect its cases
       await sendVerificationEmail(req, user.username, user.displayName, user.email, activationLink);
 
       // Send success response
-      return res.status(201).json({ message: "User registered successfully", userId: user.userId });
+      return res.status(201).json({ message: "User registered successfully", userId: user.user_id });
     } catch (err) {
       updateEventLog(req, err);
       return res.status(500).json({ message: err.message });

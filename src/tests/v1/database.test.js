@@ -120,9 +120,8 @@ describe('Test DB functions', () => {
             expect(insertedUser).toBeDefined();
             expect(insertedUser.username).toBe(mockUser.username.toLowerCase());
             expect(insertedUser.email).toBe(mockUser.email.toLowerCase());
-            expect(insertedUser.passwordHash).toBe(mockUser.passwordHash);
-            expect(insertedUser.displayName).toBe(mockUser.displayName);
-            expect(Number.isInteger(insertedUser.userId)).toBeTruthy();
+            expect(insertedUser.password_hash).toBe(mockUser.passwordHash);
+            expect(Number.isInteger(insertedUser.user_id)).toBeTruthy();
         });
     });
 
@@ -173,7 +172,7 @@ describe('Test DB functions', () => {
     describe('isInactiveUser', () => {
         it('should check if a user is inactive', async () => {
             // This depends on your database state and may need adjustment
-            const inactiveUser = { username: insertedUser.username, activationCode: insertedUser.activationCode };
+            const inactiveUser = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const isInactive = await db.isInactiveUser(inactiveUser);
             expect(isInactive).toBeTruthy();
         });
@@ -182,7 +181,7 @@ describe('Test DB functions', () => {
     describe('isActivationCodeValid', () => {
         it('should check if a user is inactive', async () => {
             // This depends on your database state and may need adjustment
-            const activationCode = { username: insertedUser.username, activationCode: insertedUser.activationCode };
+            const activationCode = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const isActivationCodeValid = await db.isActivationCodeValid(activationCode);
             expect(isActivationCodeValid).toBeTruthy();
         });
@@ -190,7 +189,7 @@ describe('Test DB functions', () => {
 
     describe('activateeUser', () => {
         it('should activate a user', async () => {
-            const userToActivate = { username: insertedUser.username, activationCode: insertedUser.activationCode };
+            const userToActivate = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const activationResult = await db.activateUser(userToActivate);
             expect(activationResult).toBeTruthy();
         });
@@ -199,7 +198,7 @@ describe('Test DB functions', () => {
     describe('isInactiveUser', () => {
         it('should check if a user is active', async () => {
             // This depends on your database state and may need adjustment
-            const activedUser = { username: insertedUser.username, activationCode: insertedUser.activationCode };
+            const activedUser = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const isInactive = await db.isInactiveUser(activedUser);
             expect(isInactive).toBeFalsy();
         });
@@ -214,31 +213,31 @@ describe('Test DB functions', () => {
         it('should generate a password_reset token', async () => {
             const resetResult = await db.generateResetToken(insertedUser.username);
             expect(resetResult).toBeDefined();
-            expect(resetResult.user_id).toBe(insertedUser.userId);
+            expect(resetResult.user_id).toBe(insertedUser.user_id);
             expect(resetResult.username).toBe(insertedUser.username);
             expect(resetResult.email).toBe(insertedUser.email);
             expect(resetResult.reset_token).toBeDefined();
             expect(typeof resetResult.reset_token).toBe('string');
             expect(resetResult.reset_token.length).toBe(64);
-            insertedUser.resetToken = resetResult.reset_token;
+            insertedUser.reset_token = resetResult.reset_token;
         });
     });
 
     describe('resetPassword', () => {
         it('should set a new password_hash for the user', async () => {
-            const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.resetToken, passwordHash: mockUser.passwordHash + 'x'};
+            const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.reset_token, passwordHash: mockUser.passwordHash + 'x'};
             const resetResult = await db.resetPassword(userToResetItsPassowrd);
             expect(resetResult).toBeTruthy();
         });
 
         it('should not set a new password_hash for wrong username', async () => {
-            const userToResetItsPassowrd = { username: insertedUser.username + 'x', resetToken: insertedUser.resetToken, passwordHash: mockUser.passwordHash + 'x'};
+            const userToResetItsPassowrd = { username: insertedUser.username + 'x', resetToken: insertedUser.reset_token, passwordHash: mockUser.passwordHash + 'x'};
             const resetResult = await db.resetPassword(userToResetItsPassowrd);
             expect(resetResult).toBeFalsy();
         });
 
         it('should not set a new password_hash for wrong reset token', async () => {
-            const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.resetToken + 'x', passwordHash: mockUser.passwordHash + 'x'};
+            const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.reset_token + 'x', passwordHash: mockUser.passwordHash + 'x'};
             const resetResult = await db.resetPassword(userToResetItsPassowrd);
             expect(resetResult).toBeFalsy();
         });

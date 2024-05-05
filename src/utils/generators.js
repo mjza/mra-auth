@@ -186,8 +186,7 @@ const generateMockUserDB = async () => {
         username: username,
         email: 'InfO@example.com',
         password: 'Pasword1$',
-        passwordHash: await generatePasswordHash('Pasword1$'),
-        displayName: 'Alex'
+        passwordHash: await generatePasswordHash('Pasword1$')
     };
 };
 

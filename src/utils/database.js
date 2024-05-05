@@ -1,5 +1,4 @@
 const { Sequelize, closeSequelize, fn, col, MraUsers, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers } = require('../models');
-const { toLowerCamelCase, toSnakeCase } = require('../utils/converters');
 
 /**
  * Closes the database connection pool.
@@ -222,11 +221,11 @@ const insertUser = async (user) => {
     username: username.trim().toLowerCase(),
     email: email.trim().toLowerCase(),
     password_hash: passwordHash.trim(),
-    display_name: displayName
+    display_name: displayName || username
   });
 
-  const lowerCamelCaseUser = toLowerCamelCase(newUser && newUser.get({ plain: true }));
-  return lowerCamelCaseUser;
+  return newUser && newUser.get({ plain: true });
+
 };
 
 /**
@@ -368,18 +367,16 @@ const generateResetToken = async (username) => {
   // Update the user's reset_token field
   await MraUsers.update(
     { reset_token: resetToken },
-    {
-      where: {
-        username: username.trim().toLowerCase()
-      },
-      returning: true
-    } // 'returning: true' is specific to PostgreSQL
+    { where: { 
+      username: username.trim().toLowerCase() 
+    }, 
+    returning: true } // 'returning: true' is specific to PostgreSQL
   );
 
   // Retrieve the updated user details
   const user = await MraUsers.findOne({
-    where: {
-      username: username.trim().toLowerCase()
+    where: { 
+      username: username.trim().toLowerCase() 
     },
     attributes: ['user_id', 'username', 'email', 'reset_token'], // Specify the fields to retrieve
   });
@@ -501,7 +498,7 @@ async function getValidRelationshipByUserCustomer(userId, customerId) {
       customer_accepted_at: { [Sequelize.Op.lte]: Sequelize.literal("now()") },
       user_accepted_at: { [Sequelize.Op.lte]: Sequelize.literal("now()") },
       valid_from: { [Sequelize.Op.lte]: Sequelize.literal("now()") },
-      valid_to: {
+      valid_to: { 
         [Sequelize.Op.or]: [
           { [Sequelize.Op.gte]: Sequelize.literal("now()") },
           null
