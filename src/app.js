@@ -6,6 +6,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const cors = require('cors');
+const path = require('path');
 const basicAuth = require('express-basic-auth');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJSDoc = require('swagger-jsdoc');
@@ -161,13 +162,13 @@ async function createApp() {
             customSiteTitle: "Auth API"
         }));
     }
-    
-    // configure Express to serve static files 
-    app.use(express.static('public'));
+
+    // Serve static files from 'public' directory
+    app.use(express.static(path.join(__dirname, 'public')));
 
     // Catch-all route for undefined routes
     app.get('*', (req, res) => {
-        return res.status(404).sendFile('public/error.html', { root: __dirname });
+        res.status(404).sendFile(path.join(__dirname, 'public', 'error.html'));
     });
 
     return app;
