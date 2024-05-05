@@ -16,7 +16,7 @@ async function checkRelationship(request, userType, user, table) {
       return false;
     }
     const { dom: customerId } = request;
-    const { userId } = user;
+    const { user_id: userId } = user;
     const { act, attrs } = request;
     if (attrs && !attrs.set) {
       attrs.set = {};
@@ -26,12 +26,12 @@ async function checkRelationship(request, userType, user, table) {
     }
     const relationship = await db.getValidRelationshipByUserCustomer(userId, customerId);
     if (relationship) {
-      const { creatorColumn, updatorColumn } = table || { creatorColumn: null, updatorColumn: null };
+      const { creator_column, updator_column } = table || { creator_column: null, updator_column: null };
       const { where, set } = attrs || { where: {}, set: {} };
-      if ('C' === act && creatorColumn) {
-        set[creatorColumn] = userId;
-      } else if ('U' === act && updatorColumn) {
-        set[updatorColumn] = userId;
+      if ('C' === act && creator_column) {
+        set[creator_column] = user.user_id;
+      } else if ('U' === act && updator_column) {
+        set[updator_column] = user.user_id;
       }
       if (where && Object.keys(where).length > 0) {
         customDataStore.setData('where', where);

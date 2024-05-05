@@ -15,7 +15,7 @@ async function checkOwnership(request, userType, user, table) {
       return false;
     }
     const { act, attrs } = request;
-    const { ownerColumn, creatorColumn, updatorColumn } = table || { ownerColumn: null, creatorColumn: null, updatorColumn: null };
+    const { owner_column, creator_column, updator_column } = table || { owner_column: null, creator_column: null, updator_column: null };
     if (attrs && !attrs.set) {
       attrs.set = {};
     }
@@ -26,35 +26,35 @@ async function checkOwnership(request, userType, user, table) {
 
     if (userType != 'internal') {
       if ('C' === act) {
-        if (ownerColumn && (!set[ownerColumn] || set[ownerColumn] != user.userId)) {
+        if (owner_column && (!set[owner_column] || set[owner_column] != user.user_id)) {
           return false;
         }
-        if (creatorColumn) {
-          set[creatorColumn] = user.userId;
+        if (creator_column) {
+          set[creator_column] = user.user_id;
         }
         customDataStore.setData('set', set);
       } else if ('R' === act) {
-        if (ownerColumn && where[ownerColumn] && where[ownerColumn] != user.userId) {
+        if (owner_column && where[owner_column] && where[owner_column] != user.user_id) {
           return false;
         }
-        if (ownerColumn) {
-          where[ownerColumn] = user.userId;
+        if (owner_column) {
+          where[owner_column] = user.user_id;
         }
         customDataStore.setData('where', where);
       } else if ('U' === act) {
-        if (ownerColumn && (!where[ownerColumn] || where[ownerColumn] != user.userId)) {
+        if (owner_column && (!where[owner_column] || where[owner_column] != user.user_id)) {
           return false;
         }
-        if (ownerColumn && set[ownerColumn] && set[ownerColumn] != user.userId) {
+        if (owner_column && set[owner_column] && set[owner_column] != user.user_id) {
           return false;
         }
-        if (updatorColumn) {
-          set[updatorColumn] = user.userId;
+        if (updator_column) {
+          set[updator_column] = user.user_id;
         }
         customDataStore.setData('where', where);
         customDataStore.setData('set', set);
       } else if ('D' === act) {
-        if (ownerColumn && (!where[ownerColumn] || where[ownerColumn] != user.userId)) {
+        if (owner_column && (!where[owner_column] || where[owner_column] != user.user_id)) {
           return false;
         }
         customDataStore.setData('where', where);
