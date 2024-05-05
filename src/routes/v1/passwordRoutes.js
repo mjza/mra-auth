@@ -74,7 +74,7 @@ router.post('/reset_token', apiRequestLimiter, [
             // Create the password reset link
             const resetPasswordLink = generateResetPasswordLink(username, result.reset_token, passwordResetPageRedirectURL);
             // Send reset password email
-            await sendResetPasswordEmail(req, username, result.email, resetPasswordLink);
+            await sendResetPasswordEmail(req, result.username, result.displayName, result.email, resetPasswordLink);
         }
 
         return res.status(200).json({ message: 'If an account with the provided username exists, a reset token has been successfully generated and sent to the associated email address.' });

@@ -108,7 +108,7 @@ router.post('/register', createAccountLimiter,
     }
     try {
       const { username, email, password, displayName } = req.body;
-
+console.log(displayName);
       // Hash the password
       const passwordHash = await generatePasswordHash(password);
 
@@ -128,7 +128,7 @@ router.post('/register', createAccountLimiter,
 
       // Send verification email
       // Let's use the original username to respect its cases
-      await sendVerificationEmail(req, username, user.email, activationLink);
+      await sendVerificationEmail(req, user.username, user.displayName, user.email, activationLink);
 
       // Send success response
       return res.status(201).json({ message: "User registered successfully", userId: user.userId });

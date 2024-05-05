@@ -41,17 +41,18 @@ const sendEmail = async (req, email, subject, htmlContent) => {
  * 
  * @async
  * @param {string} username - The username of the user.
+ * @param {string} displayName - The displayName of the user.
  * @param {string} userEmail - The email address of the user.
  * @param {string} activationLink - The link the user needs to click to verify their email.
  * @throws Will throw an error if the email fails to send.
  */
-const sendVerificationEmail = async (req, username, userEmail, activationLink) => {
+const sendVerificationEmail = async (req, username, displayName, userEmail, activationLink) => {
     // Read the template file
     const templatePath = path.join(__dirname, './verificationEmailTemplate.html');
     let emailTemplate = fs.readFileSync(templatePath, 'utf8');
 
     const replacements = {
-        '{{username}}': username,
+        '{{displayName}}': displayName,
         '{{companyLogoUrl}}': process.env.COMPANY_LOGO_URL,
         '{{companyName}}': process.env.COMPANY_NAME,
         '{{companyWebsite}}': process.env.COMPANY_WEBSITE,
@@ -134,17 +135,18 @@ const sendEmailWithUsernames = async (req, users, userEmail) => {
  * 
  * @async
  * @param {string} username - The username of the user.
+ * @param {string} displayName - The displayName of the user.
  * @param {string} userEmail - The email address of the user.
  * @param {string} resetPasswordLink - The link the user needs to click to verify their email.
  * @throws Will throw an error if the email fails to send.
  */
-const sendResetPasswordEmail = async (req, username, userEmail, resetPasswordLink) => {
+const sendResetPasswordEmail = async (req, username, displayName, userEmail, resetPasswordLink) => {
     // Read the template file
     const templatePath = path.join(__dirname, './resetPasswordEmailTemplate.html');
     let emailTemplate = fs.readFileSync(templatePath, 'utf8');
 
     const replacements = {
-        '{{username}}': username,
+        '{{displayName}}': displayName,
         '{{companyLogoUrl}}': process.env.COMPANY_LOGO_URL,
         '{{companyName}}': process.env.COMPANY_NAME,
         '{{companyWebsite}}': process.env.COMPANY_WEBSITE,
