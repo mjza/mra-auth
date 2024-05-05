@@ -31,15 +31,16 @@ async function deletePoliciesForDomainZero(enforcer) {
  * @param {string} csvFilePath Path to the CSV file containing policies to import.
  * @returns {Promise<void>} A promise that resolves once all policies are imported and changes are saved.
  */
-async function importPoliciesFromCSV(enforcer, csvFilePath) {
+async function importPoliciesOrRolesFromCSV(enforcer, csvFilePath) {
   const csvContent = fs.readFileSync(csvFilePath, 'utf8');
   
   // Convert the parse call to be promise-based for proper async handling
   const records = await new Promise((resolve, reject) => {
     parse(csvContent, {
-      from_line: 2, // Skip the header row and seprator line
+      from_line: 2, // Skip the header row
       skip_empty_lines: true,
-      delimiter: ";"
+      delimiter: ";",
+      trim: true, 
     }, (err, output) => {
       if (err) reject(err);
       else resolve(output);
@@ -47,13 +48,26 @@ async function importPoliciesFromCSV(enforcer, csvFilePath) {
   });
 
   for (const record of records) {
-    const [sub, dom, obj, act, cond, attrs, eft] = record;
-    if ([sub, dom, obj, act, cond, attrs, eft].some(v => v === undefined)) {
-      throw new Error('All parameters are mandatory, but at least one undefined value was provided.');
+    // Determine the type of rule based on the length of the record
+    if (record.length === 3) {
+      // Handle g rule: g, user, role, domain
+      const [user, role, domain] = record;
+      if ([user, role, domain].some(v => v === undefined)) {
+        throw new Error('All parameters for g rule are mandatory, but at least one undefined value was provided.');
+      }
+      await enforcer.addGroupingPolicy(user, role, domain);
+    } else if (record.length === 7) {
+      // Handle p rule: sub, dom, obj, act, cond, attrs, eft
+      const [sub, dom, obj, act, cond, attrs, eft] = record;
+      if ([sub, dom, obj, act, cond, attrs, eft].some(v => v === undefined)) {
+        throw new Error('All parameters for p rule are mandatory, but at least one undefined value was provided.');
+      }
+      await enforcer.addPolicy(sub, dom, obj, act, cond, attrs, eft);
+    } else {
+      throw new Error('Invalid record format: ' + record.join(';'));
     }
-    const policy = [sub, dom, obj, act, cond, attrs, eft];
-    await enforcer.addPolicy(...policy);
   }
+
   await enforcer.savePolicy();
 }
 
@@ -167,4 +181,4 @@ async function getPermissionsForRoleInDomain(enforcer, role, domain) {
 }
 
 // Export the function for use in other parts of your application.
-module.exports = { deletePoliciesForDomainZero, importPoliciesFromCSV, addRoleForUserInDomain, removeRoleForUserInDomain, hasRoleForUserInDomain, listRolesForUserInDomain, listRolesForUserInDomains, getPermissionsForRoleInDomain, listRolesForUser };
+module.exports = { deletePoliciesForDomainZero, importPoliciesOrRolesFromCSV, addRoleForUserInDomain, removeRoleForUserInDomain, hasRoleForUserInDomain, listRolesForUserInDomain, listRolesForUserInDomains, getPermissionsForRoleInDomain, listRolesForUser };

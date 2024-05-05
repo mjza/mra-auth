@@ -3,7 +3,7 @@ const TypeORMAdapter = require('typeorm-adapter').default;
 const { customeEval } = require('./casbinEvaluation');
 const {
   deletePoliciesForDomainZero,
-  importPoliciesFromCSV,
+  importPoliciesOrRolesFromCSV,
   addRoleForUserInDomain: addRoleForUserInDomainWithEnforcer,
   removeRoleForUserInDomain: removeRoleForUserInDomainWithEnforcer,
   listRolesForUserInDomain: listRolesForUserInDomainWithEnforcer,
@@ -60,8 +60,11 @@ async function initCasbin() {
 
   await deletePoliciesForDomainZero(enforcer);
 
-  const csvFilePath = 'src/config/policy.csv';
-  await importPoliciesFromCSV(enforcer, csvFilePath);
+  const policyFilePath = 'src/config/policy.csv';
+  await importPoliciesOrRolesFromCSV(enforcer, policyFilePath);
+
+  const roleFilePath = 'src/config/role.csv';
+  await importPoliciesOrRolesFromCSV(enforcer, roleFilePath);
 
   // Add custom functions to Casbin's function map
   await enforcer.addFunction('customeEval', async (r_sub, r_dom, r_obj, r_act, r_attrs, p_sub, p_dom, p_obj, p_act, p_cond, p_attrs) => {
@@ -71,8 +74,6 @@ async function initCasbin() {
     const userType = getUserTypeInDomain(p_sub, p_dom);
     return customeEval(request, policy, userType);
   });
-
-  await addRoleForUserInDomainWithEnforcer(enforcer, 'public', 'public', '0'); // For public users
 
   return enforcer;
 }
