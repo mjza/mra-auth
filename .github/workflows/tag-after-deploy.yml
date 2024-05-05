@@ -14,6 +14,7 @@ jobs:
     env:
       HEROKU_APP_NAME: mra-auth
       HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      BASE_URL: ${{ vars.BASE_URL }}
 
     strategy:
       matrix:
@@ -26,6 +27,12 @@ jobs:
         id: install-heroku-cli
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
+      
+      - name: Wake up Heroku App
+        run: |
+          echo "Waking up the app..."
+          curl -s $BASE_URL > /dev/null
+          echo "App should be awake now."
 
       - name: Check Heroku Deployment Status
         id: check-status
