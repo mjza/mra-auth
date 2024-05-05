@@ -108,7 +108,7 @@ router.post('/register', createAccountLimiter,
     }
     try {
       const { username, email, password, displayName } = req.body;
-console.log(displayName);
+
       // Hash the password
       const passwordHash = await generatePasswordHash(password);
 
