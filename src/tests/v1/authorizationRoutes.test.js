@@ -21,7 +21,7 @@ describe('Test authorization endpoints', () => {
             if (isNaN(res.userId))
                 throw new Error("Couldn't register a mock user.");
             testUser = await db.getUserByUsername(mockUser.username);
-            var user = { username: testUser.username, activationCode: testUser.activationCode };
+            var user = { username: testUser.username, activationCode: testUser.activation_code };
             await db.activateUser(user);
             const authData = (await request(app)
                 .post('/v1/login')
@@ -76,7 +76,7 @@ describe('Test authorization endpoints', () => {
             expect(res.statusCode).toBe(200);
             expect(res.body).toHaveProperty('user');
             expect(res.body.user).toHaveProperty('userId');
-            expect(res.body.user.userId).toBe(testUser.userId);
+            expect(res.body.user.userId).toBe(testUser.user_id);
             expect(res.body.user).toHaveProperty('username');
             expect(res.body.user.username).toBe(testUser.username);
             expect(res.body.user).toHaveProperty('email');
