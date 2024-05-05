@@ -5,8 +5,7 @@ const { generateResetPasswordLink, generateDecryptedObject, generatePasswordHash
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { updateEventLog } = require('../../utils/logger');
 const { sendResetPasswordEmail } = require('../../emails/v1/emailService');
-const { userMustExist, testUrlAccessibility } = require('../../utils/validations');
-
+const { userMustExist, testUrlAccessibility, checkRequestValidity } = require('../../utils/validations');
 const router = express.Router();
 
 /**
@@ -50,42 +49,38 @@ const router = express.Router();
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/reset_token', apiRequestLimiter, [
-    body('username')
-        .exists().withMessage('Username is required.')
-        .isLength({ min: 5, max: 30 }).withMessage('Username must be between 5 and 30 characters.'),
+router.post('/reset_token', apiRequestLimiter,
+    [
+        body('username')
+            .exists().withMessage('Username is required.')
+            .isLength({ min: 5, max: 30 }).withMessage('Username must be between 5 and 30 characters.'),
 
-    body('passwordResetPageRedirectURL')
-        .exists().withMessage('Password reset page redirect URL is required.')
-        .custom(testUrlAccessibility).withMessage('The password reset page redirect URL is not a valid url.')
-], async (req, res) => {
+        body('passwordResetPageRedirectURL')
+            .exists().withMessage('Password reset page redirect URL is required.')
+            .custom(testUrlAccessibility).withMessage('The password reset page redirect URL is not a valid url.')
+    ],
+    checkRequestValidity,
+    async (req, res) => {
+        try {
+            const { username, passwordResetPageRedirectURL } = req.body;
 
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
+            const result = await db.generateResetToken(username);
 
-    try {
-        const { username, passwordResetPageRedirectURL } = req.body;
+            if (result) {
+                // Create the password reset link
+                const resetPasswordLink = generateResetPasswordLink(username, result.reset_token, passwordResetPageRedirectURL);
+                // Send reset password email
+                await sendResetPasswordEmail(req, result.username, result.displayName, result.email, resetPasswordLink);
+            }
 
-        const result = await db.generateResetToken(username);
-
-        if (result) {
-            // Create the password reset link
-            const resetPasswordLink = generateResetPasswordLink(username, result.reset_token, passwordResetPageRedirectURL);
-            // Send reset password email
-            await sendResetPasswordEmail(req, result.username, result.displayName, result.email, resetPasswordLink);
+            return res.status(200).json({ message: 'If an account with the provided username exists, a reset token has been successfully generated and sent to the associated email address.' });
+        } catch (err) {
+            updateEventLog(req, err);
+            // handle error, maybe record error log
+            return res.status(500).json({ message: err.message });
         }
-
-        return res.status(200).json({ message: 'If an account with the provided username exists, a reset token has been successfully generated and sent to the associated email address.' });
-    } catch (err) {
-        updateEventLog(req, err);
-        // handle error, maybe record error log
-        return res.status(500).json({ message: err.message });
     }
-});
-
-
+);
 
 /**
  * @swagger
@@ -184,12 +179,9 @@ router.put('/reset_password', apiRequestLimiter,
             .withMessage('Password must contain at least one digit')
             .matches(/[`~!@#$%^&*()-_=+{}|\\[\]:";'<>?,./]/)
             .withMessage('Password must contain at least one symbol')
-    ], async (req, res) => {
-        // Check for validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+    ],
+    checkRequestValidity,
+    async (req, res) => {
         try {
             // Extract validated parameters
             const { username, token, data, password } = req.body;
@@ -212,6 +204,7 @@ router.put('/reset_password', apiRequestLimiter,
             updateEventLog(req, err);
             return res.status(500).json({ message: err.message });
         }
-    });
+    }
+);
 
 module.exports = router;

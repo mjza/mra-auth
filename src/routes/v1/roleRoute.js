@@ -2,7 +2,7 @@ const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const { updateEventLog } = require('../../utils/logger');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
-const { authenticateUser, authorizeUser } = require('../../utils/validations');
+const { authenticateUser, authorizeUser, checkRequestValidity } = require('../../utils/validations');
 const { listRolesForUserInDomain, listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRoleForUserInDomain, addPolicyInDomain, getPoliciesInDomain, getRolesInDomain, getUsersForRoleInDomain, removePoliciesInDomain } = require('../../casbin/casbinSingleton');
 
 const router = express.Router();
@@ -66,13 +66,7 @@ router.get('/domain-roles', apiRequestLimiter,
             .optional({ checkFalsy: true })
             .isNumeric().withMessage('Domain must be a number.'),
     ],
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        next();
-    },
+    checkRequestValidity,
     authenticateUser,
     async (req, res, next) => {
         const roles = await listRolesForUserInDomains(req.user.username);
@@ -99,7 +93,8 @@ router.get('/domain-roles', apiRequestLimiter,
             updateEventLog(req, err);
             return res.status(500).json({ message: err.message });
         }
-    });
+    }
+);
 
 /**
 * @swagger
@@ -147,13 +142,7 @@ router.get('/my-roles', apiRequestLimiter,
             .isNumeric().withMessage('Domain must be a number.')
             .default('0'),
     ],
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        next();
-    },
+    checkRequestValidity,
     authenticateUser,
     async (req, res) => {
         try {
@@ -171,7 +160,8 @@ router.get('/my-roles', apiRequestLimiter,
             updateEventLog(req, err);
             return res.status(500).json({ message: err.message });
         }
-    });
+    }
+);
 
 /**
 * @swagger
@@ -235,13 +225,7 @@ router.get('/user-roles', apiRequestLimiter,
             .isNumeric().withMessage('Domain must be a number.')
             .default('0'),
     ],
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        next();
-    },
+    checkRequestValidity,
     authenticateUser,
     (req, res, next) => {
         const username = req.query.username ? req.query.username : req.user.username;
@@ -269,7 +253,8 @@ router.get('/user-roles', apiRequestLimiter,
             updateEventLog(req, err);
             return res.status(500).json({ message: err.message });
         }
-    });
+    }
+);
 
 /**
  * @swagger
@@ -352,13 +337,7 @@ router.post('/user-role', apiRequestLimiter,
             .isNumeric().withMessage('Domain must be a number.')
             .default('0'),
     ],
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        next();
-    },
+    checkRequestValidity,
     authenticateUser,
     async (req, res, next) => {
         const roles = await listRolesForUserInDomains(req.user.username);
@@ -459,13 +438,7 @@ router.delete('/user-role', apiRequestLimiter,
             .isNumeric().withMessage('Domain must be a number.')
             .default('0'),
     ],
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        next();
-    },
+    checkRequestValidity,
     authenticateUser,
     async (req, res, next) => {
         const roles = await listRolesForUserInDomains(req.user.username);
@@ -596,13 +569,7 @@ router.post('/policies',
             })
             .withMessage('Attributes must be a valid JSON object.'),
     ],
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        next();
-    },
+    checkRequestValidity,
     authenticateUser,
     async (req, res, next) => {
         const roles = await listRolesForUserInDomains(req.user.username);
@@ -729,13 +696,7 @@ router.post('/policy',
             })
             .withMessage('Attributes must be a valid JSON object.'),
     ],
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        next();
-    },
+    checkRequestValidity,
     authenticateUser,
     async (req, res, next) => {
         const roles = await listRolesForUserInDomains(req.user.username);
@@ -856,37 +817,32 @@ router.post('/policy',
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.delete('/policies', [
-    body('domain').not().isEmpty().withMessage('Domain is required.'),
-    body('subject').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Subject is optional and can be string or null.'),
-    body('object').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Object can be string or null.'),
-    body('action').optional({ nullable: true, checkFalsy: true }).isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null]).withMessage('Action is optional.'),
-    body('effect').optional({ nullable: true, checkFalsy: true }).isIn(['allow', 'deny', '', null]).withMessage('Effect is optional.'),
-    body('condition').optional({ nullable: true, checkFalsy: true }).isIn(['check_relationship', 'check_ownership', 'none', '', null]).withMessage('Condition is optional.'),
-    body('attributes')
-        .optional({ nullable: true, checkFalsy: true })
-        .custom((value) => {
-            if (typeof value === 'object') {
-                return true; // Directly pass through objects without attempting to parse
-            }
-            try {
-                if (typeof value === 'string') {
-                    JSON.parse(value);
+router.delete('/policies',
+    [
+        body('domain').not().isEmpty().withMessage('Domain is required.'),
+        body('subject').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Subject is optional and can be string or null.'),
+        body('object').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Object can be string or null.'),
+        body('action').optional({ nullable: true, checkFalsy: true }).isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null]).withMessage('Action is optional.'),
+        body('effect').optional({ nullable: true, checkFalsy: true }).isIn(['allow', 'deny', '', null]).withMessage('Effect is optional.'),
+        body('condition').optional({ nullable: true, checkFalsy: true }).isIn(['check_relationship', 'check_ownership', 'none', '', null]).withMessage('Condition is optional.'),
+        body('attributes')
+            .optional({ nullable: true, checkFalsy: true })
+            .custom((value) => {
+                if (typeof value === 'object') {
+                    return true; // Directly pass through objects without attempting to parse
                 }
-            } catch (e) {
-                throw new Error('Attributes must be a valid JSON object.');
-            }
-            return true;
-        })
-        .withMessage('Attributes must be a valid JSON object.'),
-],
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        next();
-    },
+                try {
+                    if (typeof value === 'string') {
+                        JSON.parse(value);
+                    }
+                } catch (e) {
+                    throw new Error('Attributes must be a valid JSON object.');
+                }
+                return true;
+            })
+            .withMessage('Attributes must be a valid JSON object.'),
+    ],
+    checkRequestValidity,
     authenticateUser,
     async (req, res, next) => {
         const roles = await listRolesForUserInDomains(req.user.username);
@@ -902,24 +858,21 @@ router.delete('/policies', [
     },
     async (req, res) => {
         try {
-            const { subject, domain, object, action, condition, attributes, effect } = req.body;            
+            const { subject, domain, object, action, condition, attributes, effect } = req.body;
             const users = await getUsersForRoleInDomain(subject, domain);
 
-            if(users && users.length > 0){
+            if (users && users.length > 0) {
                 return res.status(404).json({ message: 'Some users are using this policy and cannot be changed or removed.' });
             }
 
             const result = await removePoliciesInDomain(subject, domain, object, action, condition, attributes, effect);
 
-            return res.status(200).json({result});
+            return res.status(200).json({ result });
         } catch (err) {
             console.error(err);
             return res.status(500).json({ message: 'Failed to delete policies due to an internal error.' });
         }
-    });
-
-
-
-
+    }
+);
 
 module.exports = router;

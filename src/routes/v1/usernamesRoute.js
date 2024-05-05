@@ -4,6 +4,7 @@ const { sendEmailWithUsernames } = require('../../emails/v1/emailService');
 const db = require('../../utils/database');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { updateEventLog } = require('../../utils/logger');
+const { checkRequestValidity } = require('../../utils/validations');
 const router = express.Router();
 
 /**
@@ -43,13 +44,9 @@ router.get('/usernames', apiRequestLimiter,
     query('email')
       .isEmail()
       .withMessage('Invalid email format.')
-  ], async (req, res) => {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
+  ], 
+  checkRequestValidity,
+  async (req, res) => {
     try {
       const { email } = req.query;
 

@@ -5,7 +5,7 @@ const { body, validationResult } = require('express-validator');
 const { generateAuthToken, parseJwt } = require('../../utils/generators');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { updateEventLog } = require('../../utils/logger');
-const { authenticateToken } = require('../../utils/validations');
+const { authenticateToken, checkRequestValidity } = require('../../utils/validations');
 const router = express.Router();
 
 /**
@@ -96,16 +96,11 @@ router.post('/login', apiRequestLimiter,
       .withMessage('Password is required.')
       .isLength({ max: 30 })
       .withMessage('Password must be maximum 30 characters.')
-  ], async (req, res) => {
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { usernameOrEmail, password } = req.body;
-
+  ],
+  checkRequestValidity,
+  async (req, res) => {
     try {
+      const { usernameOrEmail, password } = req.body;
       const users = await db.getUserByUsernameOrEmail(usernameOrEmail);
 
       if (!users || users.length === 0) {

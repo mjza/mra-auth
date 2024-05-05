@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { Agent } = require('https');
 const { promisify } = require('util');
+const { validationResult } = require('express-validator');
 const jwtVerify = promisify(jwt.verify);
 const db = require('./database');
 const { createEventLog, updateEventLog } = require('./logger');
@@ -97,7 +98,7 @@ const isValidUrl = (inputUrl) => {
  * @param {function} next - The next middleware function in the Express.js route.
  */
 const authenticateToken = async (req, res, next) => {
-    if(req.user){
+    if (req.user) {
         next();
     }
     // Get the token from the request header
@@ -122,10 +123,10 @@ const authenticateToken = async (req, res, next) => {
         }
 
         // Add user information to request
-        req.user = {userId: tokenData.userId, username: tokenData.username, email: tokenData.email}; 
+        req.user = { userId: tokenData.userId, username: tokenData.username, email: tokenData.email };
         next(); // Proceed to the next middleware or route handler
     } catch (err) {
-        updateEventLog(req, { error: 'Error in validating auth token.', details: err});
+        updateEventLog(req, { error: 'Error in validating auth token.', details: err });
         // Handle error (token invalid or other errors)
         return res.status(401).json({ message: 'Provided JWT token is invalid.' });
     }
@@ -145,7 +146,7 @@ const authenticateToken = async (req, res, next) => {
  * @param {Function} next - The next middleware function in the Express.js route.
  */
 const authenticateUser = async (req, res, next) => {
-    if(req.user){
+    if (req.user) {
         next();
     }
     // Get the token from the request header
@@ -154,27 +155,27 @@ const authenticateUser = async (req, res, next) => {
 
     // If no token is provided
     if (!token) {
-        req.user = {userId: 0, username: 'public', email: null};
+        req.user = { userId: 0, username: 'public', email: null };
         next();
     } else {
         try {
             const secretKeyHex = process.env.SECRET_KEY;
             const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
-    
+
             // Verify JWT Token
             const tokenData = await jwtVerify(token, secretKeyBuffer);
             // Check if token is expired in database
             const isExpired = await db.isTokenBlacklisted(token);
             if (isExpired) {
-                req.user = {userId: 0, username: 'public', email: null};
+                req.user = { userId: 0, username: 'public', email: null };
                 next();
             } else {
-                req.user = {userId: tokenData.userId, username: tokenData.username, email: tokenData.email}; 
-                next(); 
+                req.user = { userId: tokenData.userId, username: tokenData.username, email: tokenData.email };
+                next();
             }
         } catch (err) {
-            updateEventLog(req, { error: 'Error in validating auth token.', details: err});
-            req.user = {userId: 0, username: 'public', email: null};
+            updateEventLog(req, { error: 'Error in validating auth token.', details: err });
+            req.user = { userId: 0, username: 'public', email: null };
             next();
         }
     }
@@ -210,7 +211,7 @@ const authorizeUser = (extraData) => async (req, res, next) => {
             act: extraData.act,
             attrs: extraData.attrs
         };
-        
+
         const serviceUrl = process.env.BASE_URL + '/v1/authorize';
 
         const authHeader = req.headers['authorization'];
@@ -222,7 +223,7 @@ const authorizeUser = (extraData) => async (req, res, next) => {
         });
 
         const { user, roles, conditions } = response.data;
-        if(!req.logId) {
+        if (!req.logId) {
             const logId = await createEventLog(req, user.userId);
             req.logId = logId;
             req.user = user;
@@ -232,11 +233,11 @@ const authorizeUser = (extraData) => async (req, res, next) => {
             req.user = user;
             req.roles = roles;
             req.conditions = conditions;
-            await updateEventLog(req, { success: 'User has been authorized.', details: response.data});
+            await updateEventLog(req, { success: 'User has been authorized.', details: response.data });
         }
         next();
     } catch (error) {
-        await updateEventLog(req, { error: 'Error in authorize user.', details: error});
+        await updateEventLog(req, { error: 'Error in authorize user.', details: error });
         if (error.response) {
             // Relay the entire response from the external service
             return res.status(error.response.status).json(error.response.data);
@@ -246,4 +247,12 @@ const authorizeUser = (extraData) => async (req, res, next) => {
     }
 };
 
-module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken, authenticateUser, authorizeUser };
+const checkRequestValidity = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+};
+
+module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken, authenticateUser, authorizeUser, checkRequestValidity };

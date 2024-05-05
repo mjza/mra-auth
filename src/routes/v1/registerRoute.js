@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+const { body } = require('express-validator');
 const db = require('../../utils/database');
 const { sendVerificationEmail } = require('../../emails/v1/emailService');
 const { userMustNotExist } = require('../../utils/validations');
@@ -7,7 +7,7 @@ const { createAccountLimiter } = require('../../utils/rateLimit');
 const { generateActivationLink, generatePasswordHash } = require('../../utils/generators');
 const { updateEventLog } = require('../../utils/logger');
 const { addRoleForUserInDomain } = require('../../casbin/casbinSingleton');
-
+const { checkRequestValidity } = require('../../utils/validations');
 const router = express.Router();
 
 /**
@@ -75,9 +75,9 @@ router.post('/register', createAccountLimiter,
       .custom(userMustNotExist)
       .custom((username) => {
         // TODO: Make a test for it.
-        const reservedUsernames = ['super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support', 
-        'admin', 'admindata', 'officer', 'agent', 'enduser', 'public', 'administrator', 
-        'manager', 'staff', 'employee', 'user'];
+        const reservedUsernames = ['super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support',
+          'admin', 'admindata', 'officer', 'agent', 'enduser', 'public', 'administrator',
+          'manager', 'staff', 'employee', 'user'];
         if (reservedUsernames.includes(username.toLowerCase())) {
           throw new Error('Username cannot be a reserved word.');
         }
@@ -101,11 +101,9 @@ router.post('/register', createAccountLimiter,
       .withMessage('Password must contain at least one digit')
       .matches(/[`~!@#$%^&*()-_=+{}|\\[\]:";'<>?,./]/)
       .withMessage('Password must contain at least one symbol')
-  ], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+  ],
+  checkRequestValidity,
+  async (req, res) => {
     try {
       const { username, email, password, displayName } = req.body;
 

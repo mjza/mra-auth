@@ -1,7 +1,7 @@
 const express = require('express');
 const { query, validationResult } = require('express-validator');
 const db = require('../../utils/database');
-const { userMustExist, isValidUrl } = require('../../utils/validations');
+const { userMustExist, isValidUrl, checkRequestValidity } = require('../../utils/validations');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { generateDecryptedObject } = require('../../utils/generators');
 const { updateEventLog } = require('../../utils/logger');
@@ -89,7 +89,7 @@ router.get('/activate', apiRequestLimiter,
       .isLength({ min: 5, max: 30 })
       .withMessage('Username must be between 5 and 30 characters.')
       .matches(/^[a-zA-Z0-9_]+$/)
-      .withMessage('Username can only contain letters, numbers, and underscores.')    
+      .withMessage('Username can only contain letters, numbers, and underscores.')
       .custom(userMustExist),
 
     // Validate token
@@ -106,12 +106,9 @@ router.get('/activate', apiRequestLimiter,
       .matches(/^[0-9a-fA-F]+$/)
       .withMessage('Data must be a hexadecimal string.')
 
-  ], async (req, res) => {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+  ],
+  checkRequestValidity,
+  async (req, res) => {
     try {
       // Extract validated parameters
       const { username, token, data } = req.query;
@@ -153,7 +150,7 @@ router.get('/activate', apiRequestLimiter,
       updateEventLog(req, err);
       return res.status(500).json({ message: err.message });
     }
-  });
-
+  }
+);
 
 module.exports = router;
