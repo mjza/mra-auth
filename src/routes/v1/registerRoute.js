@@ -126,7 +126,7 @@ router.post('/register', createAccountLimiter,
 
       // Send verification email
       // Let's use the original username to respect its cases
-      await sendVerificationEmail(req, user.username, user.displayName, user.email, activationLink);
+      await sendVerificationEmail(req, user.username, user.display_name, user.email, activationLink);
 
       // Send success response
       return res.status(201).json({ message: "User registered successfully", userId: user.user_id });

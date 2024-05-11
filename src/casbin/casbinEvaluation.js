@@ -15,26 +15,84 @@ async function customeEval(request, policy, userType) {
 
     const { sub, obj } = request;
     const user = await db.getUserByUsername(sub);
+    const userId = user ? user.user_id : null;
     const table = await db.getTableByTableName(obj);
-    const { attrs, cond } = policy;
+
+    // set ownership values of the request
+    const { where, set } = await setConditions(request, policy.cond, userId, table);
+    // Update the where and set in the request
+    if (where && Object.keys(where).length > 0) {
+        request.attrs.where = where;
+    }
+    if (set && Object.keys(set).length > 0) {
+        request.attrs.set = set;
+    }
 
     // Evaluate static attributes
-    if (attrs !== 'none') {
-        const attrsResult = evalAttributes(request.attrs, attrs);
+    if (policy.attrs !== 'none') {
+        const attrsResult = evalAttributes(request.attrs, policy.attrs);
         if (!attrsResult)
             return false;
     }
 
     // Evaluate dynamic conditions
-    if (cond !== 'none') {
-        const conditionResult = await evalDynamicCondition(request, cond, userType, user, table);
-        if (!conditionResult)
+    if (policy.cond !== 'none') {
+        const result = await evalDynamicCondition(request, policy.cond, userType, userId, table);
+        if (!result)
             return false;
-    } else {
-        await setConditions(request, user, table);
     }
 
+    await storeConditions(request.attrs);
+
     return true;
+}
+
+/**
+ * Dynamically sets conditions for database operations based on the action type specified in
+ * the request object and user ownership, specifically targeting owner, creator, and updator columns.
+ * This function returns an object containing 'where' and 'set' conditions modified according to the
+ * request action type and user identity, useful for queries needing authentication or ownership checks.
+ * 
+ * @param {Object} request - The request object, expected to contain an 'act' (action type) and 'attrs'
+ *                           (attributes for the database operation) properties.
+ * @param {string} condition - A condition indicating the context in which this function is invoked,
+ *                             e.g., 'check_ownership' for read and delete operations.
+ * @param {integer} userId - An integer representing id of the user making the request.
+ * @param {Object} table - An object representing the table being operated on. Expected to contain
+ *                         'owner_column', 'creator_column', and 'updator_column' properties, used to
+ *                         attribute the ownership or modification of data to the current user.
+ * @returns {Object} An object containing 'where' and 'set' conditions adjusted according to the request
+ *                   specifics and user details.
+ */
+async function setConditions(request, condition, userId, table) {
+    const { act, attrs } = request;
+    const { owner_column, creator_column, updator_column } = table || { owner_column: null, creator_column: null, updator_column: null };
+    // It might happen that attrs is just an empty object {}
+    if (attrs && !attrs.set) {
+        attrs.set = {};
+    }
+    if (attrs && !attrs.where) {
+        attrs.where = {};
+    }
+    const { where, set } = attrs || { where: {}, set: {} };
+    if (('R' === act || 'D' === act) && condition === 'check_ownership') {
+        if (userId && userId > 0 && owner_column) {
+            where[owner_column] = userId;
+        }
+    } else if ('C' === act) {
+        if (userId && userId > 0 && creator_column) {
+            set[creator_column] = userId;
+        }
+    } else if ('U' === act) {
+        if (userId && userId > 0 && updator_column) {
+            set[updator_column] = userId;
+        }
+        if (userId && userId > 0 && owner_column) {
+            where[owner_column] = userId;
+        }
+    }
+
+    return { where, set };
 }
 
 /**
@@ -76,61 +134,46 @@ function evalAttributes(requestAttrs, policyAttrs) {
 }
 
 /**
-* Evaluates dynamic conditions specified in the policy.
-* @param {Object} request - The request object containing sub, dom, obj, act, and attrs.
-* @param {string} condition - The policy condition.
-* @param {string} userType - The user type can be 'public', 'external', 'customer', 'internal'.
-* @param {Object} user - An object representing the user making the request.
-* @param {Object} table - An object representing the table or data source involved in the request.
-* @returns {boolean} - True if the condition is met, false otherwise.
-*/
-async function evalDynamicCondition(request, condition, userType, user, table) {
+ * Evaluates dynamic conditions specified in the policy. Depending on the condition specified,
+ * this function delegates the request to specific sub-functions that handle various types of policy checks,
+ * such as ownership and relational checks. It supports multiple user types and custom conditions based on
+ * the provided arguments.
+ *
+ * @param {Object} request - The request object containing sub (subject), dom (domain), obj (object),
+ *                           act (action), and attrs (attributes). This structure helps in specifying the
+ *                           operational context.
+ * @param {string} condition - The policy condition to evaluate, e.g., 'check_ownership' or 'check_relationship'.
+ * @param {string} userType - The user type can be 'public', 'external', 'customer', 'internal'. Access control
+ *                            logic may vary based on the user type.
+ * @param {integer} userId - An integer representing id of the user making the request.
+ * @param {Object} table - An object representing the table or data source involved in the request, which may
+ *                         include metadata like ownership or relationship columns.
+ * @returns {Promise<boolean>} - A promise that resolves to `true` if the user is the owner and the action is permitted,
+ *                     false otherwise.
+ *
+ * @throws {Error} Throws an error if there is a problem during the execution, such as a failure in
+ *                 policy evaluation or if no valid condition handler is found.
+ */
+async function evalDynamicCondition(request, condition, userType, userId, table) {
     if (condition === 'check_ownership') {
-        return await checkOwnership(request, userType, user, table);
+        return await checkOwnership(request, userType, userId, table);
     } else if (condition === 'check_relationship') {
-        return await checkRelationship(request, userType, user, table);
+        return await checkRelationship(request, userType, userId, table);
     }
-    // Add more condition cases as needed
-    return false;
+    throw new Error("Unknown condition passed.");
 }
 
 /**
- * Sets conditions for database operations based on the request action and attributes,
- * as well as user and table information. This function is designed to prepare and
- * apply data modification conditions, specifically targeting creator and updator
- * columns for create and update actions respectively.
+ * Sets conditions for database operations based on request attributes, modifying the global
+ * customDataStore object by setting 'where' and 'set' conditions. This function is specifically
+ * designed to prepare the environment for database operations later in the request processing
+ * pipeline by updating conditions dynamically based on the provided attributes.
  * 
- * The function modifies the global customDataStore object by setting 'where' and 'set'
- * conditions based on the request's action type ('C' for create, 'U' for update) and
- * the provided attributes. It uses the user's ID to mark the creator or updator column
- * in the 'set' condition. Additionally, it populates 'where' conditions if specified
- * in the request.
- * 
- * Note: This function directly affects the global customDataStore object and does not
- * return any value. It should be used when the intention is to prepare conditions for
- * database operations that will be executed later in the request processing pipeline.
- *
- * @param {Object} request - The request object, expected to contain an 'act' (action type)
- * and 'attrs' (attributes for the database operation) properties.
- * @param {Object} user - An object representing the user performing the operation.
- * The function expects this object to at least contain a 'user_id' property.
- * @param {Object} table - An object representing the table being operated on.
- * Expected to contain 'creator_column' and 'updator_column' properties, which are used
- * to attribute the creation or modification of data to the current user.
+ * @param {Object} attrs - The attributes of the request object for the database
+ *                           operation which includes 'where' and 'set' properties.
  */
-async function setConditions(request, user, table) {
-    const { act, attrs } = request;
-    const { creator_column, updator_column } = table || { creator_column: null, updator_column: null };
-    const { where, set } = attrs || { where: {}, set: {} };
-    if ('C' === act) {
-        if (user && user.user_id > 0 && creator_column) {
-            set[creator_column] = user.user_id;
-        }
-    } else if ('U' === act) {
-        if (user && user.user_id > 0 && updator_column) {
-            set[updator_column] = user.user_id;
-        }
-    }
+async function storeConditions(attrs) {
+    const { where, set } = attrs;
     if (where && Object.keys(where).length > 0) {
         customDataStore.setData('where', where);
     }

@@ -1,4 +1,5 @@
-const { Sequelize, closeSequelize, fn, col, MraUsers, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers } = require('../models');
+const { Sequelize, closeSequelize, fn, col, MraUsers, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers, MraStatuses, MraTickets, MraSubscriptions } = require('../models');
+
 
 /**
  * Closes the database connection pool.
@@ -378,7 +379,7 @@ const generateResetToken = async (username) => {
     where: { 
       username: username.trim().toLowerCase() 
     },
-    attributes: ['user_id', 'username', 'email', 'reset_token'], // Specify the fields to retrieve
+    attributes: ['user_id', 'username', 'email', 'reset_token', 'display_name'], // Specify the fields to retrieve
   });
 
   return user && user.get({ plain: true });
@@ -511,6 +512,48 @@ async function getValidRelationshipByUserCustomer(userId, customerId) {
   return relationship && relationship.get({ plain: true });
 }
 
+/**
+ * Fetches a single row identified by the columnName and its value from the specified table.
+ * This function dynamically selects the appropriate database model based on the tableName provided.
+ *
+ * @param {string} tableName - Name of the table from which the row is to be fetched.
+ * @param {string} columnName - The column name which is used as an identifier (ID).
+ * @param {any} columnValue - The value of the identifier to fetch the correct row.
+ *
+ * @returns {Promise<Object|null>} - A promise that resolves to the row data fetched from the database, or null if no row is found.
+ *
+ * @throws {Error} - Throws an error if the table name does not match any known models or if the database operation fails.
+ */
+async function getRowById(tableName, columnName, columnValue) {
+  const model = getModelByTableName(tableName);
+  if (!model) {
+    throw new Error(`No model found for table name: ${tableName}`);
+  }
+  return await model.findOne({
+    where: {
+      [columnName]: columnValue
+    },
+    raw: true
+  });
+}
+
+/**
+ * Maps the table name to the corresponding ORM model.
+ *
+ * @param {string} tableName - The name of the table for which the corresponding model is needed.
+ *
+ * @returns {Model|null} - The ORM model associated with the given table name, or null if no model matches.
+ */
+function getModelByTableName(tableName) {
+  const tableMap = {
+    'mra_statuses': MraStatuses,
+    'mra_tickets': MraTickets,
+    'mra_subscriptions': MraSubscriptions
+  };
+  return tableMap[tableName] || null;
+}
+
+
 module.exports = {
   closeDBConnections,
   insertBlacklistToken,
@@ -531,5 +574,6 @@ module.exports = {
   generateResetToken,
   getUserDomains,
   getTableByTableName,
-  getValidRelationshipByUserCustomer
+  getValidRelationshipByUserCustomer,
+  getRowById
 };

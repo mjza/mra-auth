@@ -51,15 +51,19 @@ const validateAuthorizationRequest = [
  *       properties:
  *         dom:
  *           type: string
+ *           example: '0'
  *           description: The domain (e.g., customer ID) within which the action is being attempted
  *         obj:
  *           type: string
+ *           example: 'mra_users'
  *           description: The object or resource the user is trying to access
  *         act:
  *           type: string
+ *           example: 'R'
  *           description: The action the user is trying to perform on the object
  *         attrs:
  *           type: object
+ *           example: {}
  *           description: Additional attributes relevant to the authorization context
  */
 /**

@@ -43,6 +43,11 @@ module.exports = function(sequelize, DataTypes) {
 						type: DataTypes.STRING(255),
 						allowNull: true,
 						comment: "The column that indicates the updator of the row."
+				},
+				domain_column: {
+						type: DataTypes.STRING(255),
+						allowNull: true,
+						comment: "The column that indicates the custumer of the row."
 				}
 		}, {
 				sequelize,
