@@ -87,7 +87,7 @@ async function setConditions(request, condition, userId, table) {
         if (userId && userId > 0 && updator_column) {
             set[updator_column] = userId;
         }
-        if (userId && userId > 0 && owner_column) {
+        if (userId && userId > 0 && owner_column && condition === 'check_ownership' && !where[owner_column]) {
             where[owner_column] = userId;
         }
     }
