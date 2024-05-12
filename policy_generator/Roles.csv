@@ -1,5 +1,7 @@
 ﻿Tables;Owner;Systesm;super;superdata;devhead;developer;saleshead;sales;support;admin;admindata;officer;agent;enduser;public
 mra_audit_logs_authentication;SYS;CRUD;R;R;R;R;N;N;N;N;N;N;N;N;N
+mra_audit_logs_core;SYS;CRUD;R;R;R;R;N;N;N;N;N;N;N;N;N
+mra_audit_logs_file;SYS;CRUD;R;R;R;R;N;N;N;N;N;N;N;N;N
 mra_token_blacklist;SYS;CRUD;R;R;R;R;N;N;N;N;N;N;N;N;N
 mra_notifications;SYS;CRUD;R;R;N;N;N;N;N;N;N;N;N;RO;N
 mra_ticket_history;SYS;CRUD;R;R;R;R;R;R;R;R*;R*;R*;R*;RO;N
@@ -16,7 +18,7 @@ mra_ticket_reaction_types;SYS;CRUD;CRUD;CRUD;R;R;R;R;R;R;R;R;R;R;N
 mra_notification_types;SYS;CRUD;CRUD;CRUD;N;N;N;N;N;N;N;N;N;N;N
 mra_payment_methods;SYS;CRUD;CRUD;CRUD;R;R;R;R;R;R;N;N;N;N;N
 mra_currency_codes;SYS;CRUD;CRUD;CRUD;R;R;R;R;R;R;N;N;N;N;N
-mra_discount_type;SYS;CRUD;CRUD;CRUD;R;R;CRUD;R;R;R;N;N;N;N;N
+mra_discount_types;SYS;CRUD;CRUD;CRUD;R;R;CRUD;R;R;R;N;N;N;N;N
 mra_customer_types;SYS;CRUD;CRUD;CRUD;R;R;CRUD;R;R;R;N;N;N;N;N
 mra_subscription_interval;SYS;CRUD;CRUD;CRUD;R;R;CRUD;R;R;R;N;N;N;N;N
 mra_subscription_models;SYS;CRUD;CRUD;CRUD;R;R;CRUD;R;R;R;N;N;N;N;N
@@ -37,10 +39,11 @@ mra_statuses;creator;CRUD;CRUD;CRUD;R;R;R;R;R;GC*GR*GU*GD*;C*R*U*D*;R*;R*;R;N
 mra_condition_fields;creator;CRUD;CRUD;R;R;R;R;R;R;GC*GR*GU*GD*;C*R*U*D*;R*;R*;N;N
 mra_transition_conditions;creator;CRUD;CRUD;R;R;R;R;R;R;GC*GR*GU*GD*;C*R*U*D*;R*;R*;N;N
 mra_ticket_categories;creator;CRUD;CRUD;CRUD;R;R;CRUD;CRUD;CRUD;GC*GR*GU*GD*;C*R*U*D*;R*;R*;R;N
-mra_tickets;creator;CRUD;CRUD;R;R;R;R;R;R;R;R;R;R;COROUODO;R
+mra_tickets;creator;CRUD;CRUD;R;R;R;R;R;R;R;R;R;R;CORUODO;R
 mra_ticket_assignments;creator;CRUD;R;R;R;R;R;R;R;GC*GR*GU*GD*;C*R*U*D*;C*R*U*D*;R*;N;N
-mra_ticket_reactions;creator;CRUD;R;R;R;R;R;R;R;R;R;R;R;COROUODO;R
-mra_ticket_comments;creator;CRUD;R;R;R;R;R;R;R;R;R;R;R;COROUODO;R
+mra_ticket_reactions;creator;CRUD;R;R;R;R;R;R;R;R;R;R;R;CORUODO;R
+mra_ticket_comments;creator;CRUD;R;R;R;R;R;R;R;R;R;R;R;CORUODO;R
 mra_advisor_customers;creator;CRUD;CRUD;R;R;R;CRUD;R;R;GR*;R*;N;N;N;N
 mra_posts;creator;CRUD;CRUD;R;R;R;R;R;R;GC*RGU*GD*;C*RU*D*;R;R;R;R
 mra_authorization;SYS;CRD;CRD;CRD;CRD;R;N;N;N;C*R*D*;N;N;N;N;N
+s3_files;null;CRUD;CRUD;R;R;R;R;R;R;R;R;R;R;COR;R

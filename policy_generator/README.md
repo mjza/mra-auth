@@ -78,6 +78,44 @@ To support the attributes JSON the separator has changed to semicolon.
 
 First make a `Roles.csv` file. This file does not have some redundent columns.
 
+## **Create the Virtual Environment**: 
+Run the following command to create a virtual environment in the directory called `venv` 
+(or another name you prefer). The `python3` command might differ based on your 
+installation (`python` might be used if you've set an alias).
+
+```
+python3 -m venv venv
+```
+
+## **Activate the Virtual Environment**: 
+Before you start using Python or installing packages, you need to activate the virtual environment. To do so, run:
+
+- If you are using `bash`, `sh`, or `zsh`:
+
+```
+source venv/bin/activate
+```
+
+- If you are using fish or another shell, the command might slightly differ. For fish, use:
+
+```
+. venv/bin/activate.fish
+```
+
+- If you are using windows powershell:
+
+```
+.\venv\Scripts\Activate.ps1
+```
+
+## **Verify the Virtual Environment**: 
+Once the virtual environment is activated, your terminal prompt might change to show the name of the environment (in this case, `venv`). You can also check which Python you are using to ensure it’s the one from the virtual environment:
+
+```
+which python
+```
+This should point to the Python executable in your virtual environment’s `bin` directory.
+
 ## Install libraries
 
 ```
