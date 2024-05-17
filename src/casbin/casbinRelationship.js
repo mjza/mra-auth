@@ -46,6 +46,7 @@ async function checkRelationship(request, userType, userId, table) {
       if (domainColumn) {
         return await resolveDomainColumn(domainColumn, target, domain);
       }
+      return true;
     }
     return false;
   } catch (err) {
