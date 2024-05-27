@@ -54,7 +54,7 @@ module.exports = function(sequelize, DataTypes) {
 						allowNull: true,
 						comment: "Can override the default discount type specified in the subscription model.",
 						references: {
-								model: 'mra_discount_type',
+								model: 'mra_discount_types',
 								key: 'discount_type_id'
 						}
 				},

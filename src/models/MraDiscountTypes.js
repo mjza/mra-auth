@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
 module.exports = function(sequelize, DataTypes) {
-		return sequelize.define('MraDiscountType', {
+		return sequelize.define('MraDiscountTypes', {
 				discount_type_id: {
 						type: DataTypes.INTEGER,
 						allowNull: false,
@@ -14,14 +14,14 @@ module.exports = function(sequelize, DataTypes) {
 				}
 		}, {
 				sequelize,
-				tableName: 'mra_discount_type',
+				tableName: 'mra_discount_types',
 				schema: 'public',
 				timestamps: false,
 				underscored: true,
 				freezeTableName: true,
 				indexes: [
 						{
-								name: "mra_discount_type_pkey",
+								name: "mra_discount_types_pkey",
 								unique: true,
 								fields: [
 										{ name: "discount_type_id" },

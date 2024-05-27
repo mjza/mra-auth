@@ -3,7 +3,6 @@ var _CasbinRule = require("./CasbinRule");
 var _MraActions = require("./MraActions");
 var _MraAdvisorCustomers = require("./MraAdvisorCustomers");
 var _MraAuditLogsAuthentication = require("./MraAuditLogsAuthentication");
-var _MraAuditLogsCore = require("./MraAuditLogsCore");
 var _MraConditionFields = require("./MraConditionFields");
 var _MraConditionTypes = require("./MraConditionTypes");
 var _MraContactCategories = require("./MraContactCategories");
@@ -13,7 +12,7 @@ var _MraCurrencyCodes = require("./MraCurrencyCodes");
 var _MraCustomerTypes = require("./MraCustomerTypes");
 var _MraCustomers = require("./MraCustomers");
 var _MraDiscountInterval = require("./MraDiscountInterval");
-var _MraDiscountType = require("./MraDiscountType");
+var _MraDiscountTypes = require("./MraDiscountTypes");
 var _MraGenderTypes = require("./MraGenderTypes");
 var _MraNotificationTypes = require("./MraNotificationTypes");
 var _MraNotifications = require("./MraNotifications");
@@ -60,7 +59,6 @@ function initModels(sequelize) {
 		var MraActions = _MraActions(sequelize, DataTypes);
 		var MraAdvisorCustomers = _MraAdvisorCustomers(sequelize, DataTypes);
 		var MraAuditLogsAuthentication = _MraAuditLogsAuthentication(sequelize, DataTypes);
-		var MraAuditLogsCore = _MraAuditLogsCore(sequelize, DataTypes);
 		var MraConditionFields = _MraConditionFields(sequelize, DataTypes);
 		var MraConditionTypes = _MraConditionTypes(sequelize, DataTypes);
 		var MraContactCategories = _MraContactCategories(sequelize, DataTypes);
@@ -70,7 +68,7 @@ function initModels(sequelize) {
 		var MraCustomerTypes = _MraCustomerTypes(sequelize, DataTypes);
 		var MraCustomers = _MraCustomers(sequelize, DataTypes);
 		var MraDiscountInterval = _MraDiscountInterval(sequelize, DataTypes);
-		var MraDiscountType = _MraDiscountType(sequelize, DataTypes);
+		var MraDiscountTypes = _MraDiscountTypes(sequelize, DataTypes);
 		var MraGenderTypes = _MraGenderTypes(sequelize, DataTypes);
 		var MraNotificationTypes = _MraNotificationTypes(sequelize, DataTypes);
 		var MraNotifications = _MraNotifications(sequelize, DataTypes);
@@ -166,10 +164,10 @@ function initModels(sequelize) {
 		MraDiscountInterval.hasMany(MraSubscriptionModels, { as: "mra_subscription_models", foreignKey: "discount_interval_id"});
 		MraSubscriptions.belongsTo(MraDiscountInterval, { as: "discount_interval", foreignKey: "discount_interval_id"});
 		MraDiscountInterval.hasMany(MraSubscriptions, { as: "mra_subscriptions", foreignKey: "discount_interval_id"});
-		MraSubscriptionModels.belongsTo(MraDiscountType, { as: "discount_type", foreignKey: "discount_type_id"});
-		MraDiscountType.hasMany(MraSubscriptionModels, { as: "mra_subscription_models", foreignKey: "discount_type_id"});
-		MraSubscriptions.belongsTo(MraDiscountType, { as: "discount_type", foreignKey: "discount_type_id"});
-		MraDiscountType.hasMany(MraSubscriptions, { as: "mra_subscriptions", foreignKey: "discount_type_id"});
+		MraSubscriptionModels.belongsTo(MraDiscountTypes, { as: "discount_type", foreignKey: "discount_type_id"});
+		MraDiscountTypes.hasMany(MraSubscriptionModels, { as: "mra_subscription_models", foreignKey: "discount_type_id"});
+		MraSubscriptions.belongsTo(MraDiscountTypes, { as: "discount_type", foreignKey: "discount_type_id"});
+		MraDiscountTypes.hasMany(MraSubscriptions, { as: "mra_subscriptions", foreignKey: "discount_type_id"});
 		MraUserDetails.belongsTo(MraGenderTypes, { as: "gender", foreignKey: "gender_id"});
 		MraGenderTypes.hasMany(MraUserDetails, { as: "mra_user_details", foreignKey: "gender_id"});
 		MraPaymentDetails.belongsTo(MraPaymentMethods, { as: "method", foreignKey: "method_id"});
@@ -350,7 +348,6 @@ function initModels(sequelize) {
 				MraActions,
 				MraAdvisorCustomers,
 				MraAuditLogsAuthentication,
-				MraAuditLogsCore,
 				MraConditionFields,
 				MraConditionTypes,
 				MraContactCategories,
@@ -360,7 +357,7 @@ function initModels(sequelize) {
 				MraCustomerTypes,
 				MraCustomers,
 				MraDiscountInterval,
-				MraDiscountType,
+				MraDiscountTypes,
 				MraGenderTypes,
 				MraNotificationTypes,
 				MraNotifications,

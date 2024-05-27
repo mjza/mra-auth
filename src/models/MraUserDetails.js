@@ -41,20 +41,10 @@ module.exports = function(sequelize, DataTypes) {
 						allowNull: true,
 						comment: "Encrypted data, contains date of birth of the user"
 				},
-				profile_picture_url: {
+				private_profile_picture_url: {
 						type: DataTypes.TEXT,
 						allowNull: true,
 						comment: "Encrypted data, contains URL of the profile picture of the user"
-				},
-				profile_picture_thumbnail_url: {
-						type: DataTypes.TEXT,
-						allowNull: true,
-						comment: "Encrypted data, contains URL of the thumbnail version of the profile picture of the user"
-				},
-				public_profile_picture_thumbnail_url: {
-						type: DataTypes.TEXT,
-						allowNull: true,
-						comment: "Not encrypted data, contains URL of the public picture that user wants to show for people publicly"
 				},
 				creator: {
 						type: DataTypes.INTEGER,

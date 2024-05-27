@@ -16,7 +16,12 @@ module.exports = function(sequelize, DataTypes) {
 				display_name: {
 						type: DataTypes.TEXT,
 						allowNull: true,
-						comment: "Not encrypted data, contains the name that user wants to display for other people publicly"
+						comment: "Contains the name that user wants to display for other people publicly"
+				},
+				public_profile_picture_url: {
+						type: DataTypes.TEXT,
+						allowNull: true,
+						comment: "Contains URL of the public picture that user wants to show for people publicly"
 				},
 				email: {
 						type: DataTypes.STRING(255),

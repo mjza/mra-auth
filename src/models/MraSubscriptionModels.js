@@ -45,9 +45,9 @@ module.exports = function(sequelize, DataTypes) {
 				discount_type_id: {
 						type: DataTypes.INTEGER,
 						allowNull: true,
-						comment: "Type of discount applied to this model, referencing mra_discount_type.",
+						comment: "Type of discount applied to this model, referencing mra_discount_types.",
 						references: {
-								model: 'mra_discount_type',
+								model: 'mra_discount_types',
 								key: 'discount_type_id'
 						}
 				},
