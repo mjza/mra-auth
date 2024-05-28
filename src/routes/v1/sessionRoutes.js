@@ -53,7 +53,13 @@ const router = express.Router();
  *                   example: 1
  *                 displayName:
  *                   type: string
- *                   example: "Admin"
+ *                   example: "Peter Due"
+ *                 profilePictureUrl:
+ *                   type: string
+ *                   example: "https://abc.com/xyz.png"
+ *                 isPrivatePicture:
+ *                   type: boolean
+ *                   example: true
  *       401:
  *         description: Unauthorized - Invalid username/email or password.
  *         content:
@@ -128,7 +134,13 @@ router.post('/login', apiRequestLimiter,
           // Generate JWT Token for the matched user
           const token = generateAuthToken({ userId: user.user_id, username: user.username, email: user.email });
           const tokenData = parseJwt(token);
-          return res.status(200).json({ token, exp: tokenData.exp, userId: tokenData.userId, displayName: user.display_name });
+          let profilePictureUrl = user.public_profile_picture_url;
+          let isPrivatePicture = false;
+          if(!profilePictureUrl){
+            profilePictureUrl = await db.getUserPrivatePictureUrl(user.user_id);
+            isPrivatePicture = !!profilePictureUrl;
+          }
+          return res.status(200).json({ token, exp: tokenData.exp, userId: tokenData.userId, displayName: user.display_name, profilePictureUrl, isPrivatePicture });
         }
       }
 

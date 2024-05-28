@@ -1,5 +1,5 @@
-const { Sequelize, closeSequelize, fn, col, MraUsers, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers, MraStatuses, MraTickets, MraSubscriptions } = require('../models');
-
+const { Sequelize, closeSequelize, fn, col, MraUsers, MraUserDetails, MraTokenBlacklist, MraAuditLogsAuthentication, CasbinRule, MraTables, MraUserCustomers, MraStatuses, MraTickets, MraSubscriptions } = require('../models');
+const { decrypt } = require('./converters');
 
 /**
  * Closes the database connection pool.
@@ -107,6 +107,26 @@ const deleteAuditLog = async (logId) => {
   return { success: deleteCount > 0 };
 };
 
+/**
+ * Fetches the private profile picture URL for a user from the database using Sequelize models.
+ *
+ * @param {number} userId - The ID of the user whose private profile picture URL is to be fetched.
+ * @returns {Promise<string|null>} The decrypted private profile picture URL if it exists, otherwise null.
+ * @throws {Error} If there is an issue fetching data from the database.
+ *
+ */
+async function getUserPrivatePictureUrl(userId) {
+  const userDetails = await MraUserDetails.findOne({
+    where:{ user_id: userId},
+    attributes: ['private_profile_picture_url'],
+  });
+
+  if(userDetails) {
+    const privateProfilePictureUrl =  userDetails.get({ plain: true }).private_profile_picture_url;
+    return privateProfilePictureUrl && decrypt(privateProfilePictureUrl);
+  }
+  return null;
+}
 
 /**
  * Deletes a user from the database based on the provided username.
@@ -562,6 +582,7 @@ module.exports = {
   updateAuditLog,
   deleteAuditLog,
   deleteUserByUsername,
+  getUserPrivatePictureUrl,
   getUserByUsername,
   getUserByUsernameOrEmail,
   getUsernamesByEmail,

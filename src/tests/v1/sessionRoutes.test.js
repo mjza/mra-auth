@@ -36,6 +36,8 @@ describe('Test session endpoints', () => {
             expect(res.body).toHaveProperty('exp');
             expect(res.body).toHaveProperty('userId');
             expect(res.body).toHaveProperty('displayName');
+            expect(res.body).toHaveProperty('profilePictureUrl');
+            expect(res.body).toHaveProperty('isPrivatePicture');
         });
 
         test('Invalid username', async () => {
