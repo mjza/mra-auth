@@ -58,7 +58,7 @@ jobs:
         if: steps.check-status.outcome == 'success'
         run: |
           # Retrieve the version number
-          HEROKU_VERSION=$(heroku releases -a $HEROKU_APP_NAME | sed -n '2p' | awk '{print $1}')
+          HEROKU_VERSION=$(heroku releases -a mra-auth | head -n 1 | awk -F': ' '{print $2}' | awk '{print $NF}')
           echo "Heroku Version: $HEROKU_VERSION"
           echo "HEROKU_VERSION=$HEROKU_VERSION" >> $GITHUB_ENV
 
