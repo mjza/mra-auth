@@ -223,6 +223,33 @@ const getDeactivatedNotSuspendedUsers = async (usernameOrEmail) => {
   return users.map(user => user.get({ plain: true }));
 };
 
+/**
+ * Updates the updated_at timestamp to the current time for a deactivated and not suspended user in the database.
+ * It is needed for giving 5 days timeframe to the user to be able to activate their account.
+ *
+ * @param {string} username - The intended username.
+ * @returns {boolean} True if the updated_at timestamp was successfully updated, false otherwise.
+ */
+const updateUserUpdatedAtToNow = async (username) => {
+  if (!username || !username.trim())
+    return false;
+
+  // Update the updated_at timestamp to the current time if the activation code matches
+  const [updateCount] = await MraUsers.update(
+    { updated_at: Sequelize.literal("now()") }, // Set updated_at to the current time
+    {
+      where: {
+        username: username.trim().toLowerCase(),
+        confirmation_at: null, // confirmation_at IS NULL
+        suspended_at: null ,   // Not suspended users
+      },
+      returning: true, // This option is specific to PostgreSQL
+    }
+  );
+
+  return updateCount > 0; // Returns true if at least one row was updated
+};
+
 
 /**
  * Retrieves all usernames from the database based on the provided email.
@@ -365,7 +392,6 @@ const isActivationCodeValid = async (user) => {
   }
 };
 
-
 /**
  * Activates a user in the database based on the provided user information.
  *
@@ -384,10 +410,20 @@ const activateUser = async (user) => {
       where: {
         username: username.trim().toLowerCase(),
         activation_code: activationCode.trim(),
-        created_at: {
-          [Sequelize.Op.gte]: Sequelize.literal("now() - INTERVAL '5 days'"), // created_at >= 5 days ago
-          [Sequelize.Op.lte]: Sequelize.literal("now()"),   // created_at <= CURRENT_TIMESTAMP
-        },
+        [Sequelize.Op.or]: [
+          {
+            created_at: {
+              [Sequelize.Op.gte]: Sequelize.literal("now() - INTERVAL '5 days'"), // created_at >= 5 days ago
+              [Sequelize.Op.lte]: Sequelize.literal("now()"),   // created_at <= CURRENT_TIMESTAMP
+            }
+          },
+          {
+            updated_at: {
+              [Sequelize.Op.gte]: Sequelize.literal("now() - INTERVAL '5 days'"), // updated_at >= 5 days ago
+              [Sequelize.Op.lte]: Sequelize.literal("now()"),   // updated_at <= CURRENT_TIMESTAMP
+            }
+          }
+        ],
         confirmation_at: null, // confirmation_at IS NULL
       },
       returning: true, // This option is specific to PostgreSQL
@@ -617,6 +653,7 @@ module.exports = {
   getUserByUsernameOrEmail,
   getUsernamesByEmail,
   getDeactivatedNotSuspendedUsers,
+  updateUserUpdatedAtToNow,
   insertUser,
   isActiveUser,
   isInactiveUser,

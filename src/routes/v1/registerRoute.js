@@ -124,6 +124,9 @@ router.post('/register', createAccountLimiter,
       // Let's use the original username to respect its cases
       const activationLink = generateActivationLink(username, user.activation_code, loginRedirectURL);
 
+      // Update user's updated time to now, to give 5 more timeframe
+      db.updateUserUpdatedAtToNow(username);
+
       // Send verification email
       // Let's use the original username to respect its cases
       await sendVerificationEmail(req, user.username, user.display_name, user.email, activationLink);
