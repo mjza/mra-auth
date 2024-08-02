@@ -195,6 +195,36 @@ const getUserByUsernameOrEmail = async (usernameOrEmail) => {
 };
 
 /**
+ * Retrieves all deactivated but not suspended users from the database
+ * based on the provided username or email.
+ *
+ * @param {string} usernameOrEmail - The username or email of the user to retrieve.
+ * @returns {Array<Object>} An array of user objects if found, otherwise an empty array.
+ */
+const getDeactivatedNotSuspendedUsers = async (usernameOrEmail) => {
+  if (!usernameOrEmail || !usernameOrEmail.trim()) return [];
+
+  const users = await MraUsers.findAll({
+    attributes: ['username', 'email', 'activation_code', 'display_name'], // Select username and email fields
+    where: {
+      [Sequelize.Op.and]: [
+        {
+          [Sequelize.Op.or]: [
+            { username: usernameOrEmail.trim().toLowerCase() },
+            { email: usernameOrEmail.trim().toLowerCase() }
+          ]
+        },
+        { confirmation_at: null }, // Deactivated users
+        { suspended_at: null }     // Not suspended users
+      ]
+    }
+  });
+
+  return users.map(user => user.get({ plain: true }));
+};
+
+
+/**
  * Retrieves all usernames from the database based on the provided email.
  *
  * @param {string} email - The email of the user to retrieve.
@@ -586,6 +616,7 @@ module.exports = {
   getUserByUsername,
   getUserByUsernameOrEmail,
   getUsernamesByEmail,
+  getDeactivatedNotSuspendedUsers,
   insertUser,
   isActiveUser,
   isInactiveUser,

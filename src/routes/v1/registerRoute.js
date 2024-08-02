@@ -3,7 +3,7 @@ const { body } = require('express-validator');
 const db = require('../../utils/database');
 const { sendVerificationEmail } = require('../../emails/v1/emailService');
 const { userMustNotExist } = require('../../utils/validations');
-const { createAccountLimiter } = require('../../utils/rateLimit');
+const { createAccountLimiter, apiRequestLimiter } = require('../../utils/rateLimit');
 const { generateActivationLink, generatePasswordHash } = require('../../utils/generators');
 const { updateEventLog } = require('../../utils/logger');
 const { addRoleForUserInDomain } = require('../../casbin/casbinSingleton');
@@ -130,6 +130,96 @@ router.post('/register', createAccountLimiter,
 
       // Send success response
       return res.status(201).json({ message: "User registered successfully", userId: user.user_id });
+    } catch (err) {
+      updateEventLog(req, err);
+      return res.status(500).json({ message: err.message });
+    }
+  });
+
+/**
+ * @swagger
+ * /v1/resend-activation:
+ *   post:
+ *     summary: Resend activation code
+ *     description: A not activated user can ask for resending the activation code.
+ *     tags: [1st]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - usernameOrEmail
+ *             properties:
+ *               usernameOrEmail:
+ *                 type: string
+ *                 description: Username or Email of the user
+ *                 example: "username1 or test@example.com"
+ *               loginRedirectURL:
+ *                 type: string   
+ *                 default: "http://localhost:3000/login"
+ *     responses:
+ *       200:
+ *         description: You request has been processed.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: A new activation link has been sent if there is a registered user related to the provided email or username.
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       429:
+ *         $ref: '#/components/responses/CreateApiRateLimitExceeded' 
+ *       500:
+ *         $ref: '#/components/responses/ServerInternalError'
+ */
+router.post('/resend-activation', apiRequestLimiter,
+  [
+    body('usernameOrEmail')
+      .exists().withMessage('Username or email address is required.')
+      .custom((value) => {
+        if (value.includes('@')) {
+          // Validate as email
+          return body('usernameOrEmail')
+            .isEmail()
+            .withMessage('Invalid email address.')
+            .isLength({ min: 5, max: 255 })
+            .withMessage('Email must be between 5 and 255 characters.');
+        } else {
+          // Validate as username
+          return body('usernameOrEmail')
+            .isLength({ min: 5, max: 30 })
+            .withMessage('Username must be between 5 and 30 characters.');
+        }
+      }),
+  ],
+  checkRequestValidity,
+  async (req, res) => {
+    try {
+      const { usernameOrEmail } = req.body;
+      const users = await db.getDeactivatedNotSuspendedUsers(usernameOrEmail);
+
+      if(users && users.length > 0){
+        // Optional login redirect URL
+        const loginRedirectURL = req.body.loginRedirectURL || '';
+
+        for(let user of users){
+          // Create the activation link
+          // Let's use the original username to respect its cases
+          const activationLink = generateActivationLink(user.username, user.activation_code, loginRedirectURL);
+
+          // Send verification email
+          // Let's use the original username to respect its cases
+          await sendVerificationEmail(req, user.username, user.display_name, user.email, activationLink);
+        }
+      }
+
+      // Send success response
+      return res.status(200).json({ message: "A new activation link has been sent if there is a registered user related to the provided email or username." });
     } catch (err) {
       updateEventLog(req, err);
       return res.status(500).json({ message: err.message });
