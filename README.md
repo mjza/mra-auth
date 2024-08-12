@@ -36,6 +36,7 @@ heroku config:set PORT=443 --app mra-auth
 heroku config:set SECRET_KEY=ZZZ --app mra-auth
 heroku config:set SENDGRID_API_KEY=YYY --app mra-auth
 heroku config:set TZ=UTC --app mra-auth
+heroku config:set ACTIVATE_SWAGGER=true --app mra-auth
 ```
 
 Then run run the above commands in the Heroku CLI or go to the `mra-auth` application, then in the `Settings` tab press on the `Reveal Config Vars` button and edit them directly. Like the following picture:

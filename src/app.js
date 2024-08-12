@@ -97,8 +97,11 @@ async function createApp() {
     // Use routes
     app.use('/v1', v1Routes);
 
+    // Alternatively, consider other truthy values
+    const activateSwagger = ['true', '1', 'yes'].includes(process.env.ACTIVATE_SWAGGER ? process.env.ACTIVATE_SWAGGER.toLowerCase() : '');
+
     // Conditionally include Swagger UI middleware based on environment
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production' || activateSwagger ) {
         // Swagger definition
         const swaggerDefinition = {
             openapi: '3.0.0',
