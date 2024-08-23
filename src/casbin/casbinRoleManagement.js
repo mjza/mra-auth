@@ -102,6 +102,20 @@ async function removeRoleForUserInDomain(enforcer, username, role, domain) {
 }
 
 /**
+ * Removes all roles from a user within a specific domain.
+ * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {string} username The username of the user.
+ * @param {string} domain The domain within which the role is removed.
+ */
+async function removeRolesForUserInDomain(enforcer, username, domain) {
+  const removed = await enforcer.deleteRolesForUser(username.trim().toLowerCase(), domain);
+  if (removed) {
+      console.log(`Role ${role} removed from user ${username} in domain ${domain}.`);
+      await enforcer.savePolicy();
+  }
+}
+
+/**
  * Checks if a user has a role within a specific domain.
  * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
  * @param {string} username The username of the user.
@@ -181,4 +195,4 @@ async function getPermissionsForRoleInDomain(enforcer, role, domain) {
 }
 
 // Export the function for use in other parts of your application.
-module.exports = { deletePoliciesForDomainZero, importPoliciesOrRolesFromCSV, addRoleForUserInDomain, removeRoleForUserInDomain, hasRoleForUserInDomain, listRolesForUserInDomain, listRolesForUserInDomains, getPermissionsForRoleInDomain, listRolesForUser };
+module.exports = { deletePoliciesForDomainZero, importPoliciesOrRolesFromCSV, addRoleForUserInDomain, removeRoleForUserInDomain, removeRolesForUserInDomain, hasRoleForUserInDomain, listRolesForUserInDomain, listRolesForUserInDomains, getPermissionsForRoleInDomain, listRolesForUser };
