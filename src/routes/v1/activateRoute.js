@@ -1,5 +1,5 @@
 const express = require('express');
-const { query, validationResult } = require('express-validator');
+const { query, body } = require('express-validator');
 const db = require('../../utils/database');
 const { userMustExist, isValidUrl, checkRequestValidity } = require('../../utils/validations');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
@@ -12,7 +12,7 @@ const router = express.Router();
  * @swagger
  * /v1/activate:
  *   get:
- *     summary: Activate a user account
+ *     summary: Activate a user account by token
  *     description: This endpoint is used for activating a user account with a username and activation code.
  *     tags: [2nd]
  *     parameters:
@@ -142,6 +142,103 @@ router.get('/activate', apiRequestLimiter,
           return res.status(200).json({ message: 'Account is activated successfully.' });
         }
       } else if (isActivationLinkValid === false) {
+        return res.status(404).json({ message: 'Activation link is invalid.' });
+      }
+
+      throw new Exception('Couldn\'t activate a user while the activation link was valid.');
+    } catch (err) {
+      updateEventLog(req, err);
+      return res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /v1/activate-by-code:
+ *   post:
+ *     summary: Activate a user account by activation code
+ *     description: This endpoint is used for activating a user account with a username and activation code.
+ *     tags: [2nd]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 description: Username of the user to be activated.
+ *                 example: "username1"
+ *               activationCode:
+ *                 type: string
+ *                 description: A secret activation code.
+ *                 example: "0c578de6ab029f7889c61123ec6fe649"
+ *     responses:
+ *       200:
+ *         description: Account is activated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Account is activated successfully.
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       404:
+ *         description: Invalid activation code has been provided.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid activation code has been provided.
+ *       429:
+ *         $ref: '#/components/responses/ApiRateLimitExceeded'
+ *       500:
+ *         $ref: '#/components/responses/ServerInternalError'
+ */
+router.post('/activate-by-code', apiRequestLimiter,
+  [
+    // Validate username
+    body('username')
+      .isLength({ min: 5, max: 30 })
+      .withMessage('Username must be between 5 and 30 characters.')
+      .matches(/^[a-zA-Z0-9_]+$/)
+      .withMessage('Username can only contain letters, numbers, and underscores.')
+      .custom(userMustExist),
+
+    // Activation code
+    body('activationCode')
+      .isLength({ min: 32, max: 64 })
+      .withMessage('Invalid activation code.'),
+
+  ],
+  checkRequestValidity,
+  async (req, res) => {
+    try {
+      // Extract validated parameters
+      const { username, activationCode } = req.body;
+
+      // Now you can use the activationCode for further processing
+      const user = { username, activationCode };
+
+      // first check if the user has not been already activated
+      var isActivationCodeValid = await db.isActivationCodeValid(user);
+      var result = false;
+      if (isActivationCodeValid)
+        result = await db.activateUser(user);
+      var isActiveUser = await db.isActiveUser(username);
+
+      // Database operation and response handling 
+      if (isActiveUser === true || result === true) {
+          return res.status(200).json({ message: 'Account is activated successfully.' });
+      } else if (isActivationCodeValid === false) {
         return res.status(404).json({ message: 'Activation link is invalid.' });
       }
 
