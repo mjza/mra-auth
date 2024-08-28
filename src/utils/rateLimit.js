@@ -34,7 +34,15 @@ const rateLimit = require('express-rate-limit');
 const apiRequestLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minutes in milliseconds
     max: 60, // Limit each IP to 30 requests per `window` (here, per 1 minutes)
-    message: { message: 'Too many requests from this IP, please try again after 15 minutes.' }
+    message: { message: 'Too many requests from this IP, please try again after 15 minutes.' },
+    skip: (req, res) => {
+        if (process.env.NODE_ENV === 'development' && process.env.X_DEVELOPMENT_TOKEN) {
+            const developmentToken = req.headers['x-development-token'];
+            return developmentToken === process.env.X_DEVELOPMENT_TOKEN;
+        }
+        // Do not skip in production
+        return false; 
+    }
 });
 
 /**
@@ -50,7 +58,15 @@ const apiRequestLimiter = rateLimit({
 const authorizationApiRequestLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minutes in milliseconds
     max: 100, // Limit each IP to 30 requests per `window` (here, per 15 minutes)
-    message: { message: 'Too many requests from this IP, please try again after 15 minutes.' }
+    message: { message: 'Too many requests from this IP, please try again after 15 minutes.' },
+    skip: (req, res) => {
+        if (process.env.NODE_ENV === 'development') {
+            const ip = req.ip || req.connection.remoteAddress;
+            return ip === '127.0.0.1' || ip === '::1';
+        }
+        // Do not skip in production
+        return false; 
+    }
 });
 
 /**
@@ -88,7 +104,15 @@ const authorizationApiRequestLimiter = rateLimit({
 const createAccountLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 5, // limit each IP to 5 requests per windowMs
-    message: { message: 'Too many accounts created from this IP, please try again after an hour.' }
+    message: { message: 'Too many accounts created from this IP, please try again after an hour.' },
+    skip: (req, res) => {
+        if (process.env.NODE_ENV === 'development' && process.env.X_DEVELOPMENT_TOKEN) {
+            const developmentToken = req.headers['x-development-token'];
+            return developmentToken === process.env.X_DEVELOPMENT_TOKEN;
+        }
+        // Do not skip in production
+        return false; 
+    }
 });
 
 module.exports = { apiRequestLimiter, authorizationApiRequestLimiter, createAccountLimiter };
