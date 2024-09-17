@@ -164,8 +164,9 @@ const authenticateUser = async (req, res, next) => {
 
             // Verify JWT Token
             const tokenData = await jwtVerify(token, secretKeyBuffer);
+            const userId = await db.getUserIdByUsername(tokenData.username);
             // Check if token is expired in database
-            const isExpired = await db.isTokenBlacklisted(token);
+            const isExpired = await db.isTokenBlacklisted(token) || tokenData.userId != userId;
             if (isExpired) {
                 req.user = { userId: 0, username: 'public', email: null };
                 next();

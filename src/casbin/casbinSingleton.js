@@ -7,6 +7,7 @@ const {
   addRoleForUserInDomain: addRoleForUserInDomainWithEnforcer,
   removeRoleForUserInDomain: removeRoleForUserInDomainWithEnforcer,
   removeRolesForUserInDomain: removeRolesForUserInDomainWithEnforcer,
+  removeRolesForUserInAllDomains: removeRolesForUserInAllDomainsWithEnforcer,
   listRolesForUserInDomain: listRolesForUserInDomainWithEnforcer,
   listRolesForUserInDomains: listRolesForUserInDomainsWithEnforcer,
   listRolesForUser: listRolesForUserWithEnforcer
@@ -379,6 +380,24 @@ async function removeRolesForUserInDomain(username, domain) {
 }
 
 /**
+ * Asynchronously removes all roles from a user in all domains. This function depends on the global
+ * `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's adaptable for use across various
+ * contexts, extending beyond just Express.js middleware or route handlers.
+ * 
+ * @param {string} username - The username of the user from whom the role will be removed.
+ * @returns {Promise<void>} A promise that resolves when the operation is complete. The promise will reject if an error occurs.
+ */
+async function removeRolesForUserInAllDomains(username) {
+  if (!enforcerPromiseInstance) {
+    throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+  }
+
+  return enforcerPromiseInstance.then(enforcer => {
+    return removeRolesForUserInAllDomainsWithEnforcer(enforcer, username);
+  });
+}
+
+/**
  * Adds a policy to the specified domain using the Casbin enforcer.
  * 
  * This function asynchronously adds a new access control policy to the Casbin enforcer,
@@ -589,4 +608,4 @@ async function removePoliciesInDomain(sub, dom, obj = '', act = '', cond = '', a
 }
 
 
-module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, removeRolesForUserInDomain, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter, getUserType, getUserTypeInDomain, addPolicyInDomain, getPoliciesInDomain, getRolesInDomain, getUsersForRoleInDomain, removePoliciesInDomain };
+module.exports = { setupCasbinMiddleware, casbinMiddleware, addRoleForUserInDomain, removeRoleForUserInDomain, removeRolesForUserInDomain, removeRolesForUserInAllDomains, listRolesForUserInDomain, listRolesForUser, listRolesForUserInDomains, closeCasbinAdapter, getUserType, getUserTypeInDomain, addPolicyInDomain, getPoliciesInDomain, getRolesInDomain, getUsersForRoleInDomain, removePoliciesInDomain };

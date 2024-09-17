@@ -75,7 +75,7 @@ async function setConditions(request, condition, userId, table) {
         attrs.where = {};
     }
     const { where, set } = attrs || { where: {}, set: {} };
-    if (('R' === act || 'D' === act) && condition === 'check_ownership') {
+    if ('R' === act && condition === 'check_ownership') {
         if (userId && userId > 0 && owner_column) {
             where[owner_column] = userId;
         }
@@ -87,7 +87,11 @@ async function setConditions(request, condition, userId, table) {
         if (userId && userId > 0 && updator_column) {
             set[updator_column] = userId;
         }
-        if (userId && userId > 0 && owner_column && condition === 'check_ownership' && !where[owner_column]) {
+        if (userId && userId > 0 && owner_column && condition === 'check_ownership' && where[owner_column] === undefined) {
+            where[owner_column] = userId;
+        }
+    } else if ('D' === act && condition === 'check_ownership') {
+        if (userId && userId > 0 && owner_column && where[owner_column] === undefined) {
             where[owner_column] = userId;
         }
     }

@@ -75,8 +75,8 @@ For example, you can have **CUD{"age": 30}**.
 To support the attributes JSON the separator has changed to semicolon.  
 
 # Convert Role.csv to policy.csv
-
-First make a `Roles.csv` file. This file does not have some redundent columns.
+The `Roles.xlsx` is for our reference. First update it, then find related item in the `Roles.csv` and update related rows.
+This file does have some redundent columns. Then follow the following steps to generate the `policy.csv` that is used by casbin.
 
 ## **Create the Virtual Environment**: 
 Run the following command to create a virtual environment in the directory called `venv` 
@@ -125,4 +125,4 @@ pip install pandas
 ## Run the program
 
 1. Run `python convertor.py` to generate `policy.csv` file. 
-2. Move the `policy.csv` to './config' folder.
+2. Move the `policy.csv` to './src/config' folder if it does not copied there.

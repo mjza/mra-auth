@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, query, validationResult } = require('express-validator');
+const { body, query } = require('express-validator');
 const { updateEventLog } = require('../../utils/logger');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { authenticateUser, authorizeUser, checkRequestValidity } = require('../../utils/validations');
@@ -447,13 +447,19 @@ router.delete('/user-role', apiRequestLimiter,
         const middleware = authorizeUser({
             dom: domain,
             obj: 'mra_authorization',
-            act: 'D'
+            act: 'D',
+            attrs: {
+                where: {
+                    username: req.body.username ?? req.user.username
+                }
+            }
         });
         middleware(req, res, next);
     },
     async (req, res) => {
         try {
-            const { username, role, domain } = req.body;
+            const { role, domain } = req.body;
+            const { username } = req.conditions.where;
             await removeRoleForUserInDomain(username, role, domain);
             updateEventLog(req, { success: `Removed role ${role} in domain ${domain} for the user ${username}.` });
             return res.status(200).json({ message: 'Role has been removed successfully.' });

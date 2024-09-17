@@ -307,5 +307,4 @@ router.post('/refresh_token', apiRequestLimiter, [authenticateToken], async (req
   }
 });
 
-
 module.exports = router;

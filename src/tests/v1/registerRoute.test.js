@@ -56,7 +56,7 @@ describe('POST /v1/register endpoint', () => {
 
     expect(res.statusCode).toBe(429);
     expect(res.body.message).toBeDefined();
-    expect(res.body.message).toBe('Too many accounts created from this IP, please try again after an hour.');
+    expect(res.body.message).toBe('Too many registration requests from this IP, please try again after an hour.');
   });
 
   // Clean up after each tests

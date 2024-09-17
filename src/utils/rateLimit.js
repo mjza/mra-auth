@@ -82,7 +82,7 @@ const authorizationApiRequestLimiter = rateLimit({
  *             properties:
  *               message:
  *                 type: string
- *                 example: Too many accounts created from this IP, please try again after an hour.
+ *                 example: Too many registration requests from this IP, please try again after an hour.
  *       headers:
  *         Retry-After:
  *           description: Indicates how long the user should wait before making a new request.
@@ -101,10 +101,10 @@ const authorizationApiRequestLimiter = rateLimit({
  * @property {string} message - The message returned when the rate limit for account creation is exceeded.
  */
 
-const createAccountLimiter = rateLimit({
+const registerAccountLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 5, // limit each IP to 5 requests per windowMs
-    message: { message: 'Too many accounts created from this IP, please try again after an hour.' },
+    message: { message: 'Too many registration requests from this IP, please try again after an hour.' },
     skip: (req, res) => {
         if (process.env.NODE_ENV === 'development' && process.env.X_DEVELOPMENT_TOKEN) {
             const developmentToken = req.headers['x-development-token'];
@@ -115,4 +115,4 @@ const createAccountLimiter = rateLimit({
     }
 });
 
-module.exports = { apiRequestLimiter, authorizationApiRequestLimiter, createAccountLimiter };
+module.exports = { apiRequestLimiter, authorizationApiRequestLimiter, registerAccountLimiter };

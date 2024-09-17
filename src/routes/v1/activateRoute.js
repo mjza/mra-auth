@@ -174,7 +174,7 @@ router.get('/activate', apiRequestLimiter,
  *               activationCode:
  *                 type: string
  *                 description: A secret activation code.
- *                 example: "0c578de6ab029f7889c61123ec6fe649"
+ *                 example: "931411e1681cfab83a55ae69e80d5e9b76e5d7175a700ce98ab914c55f757402"
  *     responses:
  *       200:
  *         description: Account is activated successfully.

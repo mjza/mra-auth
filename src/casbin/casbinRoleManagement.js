@@ -81,7 +81,7 @@ async function importPoliciesOrRolesFromCSV(enforcer, csvFilePath) {
 async function addRoleForUserInDomain(enforcer, username, role, domain) {
     const added = await enforcer.addRoleForUser(username.trim().toLowerCase(), role, domain);
     if (added) {
-        console.log(`Role ${role} added to user ${username} in domain ${domain}.`);
+        console.log(`Role ${role} has been added to user ${username} in domain ${domain}.`);
         await enforcer.savePolicy();
     }
 }
@@ -96,7 +96,7 @@ async function addRoleForUserInDomain(enforcer, username, role, domain) {
 async function removeRoleForUserInDomain(enforcer, username, role, domain) {
     const removed = await enforcer.deleteRoleForUser(username.trim().toLowerCase(), role, domain);
     if (removed) {
-        console.log(`Role ${role} removed from user ${username} in domain ${domain}.`);
+        console.log(`Role ${role} has been removed from user ${username} in domain ${domain}.`);
         await enforcer.savePolicy();
     }
 }
@@ -110,7 +110,20 @@ async function removeRoleForUserInDomain(enforcer, username, role, domain) {
 async function removeRolesForUserInDomain(enforcer, username, domain) {
   const removed = await enforcer.deleteRolesForUser(username.trim().toLowerCase(), domain);
   if (removed) {
-      console.log(`Role ${role} removed from user ${username} in domain ${domain}.`);
+      console.log(`All roles have been removed from user ${username} in domain ${domain}.`);
+      await enforcer.savePolicy();
+  }
+}
+
+/**
+ * Removes all roles from a user in all domains.
+ * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {string} username The username of the user.
+ */
+async function removeRolesForUserInAllDomains(enforcer, username) {
+  const removed = await enforcer.deleteRolesForUser(username.trim().toLowerCase());
+  if (removed) {
+      console.log(`All roles have been removed from user ${username} in all domains.`);
       await enforcer.savePolicy();
   }
 }
@@ -195,4 +208,4 @@ async function getPermissionsForRoleInDomain(enforcer, role, domain) {
 }
 
 // Export the function for use in other parts of your application.
-module.exports = { deletePoliciesForDomainZero, importPoliciesOrRolesFromCSV, addRoleForUserInDomain, removeRoleForUserInDomain, removeRolesForUserInDomain, hasRoleForUserInDomain, listRolesForUserInDomain, listRolesForUserInDomains, getPermissionsForRoleInDomain, listRolesForUser };
+module.exports = { deletePoliciesForDomainZero, importPoliciesOrRolesFromCSV, addRoleForUserInDomain, removeRoleForUserInDomain, removeRolesForUserInDomain, removeRolesForUserInAllDomains, hasRoleForUserInDomain, listRolesForUserInDomain, listRolesForUserInDomains, getPermissionsForRoleInDomain, listRolesForUser };

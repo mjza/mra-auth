@@ -25,7 +25,7 @@ mra_subscription_models;SYS;CRUD;CRUD;CRUD;R;R;CRUD;R;R;R;N;N;N;N;N
 mra_subscription_options;SYS;CRUD;CRUD;CRUD;R;R;CRUD;R;R;R;N;N;N;N;N
 mra_subscription_model_options;SYS;CRUD;CRUD;CRUD;R;R;CRUD;R;R;R;N;N;N;N;N
 mra_discount_interval;SYS;CRUD;CRUD;CRUD;R;R;CRUD;R;R;R;N;N;N;N;N
-mra_users;user_id;CRUD;CRUD;CRUD;R;R;R;R;CRU;GC*GR*;C*R*;R*;R*;COROUO;N
+mra_users;user_id;CRUD;CRUD;CRUD;R;R;R;R;CRUD;GC*GR*GU*GD*;C*R*;R*;R*;COROUODO;N
 mra_user_details;user_id;CRUD;CRUD;R;R;R;R;R;R;N;N;N;N;COROUODO;N
 mra_user_cities ;creator;CRUD;CRUD;R;R;R;R;R;R;N;N;N;N;COROUO;N
 mra_customers;creator;CRUD;CRUD;R;R;R;CRUD;CRUD;R;R;R;R;R;R;N

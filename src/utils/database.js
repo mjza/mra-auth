@@ -2,6 +2,24 @@ const { Sequelize, closeSequelize, fn, col, MraUsers, MraUserDetails, MraTokenBl
 const { decrypt } = require('./converters');
 
 /**
+ * Checks if an object is empty.
+ *
+ * An object is considered empty if it has no own enumerable properties.
+ *
+ * @param {Object} obj - The object to check.
+ * @returns {boolean} Returns `true` if the object is empty, otherwise `false`.
+ *
+ * @example
+ *
+ * const obj1 = {};
+ * console.log(isEmptyObject(obj1)); // true
+ *
+ * const obj2 = { key: 'value' };
+ * console.log(isEmptyObject(obj2)); // false
+ */
+const isEmptyObject = (obj) => Object.keys(obj).length === 0;
+
+/**
  * Closes the database connection pool.
  */
 const closeDBConnections = async () => {
@@ -153,6 +171,22 @@ const deleteUserByUsername = async (username) => {
 };
 
 /**
+ * Deletes a user from the database based on the provided condition.
+ *
+ * @param {object} where - The criteria for selecting the user to delete.
+ * @returns {number|null} The number of deleted rows if successful, or null if no criteria were provided.
+ */
+const deleteUser = async (where) => {
+  if (isEmptyObject(where))
+    return null;
+
+  // Delete the user(s) and get the number of deleted rows
+  const deletedCount = await MraUsers.destroy({ where });
+
+  return deletedCount; // Return the number of deleted rows
+};
+
+/**
  * Retrieves a user from the database based on the provided username.
  *
  * @param {string} username - The username of the user to retrieve.
@@ -168,6 +202,25 @@ const getUserByUsername = async (username) => {
 
   return user && user.get({ plain: true });
 };
+
+/**
+ * Retrieves a user ID from the database based on the provided username.
+ *
+ * @param {string} username - The username of the user to retrieve.
+ * @returns {number|null} The user ID if found, null otherwise.
+ */
+const getUserIdByUsername = async (username) => {
+  if (!username || !username.trim()) {
+    return null;
+  }
+
+  const user = await MraUsers.findOne({
+    where: { username: username.trim().toLowerCase() }
+  });
+
+  return user ? user.user_id : null; // Return the user ID if found, or null if not
+};
+
 
 /**
  * Retrieves a user from the database based on the provided username or email.
@@ -650,11 +703,13 @@ module.exports = {
   deleteUserByUsername,
   getUserPrivatePictureUrl,
   getUserByUsername,
+  getUserIdByUsername,
   getUserByUsernameOrEmail,
   getUsernamesByEmail,
   getDeactivatedNotSuspendedUsers,
   updateUserUpdatedAtToNow,
   insertUser,
+  deleteUser,
   isActiveUser,
   isInactiveUser,
   isActivationCodeValid,

@@ -175,10 +175,16 @@ async function authorize(req, res, next) {
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/authorize', authorizationApiRequestLimiter, validateAuthorizationRequest, authenticateUser, authorize, async (req, res) => {
-    const roles = await listRolesForUserInDomains(req.user.username);
-    const conditions = customDataStore.getData();
-    res.json({ user: req.user, roles, conditions });
-});
+router.post('/authorize',
+    authorizationApiRequestLimiter,
+    validateAuthorizationRequest,
+    authenticateUser,
+    authorize,
+    async (req, res) => {
+        const roles = await listRolesForUserInDomains(req.user.username);
+        const conditions = customDataStore.getData();
+        res.json({ user: req.user, roles, conditions });
+    }
+);
 
 module.exports = router;
