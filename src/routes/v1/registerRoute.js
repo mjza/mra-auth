@@ -295,7 +295,8 @@ router.delete('/deregister', apiRequestLimiter,
       .optional({ checkFalsy: true })
       .isString().withMessage('If you provide username, it must be a string.')
       .isLength({ min: 5, max: 30 }).withMessage('Username must be between 5 and 30 characters.')
-      .matches(/^[A-Za-z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores.'),
+      .matches(/^[A-Za-z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores.')
+      .toLowerCase(),
 
     body('domain')
       .optional({ checkFalsy: true })
