@@ -1,5 +1,5 @@
 const request = require('supertest');
-const {createApp, closeApp} = require('../../app');
+const { createApp, closeApp } = require('../../app');
 const db = require('../../utils/database');
 const { generateMockUserDB, generateEncryptedObject } = require('../../utils/generators');
 
@@ -17,6 +17,16 @@ describe('GET /v1/activate Endpoint', () => {
   beforeEach(async () => {
     // Insert a test user into the database
     testUser = await db.insertUser(mockUser);
+  });
+
+  // Clean up after each tests
+  afterEach(async () => {
+    await db.deleteUserByUsername(mockUser.username);
+  });
+
+  // Ensure the app resources are closed after all tests
+  afterAll(async () => {
+    await closeApp();
   });
 
   it('should activate a user and return redirect code', async () => {
@@ -116,13 +126,4 @@ describe('GET /v1/activate Endpoint', () => {
     expect(isActiveUser).toBeFalsy();
   });
 
-  // Clean up after each tests
-  afterEach(async () => {
-    await db.deleteUserByUsername(mockUser.username);
-  });
-
-  // Ensure the app resources are closed after all tests
-  afterAll(async () => {
-    await closeApp();
-  });
 });

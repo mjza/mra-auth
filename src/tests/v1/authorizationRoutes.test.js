@@ -26,11 +26,16 @@ describe('Test authorization endpoints', () => {
             const authData = (await request(app)
                 .post('/v1/login')
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;
-            validToken = `Bearer ${authData.token}`;    
+            validToken = `Bearer ${authData.token}`;
         });
 
         afterAll(async () => {
-            await db.deleteUserByUsername(mockUser.username);
+            const res = (await request(app)
+                .post('/v1/deregister')
+                .send({username: mockUser.username}));
+            if(res.statusCode >= 400){
+                await db.deleteUserByUsername(mockUser.username);
+            } 
         });
 
         it('should return 403 as authorization token is missing', async () => {
@@ -40,7 +45,7 @@ describe('Test authorization endpoints', () => {
                     dom: '0',
                     obj: 'mra_users',
                     act: 'R',
-                    attrs: { }
+                    attrs: {}
                 });
 
             expect(res.statusCode).toEqual(403);
@@ -55,14 +60,14 @@ describe('Test authorization endpoints', () => {
                     dom: '0',
                     obj: 'mra_users',
                     act: 'R',
-                    attrs: { }
+                    attrs: {}
                 });
 
             expect(res.statusCode).toEqual(403);
             expect(res.body.message).toEqual('User is not authorized.');
         });
 
-        it('should authorize user action when valid parameters are provided', async () => {            
+        it('should authorize user action when valid parameters are provided', async () => {
 
             const res = await request(app)
                 .post('/v1/authorize')
@@ -71,7 +76,7 @@ describe('Test authorization endpoints', () => {
                     dom: '0',
                     obj: 'mra_users',
                     act: 'R',
-                    attrs: { }
+                    attrs: {}
                 });
             expect(res.statusCode).toBe(200);
             expect(res.body).toHaveProperty('user');
@@ -84,10 +89,10 @@ describe('Test authorization endpoints', () => {
             expect(res.body).toHaveProperty('roles');
             expect(res.body.roles).toEqual(
                 expect.arrayContaining([
-                { role: 'enduser', domain: '0' }
-            ]));
+                    { role: 'enduser', domain: '0' }
+                ]));
         });
-    
+
         it('should return 400 Bad Request for missing required fields', async () => {
             const res = await request(app)
                 .post('/v1/authorize')
@@ -143,7 +148,7 @@ describe('Test authorization endpoints', () => {
                 ])
             );
         });
-    
+
         it('should return 403 Forbidden if the user is not authorized for the action', async () => {
             const res = await request(app)
                 .post('/v1/authorize')
