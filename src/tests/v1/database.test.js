@@ -13,6 +13,10 @@ describe('Test DB functions', () => {
         mockUser = await generateMockUserDB();
     });
 
+    afterAll(async () => {
+        await db.closeDBConnections();
+    });
+
     describe('Audit Log DB functions', () => {
         let mockLog;
         let insertedLog;
@@ -65,7 +69,7 @@ describe('Test DB functions', () => {
     describe('Blacklist Token Functions', () => {
         const mockTokenData = {
             token: generateRandomString(32),
-            expiry: Math.floor(Date.now() / 1000) + 2 // 1 seconds from now
+            expiry: Math.floor(Date.now() / 1000) + 1 // 1 seconds from now
         };
 
         describe('insertBlacklistToken', () => {
@@ -80,6 +84,9 @@ describe('Test DB functions', () => {
 
         describe('isTokenBlacklisted', () => {
             it('should return true if the token is in the blacklist', async () => {
+                // Wait for 1 second before checking the blacklist status
+                await sleep(1000);
+
                 // Assuming the test token is already inserted from previous test
                 const isExpired = await db.isTokenBlacklisted(mockTokenData.token);
                 expect(isExpired).toBeTruthy();
@@ -109,7 +116,6 @@ describe('Test DB functions', () => {
             });
         });
     });
-
 
     let insertedUser;
 
@@ -256,7 +262,4 @@ describe('Test DB functions', () => {
         });
     });
 
-    afterAll(async () => {
-        await db.closeDBConnections();
-    });
 });
