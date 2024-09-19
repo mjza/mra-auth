@@ -41,7 +41,7 @@ describe('POST /v1/register endpoint', () => {
     expect(res.statusCode).toBe(201);
 
     expect(res.body).toEqual({
-      message: "User registered successfully",
+      message: "User registered successfully.",
       userId: expect.any(Number)
     });
 

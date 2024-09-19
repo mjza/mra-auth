@@ -1,12 +1,14 @@
 const express = require('express');
 const db = require('../../utils/database');
 const bcrypt = require('bcrypt');
-const { body, validationResult } = require('express-validator');
+const { body } = require('express-validator');
 const { generateAuthToken, parseJwt } = require('../../utils/generators');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { updateEventLog } = require('../../utils/logger');
-const { authenticateToken, checkRequestValidity } = require('../../utils/validations');
+const { authenticateToken, checkRequestValidity, isValidEmail } = require('../../utils/validations');
+
 const router = express.Router();
+module.exports = router;
 
 /**
  * @swagger
@@ -81,27 +83,41 @@ const router = express.Router();
 router.post('/login', apiRequestLimiter,
   [
     body('usernameOrEmail')
-      .exists().withMessage('Username or email address is required.')
-      .custom((value) => {
+      .exists()
+      .withMessage((_, { req }) => req.t('UsernameOrEmail is required.'))
+      .bail()
+      .isString()
+      .withMessage((_, { req }) => req.t('UsernameOrEmail must be a string.'))
+      .bail()
+      .custom((value, { req }) => {
         if (value.includes('@')) {
-          // Validate as email
-          return body('usernameOrEmail')
-            .isEmail()
-            .withMessage('Invalid email address.')
-            .isLength({ min: 5, max: 255 })
-            .withMessage('Email must be between 5 and 255 characters.');
+          // Validate as email          
+          if (!isValidEmail(value)) {
+            throw new Error(req.t('Invalid email address.'));
+          }
+          if (value.length < 5 || value.length > 255) {
+            throw new Error(req.t('Email must be between 5 and 255 characters.'));
+          }
         } else {
           // Validate as username
-          return body('usernameOrEmail')
-            .isLength({ min: 5, max: 30 })
-            .withMessage('Username must be between 5 and 30 characters.');
+          const isUsernameValid = /^[A-Za-z0-9_]+$/.test(value);
+          if (!isUsernameValid) {
+            throw new Error(req.t('Username can only contain letters, numbers, and underscores.'));
+          }
+          if (value.length < 5 || value.length > 30) {
+            throw new Error(req.t('Username must be between 5 and 30 characters.'));
+          }
         }
-      }),
+        return true; // Validation passed
+      })
+      .toLowerCase(),
+
     body('password')
       .exists()
-      .withMessage('Password is required.')
+      .withMessage((_, { req }) => req.t('Password is required.'))
+      .bail()
       .isLength({ max: 30 })
-      .withMessage('Password must be maximum 30 characters.')
+      .withMessage((_, { req }) => req.t('Password must be maximum 30 characters.'))
   ],
   checkRequestValidity,
   async (req, res) => {
@@ -110,7 +126,7 @@ router.post('/login', apiRequestLimiter,
       const users = await db.getUserByUsernameOrEmail(usernameOrEmail);
 
       if (!users || users.length === 0) {
-        return res.status(401).json({ message: 'Username or password is incorrect' });
+        return res.status(401).json({ message: req.t('Username or password is incorrect.') });
       }
 
       let found = false, confirmed = true, deleted = false, suspended = false;
@@ -136,7 +152,7 @@ router.post('/login', apiRequestLimiter,
           const tokenData = parseJwt(token);
           let profilePictureUrl = user.public_profile_picture_url;
           let isPrivatePicture = false;
-          if(!profilePictureUrl){
+          if (!profilePictureUrl) {
             profilePictureUrl = await db.getUserPrivatePictureUrl(user.user_id);
             isPrivatePicture = !!profilePictureUrl;
           }
@@ -145,21 +161,22 @@ router.post('/login', apiRequestLimiter,
       }
 
       if (!found) {// If no user matches
-        return res.status(401).json({ message: 'Username or password is incorrect' });
+        return res.status(401).json({ message: req.t('Username or password is incorrect.') });
       } else if (!confirmed) {
-        return res.status(409).json({ message: 'You must first confirm your email address.' });
+        return res.status(409).json({ message: req.t('You must first confirm your email address.') });
       } else if (deleted) {
-        return res.status(404).json({ message: 'User has been deleted.' });
+        return res.status(404).json({ message: req.t('User has been deleted.') });
       } else if (suspended) {
-        return res.status(403).json({ message: 'User has been suspended.' });
+        return res.status(403).json({ message: req.t('User has been suspended.') });
       }
 
-      throw new Exception("The login method has a logical error.");
+      throw new Exception(req.t('The login method has a logical error.'));
     } catch (err) {
-      updateEventLog(req, err);
+      updateEventLog(req, { error: 'Error in login.', details: err });
       return res.status(500).json({ message: err.message });
     }
-  });
+  }
+);
 
 /**
  * @swagger
@@ -188,23 +205,26 @@ router.post('/login', apiRequestLimiter,
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/logout', apiRequestLimiter, [authenticateToken], async (req, res) => {
-  try {
-    // Extract the token from the Authorization header
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+router.post('/logout', apiRequestLimiter,
+  [authenticateToken],
+  async (req, res) => {
+    try {
+      // Extract the token from the Authorization header
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-    const tokenData = parseJwt(token);
+      const tokenData = parseJwt(token);
 
-    // Insert the token into the blacklist
-    await db.insertBlacklistToken({ token, expiry: tokenData.exp });
+      // Insert the token into the blacklist
+      await db.insertBlacklistToken({ token, expiry: tokenData.exp });
 
-    return res.status(200).json({ message: 'Successfully logged out.' });
-  } catch (err) {
-    updateEventLog(req, err);
-    return res.status(500).json({ message: err.message });
+      return res.status(200).json({ message: req.t('Successfully logged out.') });
+    } catch (err) {
+      updateEventLog(req, { error: 'Error in logout.', details: err });
+      return res.status(500).json({ message: err.message });
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -242,17 +262,20 @@ router.post('/logout', apiRequestLimiter, [authenticateToken], async (req, res) 
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/verify_token', apiRequestLimiter, [authenticateToken], async (req, res) => {
-  try {
-    // Get the token from the request header
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-    return res.status(200).json(parseJwt(token));
-  } catch (err) {
-    updateEventLog(req, err);
-    return res.status(500).json({ message: err.message });
+router.post('/verify_token', apiRequestLimiter,
+  [authenticateToken],
+  async (req, res) => {
+    try {
+      // Get the token from the request header
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+      return res.status(200).json(parseJwt(token));
+    } catch (err) {
+      updateEventLog(req, { error: 'Error in verifying a token.', details: err });
+      return res.status(500).json({ message: err.message });
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -286,25 +309,26 @@ router.post('/verify_token', apiRequestLimiter, [authenticateToken], async (req,
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
-router.post('/refresh_token', apiRequestLimiter, [authenticateToken], async (req, res) => {
-  try {
-    // Verify the current token
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN  
+router.post('/refresh_token', apiRequestLimiter,
+  [authenticateToken],
+  async (req, res) => {
+    try {
+      // Verify the current token
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN  
 
-    const tokenData = parseJwt(token);
+      const tokenData = parseJwt(token);
 
-    // Generate a new token
-    const newToken = generateAuthToken(tokenData);
-    const newTokenData = parseJwt(newToken);
+      // Generate a new token
+      const newToken = generateAuthToken(tokenData);
+      const newTokenData = parseJwt(newToken);
 
-    await db.insertBlacklistToken({ token, expiry: tokenData.exp });
+      await db.insertBlacklistToken({ token, expiry: tokenData.exp });
 
-    return res.status(200).json({ token: newToken, exp: newTokenData.exp, userId: newTokenData.userId });
-  } catch (err) {
-    updateEventLog(req, err);
-    return res.status(500).json({ message: err.message });
+      return res.status(200).json({ token: newToken, exp: newTokenData.exp, userId: newTokenData.userId });
+    } catch (err) {
+      updateEventLog(req, { error: 'Error in refreshing token.', details: err });
+      return res.status(500).json({ message: err.message });
+    }
   }
-});
-
-module.exports = router;
+);

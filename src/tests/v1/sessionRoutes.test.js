@@ -10,6 +10,11 @@ describe('Test session endpoints', () => {
         app = await createApp();
     });
 
+    // Ensure the app resources are closed after all tests
+    afterAll(async () => {
+        await closeApp();
+    });
+
     describe('Post /v1/login endpoint', () => {
         let mockUser, testUser;
 
@@ -46,7 +51,7 @@ describe('Test session endpoints', () => {
                 .send({ usernameOrEmail: mockUser.username + 'x', password: mockUser.password });
 
             expect(res.statusCode).toBe(401);
-            expect(res.body.message).toBe('Username or password is incorrect');
+            expect(res.body.message).toBe('Username or password is incorrect.');
         });
 
         test('Invalid password', async () => {
@@ -55,7 +60,7 @@ describe('Test session endpoints', () => {
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password + 'x' });
 
             expect(res.statusCode).toBe(401);
-            expect(res.body.message).toBe('Username or password is incorrect');
+            expect(res.body.message).toBe('Username or password is incorrect.');
         });
 
         test('Incorrect username or password', async () => {
@@ -230,9 +235,6 @@ describe('Test session endpoints', () => {
         });
     });
 
-    // Ensure the app resources are closed after all tests
-    afterAll(async () => {
-        await closeApp();
-    });
+    
 
 });

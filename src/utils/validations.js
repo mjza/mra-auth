@@ -12,14 +12,14 @@ const { createEventLog, updateEventLog } = require('./logger');
  * If the user exists, it rejects the promise with a specific message.
  *
  * @async
- * @param {string} username - The username to check in the database.
+ * @param {string} value - The username to check in the database.
  * @returns {Promise<void>} A promise that resolves if the user does not exist, or rejects if the user exists.
  */
-const userMustNotExist = async (username) => {
+const userMustNotExist = async (value, { req }) => {
     // Database logic to check if the user exists
-    const user = await db.getUserByUsername(username);
+    const user = await db.getUserByUsername(value);
     if (user) {
-        return Promise.reject('Username already exists.');
+        return Promise.reject(req.t('Username already exists.'));
     }
 };
 
@@ -31,11 +31,11 @@ const userMustNotExist = async (username) => {
  * @param {string} username - The username to check in the database.
  * @returns {Promise<void>} A promise that resolves if the user exists, or rejects if the user does not exist.
  */
-const userMustExist = async (username) => {
+const userMustExist = async (value, { req }) => {
     // Database logic to check if the user exists
-    const user = await db.getUserByUsername(username);
+    const user = await db.getUserByUsername(value);
     if (!user) {
-        return Promise.reject('Username does not exist.');
+        return Promise.reject(req.t('Username does not exist.'));
     }
 };
 
@@ -66,7 +66,7 @@ const testUrlAccessibility = async function (url) {
  */
 const isValidUrl = (inputUrl) => {
     try {
-        const parsedUrl = new URL(inputUrl);
+        const _ = new URL(inputUrl);
         return true;
     } catch (err) {
         return false;
@@ -107,7 +107,7 @@ const authenticateToken = async (req, res, next) => {
 
     // If no token is provided
     if (token == null) {
-        return res.status(401).json({ message: 'You must provide a valid JWT token.' });
+        return res.status(401).json({ message: req.t('You must provide a valid JWT token.') });
     }
 
     try {
@@ -119,7 +119,7 @@ const authenticateToken = async (req, res, next) => {
         // Check if token is expired in database
         const isExpired = await db.isTokenBlacklisted(token);
         if (isExpired) {
-            return res.status(401).json({ message: 'Provided JWT token is invalid.' });
+            return res.status(401).json({ message: req.t('Provided JWT token is invalid.') });
         }
 
         // Add user information to request
@@ -128,7 +128,7 @@ const authenticateToken = async (req, res, next) => {
     } catch (err) {
         updateEventLog(req, { error: 'Error in validating auth token.', details: err });
         // Handle error (token invalid or other errors)
-        return res.status(401).json({ message: 'Provided JWT token is invalid.' });
+        return res.status(401).json({ message: req.t('Provided JWT token is invalid.') });
     }
 };
 
@@ -142,10 +142,10 @@ const authenticateToken = async (req, res, next) => {
  * middleware or route handlers to make decisions based on the authentication status.
  *
  * @param {Object} req - The request object from Express.js, augmented with `user` properties.
- * @param {Object} res - The response object from Express.js.
+ * @param {Object} _ - The response object from Express.js.
  * @param {Function} next - The next middleware function in the Express.js route.
  */
-const authenticateUser = async (req, res, next) => {
+const authenticateUser = async (req, _, next) => {
     if (req.user) {
         next();
     }
@@ -266,4 +266,60 @@ const checkRequestValidity = (req, res, next) => {
     next();
 };
 
-module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken, authenticateUser, authorizeUser, checkRequestValidity };
+/**
+ * Middleware to handle and respond to invalid JSON format errors.
+ * This middleware captures `SyntaxError` thrown by the `express.json()` middleware
+ * when the incoming request contains invalid JSON. It extracts useful information
+ * about the error, including the error type, message, and position where the error
+ * occurred in the JSON string, and sends a detailed response back to the client.
+ *
+ * @param {object} err - The error object thrown by `express.json()` when it encounters malformed JSON.
+ * @param {object} req - The request object from Express.js containing the client's request data.
+ * @param {object} res - The response object from Express.js used to send back the desired HTTP response.
+ * @param {function} next - The callback function to pass control to the next middleware function.
+ *
+ * @returns {void|object} - Sends a 400 error response with details if the error is a `SyntaxError`.
+ *                          Otherwise, passes control to the next middleware.
+ *
+ * @example
+ * // Usage as part of the Express middleware stack:
+ * app.use(express.json());
+ * app.use(checkJSONBody);
+ */
+const checkJSONBody = (err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        // Extract relevant details from the error message
+        const position = err.message.match(/position (\d+)/)?.[1] || req.t('Unknown');
+        const errorSnippet = err.message.split('\n')[0]; // Get first line of the error
+
+        return res.status(400).json({
+            message: req.t('Invalid JSON format.'),
+            details: {
+                type: err.type,
+                error: errorSnippet,  // Include the main error message
+                position: position,  // Provide position of the error in the JSON string
+                hint: req.t('Ensure that all keys and values are properly enclosed in double quotes.')
+            }
+        });
+    }
+    next();
+};
+
+/**
+ * Function to validate an email address format.
+ * It uses a regular expression to check if the email follows the standard email format.
+ *
+ * @param {string} email - The email address to validate.
+ * @returns {boolean} - Returns true if the email is valid, otherwise false.
+ *
+ * @example
+ * isValidEmail('test@example.com'); // true
+ * isValidEmail('invalid-email'); // false
+ */
+const isValidEmail = (email) => {
+    // Regular expression for basic email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+};
+
+module.exports = { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken, authenticateUser, authorizeUser, checkRequestValidity, checkJSONBody, isValidEmail };

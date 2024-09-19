@@ -6,6 +6,7 @@ const { authenticateUser, authorizeUser, checkRequestValidity } = require('../..
 const { listRolesForUserInDomain, listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRoleForUserInDomain, addPolicyInDomain, getPoliciesInDomain, getRolesInDomain, getUsersForRoleInDomain, removePoliciesInDomain } = require('../../casbin/casbinSingleton');
 
 const router = express.Router();
+module.exports = router;
 
 /**
  * @swagger
@@ -59,12 +60,22 @@ const router = express.Router();
 router.get('/domain-roles', apiRequestLimiter,
     [
         query('role')
-            .optional({ checkFalsy: true })
-            .isString().withMessage('If you provide the role, it must be a string.'),
+            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('If you provide the role, it must be a string.')),
 
         query('domain')
-            .optional({ checkFalsy: true })
-            .isNumeric().withMessage('Domain must be a number.'),
+            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('Domain must be a string.'))
+            .bail()
+            .custom((value, { req }) => {
+                // Check if the value is numeric in string form
+                if (!/^\d+$/.test(value)) {
+                    throw new Error(req.t('Domain must be a string containing digits.'));
+                }
+                return true; // Passes validation
+            })
     ],
     checkRequestValidity,
     authenticateUser,
@@ -90,7 +101,7 @@ router.get('/domain-roles', apiRequestLimiter,
             const rolesDomainArray = await getRolesInDomain(req.conditions.where.role, req.conditions.where.domain);
             return res.json(rolesDomainArray);
         } catch (err) {
-            updateEventLog(req, err);
+            updateEventLog(req, { error: 'Error in retrieving roles for the current user in all domains.', details: err });
             return res.status(500).json({ message: err.message });
         }
     }
@@ -138,8 +149,17 @@ router.get('/domain-roles', apiRequestLimiter,
 router.get('/my-roles', apiRequestLimiter,
     [
         query('domain')
-            .optional({ checkFalsy: true })
-            .isNumeric().withMessage('Domain must be a number.')
+            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('Domain must be a string.'))
+            .bail()
+            .custom((value, { req }) => {
+                // Check if the value is numeric in string form
+                if (!/^\d+$/.test(value)) {
+                    throw new Error(req.t('Domain must be a string containing digits.'));
+                }
+                return true; // Passes validation
+            })
             .default('0'),
     ],
     checkRequestValidity,
@@ -157,7 +177,7 @@ router.get('/my-roles', apiRequestLimiter,
 
             return res.json(userRolesArray);
         } catch (err) {
-            updateEventLog(req, err);
+            updateEventLog(req, { error: 'Error in retrieving roles for current user.', details: err });
             return res.status(500).json({ message: err.message });
         }
     }
@@ -215,14 +235,28 @@ router.get('/my-roles', apiRequestLimiter,
 router.get('/user-roles', apiRequestLimiter,
     [
         query('username')
-            .optional({ checkFalsy: true })
-            .isString().withMessage('If you provide username, it must be a string.')
-            .isLength({ min: 5, max: 30 }).withMessage('Username must be between 5 and 30 characters.')
-            .matches(/^[A-Za-z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores.'),
+            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('If you provide a username, it must be a string.'))
+            .bail()
+            .isLength({ min: 5, max: 30 })
+            .withMessage((_, { req }) => req.t('Username must be between 5 and 30 characters.'))
+            .matches(/^[A-Za-z0-9_]+$/)
+            .withMessage((_, { req }) => req.t('Username can only contain letters, numbers, and underscores.'))
+            .toLowerCase(),
 
         query('domain')
-            .optional({ checkFalsy: true })
-            .isNumeric().withMessage('Domain must be a number.')
+            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('Domain must be a string.'))
+            .bail()
+            .custom((value, { req }) => {
+                // Check if the value is numeric in string form
+                if (!/^\d+$/.test(value)) {
+                    throw new Error(req.t('Domain must be a string containing digits.'));
+                }
+                return true; // Passes validation
+            })
             .default('0'),
     ],
     checkRequestValidity,
@@ -250,7 +284,7 @@ router.get('/user-roles', apiRequestLimiter,
 
             return res.json(userRolesArray);
         } catch (err) {
-            updateEventLog(req, err);
+            updateEventLog(req, { error: 'Error in retrieving roles for a given user.', details: err });
             return res.status(500).json({ message: err.message });
         }
     }
@@ -323,19 +357,39 @@ router.get('/user-roles', apiRequestLimiter,
 router.post('/user-role', apiRequestLimiter,
     [
         body('username')
-            .optional({ checkFalsy: true })
-            .isString().withMessage('If you provide username, it must be a string.')
-            .isLength({ min: 5, max: 30 }).withMessage('Username must be between 5 and 30 characters.')
-            .matches(/^[A-Za-z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores.'),
+            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('If you provide a username, it must be a string.'))
+            .bail()
+            .isLength({ min: 5, max: 30 })
+            .withMessage((_, { req }) => req.t('Username must be between 5 and 30 characters.'))
+            .matches(/^[A-Za-z0-9_]+$/)
+            .withMessage((_, { req }) => req.t('Username can only contain letters, numbers, and underscores.'))
+            .toLowerCase(),
+
         body('role')
             .exists()
-            .withMessage('Role is required.')
-            .isString().withMessage('Role must be a string.')
-            .isLength({ max: 255 }).withMessage('Role must not exceed 255 characters.'),
+            .withMessage((_, { req }) => req.t('Role is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Role must be a string.'))
+            .bail()
+            .isLength({ max: 255 })
+            .withMessage((_, { req }) => req.t('Role must not exceed 255 characters.')),
+
         body('domain')
-            .optional({ checkFalsy: true })
-            .isNumeric().withMessage('Domain must be a number.')
-            .default('0'),
+            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .default('0')
+            .isString()
+            .withMessage((_, { req }) => req.t('Domain must be a string.'))
+            .bail()
+            .custom((value, { req }) => {
+                // Check if the value is numeric in string form
+                if (!/^\d+$/.test(value)) {
+                    throw new Error(req.t('Domain must be a string containing digits.'));
+                }
+                return true; // Passes validation
+            }),
     ],
     checkRequestValidity,
     authenticateUser,
@@ -361,7 +415,7 @@ router.post('/user-role', apiRequestLimiter,
             updateEventLog(req, { success: `Added role ${role} in domain ${domain} for the user ${username}.` });
             return res.status(201).json({ message: 'Role has been added successfully. User must relogin to have the new role.' });
         } catch (err) {
-            updateEventLog(req, err);
+            updateEventLog(req, { error: 'Error in assigning roles for a ghiven user.', details: err });
             return res.status(500).json({ message: err.message });
         }
     }
@@ -424,19 +478,39 @@ router.post('/user-role', apiRequestLimiter,
 router.delete('/user-role', apiRequestLimiter,
     [
         body('username')
-            .optional({ checkFalsy: true })
-            .isString().withMessage('If you provide username, it must be a string.')
-            .isLength({ min: 5, max: 30 }).withMessage('Username must be between 5 and 30 characters.')
-            .matches(/^[A-Za-z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores.'),
+            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('If you provide a username, it must be a string.'))
+            .bail()
+            .isLength({ min: 5, max: 30 })
+            .withMessage((_, { req }) => req.t('Username must be between 5 and 30 characters.'))
+            .matches(/^[A-Za-z0-9_]+$/)
+            .withMessage((_, { req }) => req.t('Username can only contain letters, numbers, and underscores.'))
+            .toLowerCase(),
+
         body('role')
             .exists()
-            .withMessage('Role is required.')
-            .isString().withMessage('Role must be a string.')
-            .isLength({ max: 255 }).withMessage('Role must not exceed 255 characters.'),
+            .withMessage((_, { req }) => req.t('Role is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Role must be a string.'))
+            .bail()
+            .isLength({ max: 255 })
+            .withMessage((_, { req }) => req.t('Role must not exceed 255 characters.')),
+
         body('domain')
-            .optional({ checkFalsy: true })
-            .isNumeric().withMessage('Domain must be a number.')
-            .default('0'),
+            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .default('0')
+            .isString()
+            .withMessage((_, { req }) => req.t('Domain must be a string.'))
+            .bail()
+            .custom((value, { req }) => {
+                // Check if the value is numeric in string form
+                if (!/^\d+$/.test(value)) {
+                    throw new Error(req.t('Domain must be a string containing digits.'));
+                }
+                return true; // Passes validation
+            }),
     ],
     checkRequestValidity,
     authenticateUser,
@@ -462,9 +536,9 @@ router.delete('/user-role', apiRequestLimiter,
             const { username } = req.conditions.where;
             await removeRoleForUserInDomain(username, role, domain);
             updateEventLog(req, { success: `Removed role ${role} in domain ${domain} for the user ${username}.` });
-            return res.status(200).json({ message: 'Role has been removed successfully.' });
+            return res.status(200).json({ message: req.t('Role has been removed successfully.') });
         } catch (err) {
-            updateEventLog(req, err);
+            updateEventLog(req, { error: 'Error in deleting roles for a ghiven user.', details: err });
             return res.status(500).json({ message: err.message });
         }
     }
@@ -555,25 +629,61 @@ router.delete('/user-role', apiRequestLimiter,
  */
 router.post('/policies',
     [
-        body('domain').not().isEmpty().withMessage('Domain is required.'),
-        body('subject').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Subject is optional and can be string or null.'),
-        body('object').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Object can be string or null.'),
-        body('action').optional({ nullable: true, checkFalsy: true }).isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null]).withMessage('Action is optional and can be "C", "R", "U", "D", "GC", "GR", "GU", "GD", empty string or null.'),
-        body('effect').optional({ nullable: true, checkFalsy: true }).isIn(['allow', 'deny', '', null]).withMessage('Effect is optional and can be "allow", "deny", empty string or null.'),
-        body('condition').optional({ nullable: true, checkFalsy: true }).isIn(['check_relationship', 'check_ownership', 'none', '', null]).withMessage('Condition is optional and can be one of "check_relationship", "check_ownership", "none", empty string or null.'),
+        body('subject')
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('Subject is optional and can be string or null.')),
+
+        body('domain')
+            .exists()
+            .withMessage((_, { req }) => req.t('Domain is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Domain must be a string.'))
+            .bail()
+            .custom((value, { req }) => {
+                // Check if the value is numeric in string form
+                if (!/^\d+$/.test(value)) {
+                    throw new Error(req.t('Domain must be a string containing digits.'));
+                }
+                return true; // Passes validation
+            }),
+
+        body('object')
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('Object can be string or null.')),
+
+        body('action')
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null])
+            .withMessage((_, { req }) => req.t("Action is optional and can be 'C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', empty string or null.")),
+
+        body('effect')
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isIn(['allow', 'deny', '', null])
+            .withMessage((_, { req }) => req.t("Effect is optional and can be 'allow', 'deny', empty string or null.")),
+
+        body('condition')
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isIn(['check_relationship', 'check_ownership', 'none', '', null])
+            .withMessage((_, { req }) => req.t("Condition is optional and can be one of 'check_relationship', 'check_ownership', 'none', empty string or null.")),
+
         body('attributes')
-            .optional({ nullable: true, checkFalsy: true })
-            .custom((value) => {
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .custom((value, { req }) => {
+                if (typeof value === 'object') {
+                    return true; // Directly pass through objects without attempting to parse
+                }
                 try {
                     if (typeof value === 'string') {
                         JSON.parse(value);
                     }
                 } catch (e) {
-                    throw new Error('Attributes must be a valid JSON object.');
+                    throw new Error(req.t('Attributes must be a valid JSON object.'));
                 }
                 return true;
-            })
-            .withMessage('Attributes must be a valid JSON object.'),
+            }),
     ],
     checkRequestValidity,
     authenticateUser,
@@ -597,10 +707,11 @@ router.post('/policies',
 
             return res.status(200).json(policies);
         } catch (err) {
-            console.error(err);
-            return res.status(500).json({ message: 'Failed to retrieve policies due to an internal error.' });
+            updateEventLog(req, { error: 'Error in retrieving policies while it is a POST request.', details: err });
+            return res.status(500).json({ message: req.t('Failed to retrieve policies due to an internal error.') });
         }
-    });
+    }
+);
 
 /**
  * @swagger
@@ -678,29 +789,71 @@ router.post('/policies',
  */
 router.post('/policy',
     [
-        body('subject').not().isEmpty().withMessage('Subject is required.'),
-        body('domain').not().isEmpty().withMessage('Domain is required.'),
-        body('object').not().isEmpty().withMessage('Object is required.'),
-        body('action').isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD']).withMessage('Action is required.'),
-        body('effect').isIn(['allow', 'deny']).withMessage('Effect must be either "allow" or "deny".'),
+
+        body('subject')
+            .exists()
+            .withMessage((_, { req }) => req.t('Subject is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Subject must be a string.')),
+
+        body('domain')
+            .exists()
+            .withMessage((_, { req }) => req.t('Domain is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Domain must be a string.'))
+            .bail()
+            .custom((value, { req }) => {
+                // Check if the value is numeric in string form
+                if (!/^\d+$/.test(value)) {
+                    throw new Error(req.t('Domain must be a string containing digits.'));
+                }
+                return true; // Passes validation
+            }),
+
+        body('object')
+            .exists()
+            .withMessage((_, { req }) => req.t('Object is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Object must be a string.')),
+
+        body('action')
+            .exists()
+            .withMessage((_, { req }) => req.t('Action is required.'))
+            .bail()
+            .isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD'])
+            .withMessage((_, { req }) => req.t('Action must be one of the [C, R, U, D, GC, GR, GU, GD].')),
+
+        body('effect')
+            .exists()
+            .withMessage((_, { req }) => req.t('Effect is required.'))
+            .bail()
+            .isIn(['allow', 'deny']).withMessage((_, { req }) => req.t('Effect must be either "allow" or "deny".')),
+
         body('condition')
-            .optional({ nullable: true, checkFalsy: true })
+            .optional({ nullable: true, checkFalsy: true }) // Allows missing or falsy values
             .default('none')
             .isIn(['check_relationship', 'check_ownership', 'none'])
-            .withMessage('Condition must be one of "check_relationship", "check_ownership", or "none".'),
+            .withMessage((_, { req }) => req.t('Condition must be one of "check_relationship", "check_ownership", or "none".')),
+
         body('attributes')
-            .optional({ checkFalsy: true })
-            .custom((value) => {
+            .optional({ nullable: true, checkFalsy: true }) // Allows missing or falsy values
+            .custom((value, { req }) => {
+                if (typeof value === 'object') {
+                    return true; // Directly pass through objects without attempting to parse
+                }
                 try {
                     if (typeof value === 'string') {
                         JSON.parse(value);
                     }
                 } catch (e) {
-                    throw new Error('Attributes must be a valid JSON object.');
+                    throw new Error(req.t('Attributes must be a valid JSON object.'));
                 }
                 return true;
-            })
-            .withMessage('Attributes must be a valid JSON object.'),
+            }),
+
     ],
     checkRequestValidity,
     authenticateUser,
@@ -722,9 +875,8 @@ router.post('/policy',
             next();
         } else {
             if (req.body.condition !== 'check_relationship') {
-                let error = { message: 'User is not authorized.', details: "Customer users must set condition to 'check_relationship'." };
-                updateEventLog(req, error);
-                return res.status(403).json(error);
+                updateEventLog(req, { message: 'User is not authorized.', details: "Customer users must set condition to 'check_relationship'." });
+                return res.status(403).json({ message: req.t('User is not authorized.'), details: req.t("Customer users must set condition to 'check_relationship'.") });
             }
             // Customer users must have grant permission to be able to create a policy
             let action = req.body.action;
@@ -744,11 +896,10 @@ router.post('/policy',
         try {
             const { subject, domain, object, action, condition, attributes, effect } = req.body;
             await addPolicyInDomain(subject, domain, object, action, condition, attributes, effect);
-            return res.status(200).json({ message: 'Policy added successfully.' });
+            return res.status(200).json({ message: req.t('Policy added successfully.') });
         } catch (err) {
-            updateEventLog(req, { Error: 'Failed to add policy:' });
-            updateEventLog(req, err);
-            return res.status(500).json({ message: 'Failed to add policy due to an internal error.' });
+            updateEventLog(req, { error: 'Error in creating a policy.', details: err });
+            return res.status(500).json({ message: req.t('Failed to add policy due to an internal error.') });
         }
     }
 );
@@ -825,15 +976,49 @@ router.post('/policy',
  */
 router.delete('/policies',
     [
-        body('domain').not().isEmpty().withMessage('Domain is required.'),
-        body('subject').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Subject is optional and can be string or null.'),
-        body('object').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Object can be string or null.'),
-        body('action').optional({ nullable: true, checkFalsy: true }).isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null]).withMessage('Action is optional.'),
-        body('effect').optional({ nullable: true, checkFalsy: true }).isIn(['allow', 'deny', '', null]).withMessage('Effect is optional.'),
-        body('condition').optional({ nullable: true, checkFalsy: true }).isIn(['check_relationship', 'check_ownership', 'none', '', null]).withMessage('Condition is optional.'),
+        body('subject')
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('Subject is optional and can be string or null.')),
+
+        body('domain')
+            .exists()
+            .withMessage((_, { req }) => req.t('Domain is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Domain must be a string.'))
+            .bail()
+            .custom((value, { req }) => {
+                // Check if the value is numeric in string form
+                if (!/^\d+$/.test(value)) {
+                    throw new Error(req.t('Domain must be a string containing digits.'));
+                }
+                return true; // Passes validation
+            }),
+
+        body('object')
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isString()
+            .withMessage((_, { req }) => req.t('Object can be string or null.')),
+
+        body('action')
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null])
+            .withMessage((_, { req }) => req.t('Action is optional, but can be null, empty string or one of the [C, R, U, D, GC, GR, GU, GD].')),
+
+        body('effect')
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isIn(['allow', 'deny', '', null])
+            .withMessage((_, { req }) => req.t('Effect is optional, but can be null, empty string or one of the [allow, deny].')),
+
+        body('condition')
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .isIn(['check_relationship', 'check_ownership', 'none', '', null])
+            .withMessage((_, { req }) => req.t('Condition is optional, but can be null, empty string or one of the [check_relationship, check_ownership].')),
+
         body('attributes')
-            .optional({ nullable: true, checkFalsy: true })
-            .custom((value) => {
+            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .custom((value, { req }) => {
                 if (typeof value === 'object') {
                     return true; // Directly pass through objects without attempting to parse
                 }
@@ -842,11 +1027,10 @@ router.delete('/policies',
                         JSON.parse(value);
                     }
                 } catch (e) {
-                    throw new Error('Attributes must be a valid JSON object.');
+                    throw new Error(req.t('Attributes must be a valid JSON object.'));
                 }
                 return true;
-            })
-            .withMessage('Attributes must be a valid JSON object.'),
+            }),
     ],
     checkRequestValidity,
     authenticateUser,
@@ -868,17 +1052,15 @@ router.delete('/policies',
             const users = await getUsersForRoleInDomain(subject, domain);
 
             if (users && users.length > 0) {
-                return res.status(404).json({ message: 'Some users are using this policy and cannot be changed or removed.' });
+                return res.status(404).json({ message: req.t('Some users are using this policy and cannot be changed or removed.') });
             }
 
             const result = await removePoliciesInDomain(subject, domain, object, action, condition, attributes, effect);
 
             return res.status(200).json({ result });
         } catch (err) {
-            console.error(err);
-            return res.status(500).json({ message: 'Failed to delete policies due to an internal error.' });
+            updateEventLog(req, { error: 'Error in deleting a policy.', details: err });
+            return res.status(500).json({ message: req.t('Failed to delete policies due to an internal error.') });
         }
     }
 );
-
-module.exports = router;

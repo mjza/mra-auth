@@ -6,9 +6,11 @@ const { userMustNotExist } = require('../../utils/validations');
 const { registerAccountLimiter, apiRequestLimiter } = require('../../utils/rateLimit');
 const { generateActivationLink, generatePasswordHash } = require('../../utils/generators');
 const { updateEventLog } = require('../../utils/logger');
-const { authenticateUser, authorizeUser, checkRequestValidity } = require('../../utils/validations');
+const { authenticateUser, authorizeUser, checkRequestValidity, testUrlAccessibility, isValidEmail } = require('../../utils/validations');
 const { listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRolesForUserInAllDomains } = require('../../casbin/casbinSingleton');
+
 const router = express.Router();
+module.exports = router;
 
 /**
  * @swagger
@@ -68,39 +70,82 @@ const router = express.Router();
 router.post('/register', registerAccountLimiter,
   [
     body('username')
+      .exists()
+      .withMessage((_, { req }) => req.t('Username is required.'))
+      .bail()
+      .isString()
+      .withMessage((_, { req }) => req.t('Username must be a string.'))
+      .bail()
       .isLength({ min: 5, max: 30 })
-      .withMessage('Username must be between 5 and 30 characters.')
+      .withMessage((_, { req }) => req.t('Username must be between 5 and 30 characters.'))
       .matches(/^[A-Za-z0-9_]+$/)
-      .withMessage('Username can only contain letters, numbers, and underscores.')
+      .withMessage((_, { req }) => req.t('Username can only contain letters, numbers, and underscores.'))
       .custom(userMustNotExist)
-      .custom((username) => {
+      .custom((value, { req }) => {
         // TODO: Make a test for it.
         const reservedUsernames = ['super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support',
           'admin', 'admindata', 'officer', 'agent', 'enduser', 'public', 'administrator',
           'manager', 'staff', 'employee', 'user'];
-        if (reservedUsernames.includes(username.toLowerCase())) {
-          throw new Error('Username cannot be a reserved word.');
+        if (reservedUsernames.includes(value.toLowerCase())) {
+          throw new Error(req.t('Username cannot be a reserved word.'));
         }
         return true;
       }),
 
+    body('displayName')
+      .optional({ checkFalsy: true }) // Allows missing or falsy values
+      .isString()
+      .withMessage((_, { req }) => req.t('DisplayName must be a string.'))
+      .bail()
+      .isLength({ max: 50 })
+      .withMessage((_, { req }) => req.t('DisplayName can be a maximum of 50 characters.')),
+
     body('email')
-      .isEmail()
-      .withMessage('Invalid email address.')
+      .exists()
+      .withMessage((_, { req }) => req.t('Email is required.'))  
+      .bail()    
+      .isString()
+      .withMessage((_, { req }) => req.t('Email must be a string.'))
+      .bail()
       .isLength({ min: 5, max: 255 })
-      .withMessage('Email must be between 5 and 255 characters.'),
+      .withMessage((_, { req }) => req.t('Email must be between 5 and 255 characters.'))
+      .custom((value, { req }) => {
+        if (!isValidEmail(value)) {
+          throw new Error(req.t('Invalid email address.'));
+        }
+        return true;
+      })
+      .toLowerCase(),
 
     body('password')
+      .exists()
+      .withMessage((_, { req }) => req.t('Password is required.'))
+      .bail()
+      .isString()
+      .withMessage((_, { req }) => req.t('Password must be a string.'))
+      .bail()
       .isLength({ min: 8, max: 30 })
-      .withMessage('Password must be between 8 and 30 characters.')
+      .withMessage((_, { req }) => req.t('Password must be between 8 and 30 characters.'))
       .matches(/[A-Z]/)
-      .withMessage('Password must contain at least one uppercase letter')
+      .withMessage((_, { req }) => req.t('Password must contain at least one uppercase letter.'))
       .matches(/[a-z]/)
-      .withMessage('Password must contain at least one lowercase letter')
+      .withMessage((_, { req }) => req.t('Password must contain at least one lowercase letter.'))
       .matches(/\d/)
-      .withMessage('Password must contain at least one digit')
+      .withMessage((_, { req }) => req.t('Password must contain at least one digit.'))
       .matches(/[`~!@#$%^&*()-_=+{}|\\[\]:";'<>?,./]/)
-      .withMessage('Password must contain at least one symbol')
+      .withMessage((_, { req }) => req.t('Password must contain at least one latin symbol.')),
+
+    body('loginRedirectURL')
+      .optional()
+      .isURL({
+        protocols: ['http', 'https'],
+        require_protocol: true,
+        require_tld: false,
+      })
+      .withMessage((_, { req }) => req.t('The login redirect URL must be a valid URL starting with http:// or https://.'))
+      .bail()
+      .custom(testUrlAccessibility)
+      .withMessage((_, { req }) => req.t('The login redirect URL is not a valid URL.')),
   ],
   checkRequestValidity,
   async (req, res) => {
@@ -115,6 +160,7 @@ router.post('/register', registerAccountLimiter,
       // The insertUser function is hypothetical. Replace it with your actual database logic.
       const user = await db.insertUser(newUser);
 
+      // by default all users must have the enduser role
       await addRoleForUserInDomain(user.username, "enduser", "0");
 
       // Optional login redirect URL
@@ -132,9 +178,9 @@ router.post('/register', registerAccountLimiter,
       await sendVerificationEmail(req, user.username, user.display_name, user.email, activationLink);
 
       // Send success response
-      return res.status(201).json({ message: "User registered successfully", userId: user.user_id });
+      return res.status(201).json({ message: req.t('User registered successfully.'), userId: user.user_id });
     } catch (err) {
-      updateEventLog(req, err);
+      updateEventLog(req, { error: 'Error in registering a new user.', details: err });
       return res.status(500).json({ message: err.message });
     }
   });
@@ -183,22 +229,46 @@ router.post('/register', registerAccountLimiter,
 router.post('/resend-activation', registerAccountLimiter,
   [
     body('usernameOrEmail')
-      .exists().withMessage('Username or email address is required.')
-      .custom((value) => {
+      .exists()
+      .withMessage((_, { req }) => req.t('Username or email is required.'))
+      .bail()
+      .isString()
+      .withMessage((_, { req }) => req.t('Username or email must be a string.'))
+      .bail()
+      .custom((value, { req }) => {
         if (value.includes('@')) {
-          // Validate as email
-          return body('usernameOrEmail')
-            .isEmail()
-            .withMessage('Invalid email address.')
-            .isLength({ min: 5, max: 255 })
-            .withMessage('Email must be between 5 and 255 characters.');
+          // Validate as email          
+          if (!isValidEmail(value)) {
+            throw new Error(req.t('Invalid email address.'));
+          }
+          if (value.length < 5 || value.length > 255) {
+            throw new Error(req.t('Email must be between 5 and 255 characters.'));
+          }
         } else {
           // Validate as username
-          return body('usernameOrEmail')
-            .isLength({ min: 5, max: 30 })
-            .withMessage('Username must be between 5 and 30 characters.');
+          const isUsernameValid = /^[A-Za-z0-9_]+$/.test(value);
+          if (!isUsernameValid) {
+            throw new Error(req.t('Username can only contain letters, numbers, and underscores.'));
+          }
+          if (value.length < 5 || value.length > 30) {
+            throw new Error(req.t('Username must be between 5 and 30 characters.'));
+          }
         }
-      }),
+        return true; // Validation passed
+      })
+      .toLowerCase(),
+
+    body('loginRedirectURL')
+      .optional()
+      .isURL({
+        protocols: ['http', 'https'],
+        require_protocol: true,
+        require_tld: false,
+      })
+      .withMessage((_, { req }) => req.t('The login redirect URL must be a valid URL starting with http:// or https://.'))
+      .bail()
+      .custom(testUrlAccessibility)
+      .withMessage((_, { req }) => req.t('The login redirect URL is not a valid URL.')),
   ],
   checkRequestValidity,
   async (req, res) => {
@@ -222,14 +292,13 @@ router.post('/resend-activation', registerAccountLimiter,
       }
 
       // Send success response
-      return res.status(200).json({ message: "A new activation link has been sent if there is a registered user related to the provided email or username." });
+      return res.status(200).json({ message: req.t('A new activation link has been sent if there is a registered user related to the provided email or username.') });
     } catch (err) {
-      updateEventLog(req, err);
+      updateEventLog(req, { error: 'Error in resending a new activation link.', details: err });
       return res.status(500).json({ message: err.message });
     }
   }
 );
-
 
 /**
  * @swagger
@@ -292,15 +361,29 @@ router.post('/resend-activation', registerAccountLimiter,
 router.delete('/deregister', apiRequestLimiter,
   [
     body('username')
-      .optional({ checkFalsy: true })
-      .isString().withMessage('If you provide username, it must be a string.')
-      .isLength({ min: 5, max: 30 }).withMessage('Username must be between 5 and 30 characters.')
-      .matches(/^[A-Za-z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores.')
+      .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+      .isString()
+      .withMessage((_, { req }) => req.t('If you provide a username, it must be a string.'))
+      .bail()
+      .isLength({ min: 5, max: 30 })
+      .withMessage((_, { req }) => req.t('Username must be between 5 and 30 characters.'))
+      .matches(/^[A-Za-z0-9_]+$/)
+      .withMessage((_, { req }) => req.t('Username can only contain letters, numbers, and underscores.'))
       .toLowerCase(),
 
     body('domain')
-      .optional({ checkFalsy: true })
-      .isNumeric().withMessage('Domain must be a number.'),
+      .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+      .isString()
+      .withMessage((_, { req }) => req.t('Domain must be a string.'))
+      .bail()
+      .custom((value, { req }) => {
+        // Check if the value is numeric in string form
+        if (!/^\d+$/.test(value)) {
+          throw new Error(req.t('Domain must be a string containing digits.'));
+        }
+
+        return true; // Passes validation
+      })
   ],
   checkRequestValidity,
   authenticateUser,
@@ -312,7 +395,7 @@ router.delete('/deregister', apiRequestLimiter,
     const username = req.body.username ?? req.user.username;
     const userId = await db.getUserIdByUsername(username);
     if (userId === null) {
-      return res.status(404).json({ message: 'There is no such a username.' });
+      return res.status(404).json({ message: req.t('There is no such a username.') });
     }
     const middleware = authorizeUser({
       dom: domain,
@@ -330,19 +413,16 @@ router.delete('/deregister', apiRequestLimiter,
   },
   async (req, res) => {
     try {
-      const result = await db.deleteUser(req.conditions.where);
-      if (!isNaN(result) && result > 0) {
-        const { username } = req.conditions.where;
+      const { username } = req.conditions.where;
+      const result = await db.deleteUser(req.conditions.where);      
+      if (!isNaN(result) && result > 0) {    
         await removeRolesForUserInAllDomains(username);
-        updateEventLog(req, { success: `Removed all roles in all domains for the user ${username}.` });
-        return res.status(200).json({ message: 'User has been removed successfully.' });
+        return res.status(200).json({ message: req.t('User has been removed successfully.') });
       }
-      return res.status(404).json({ message: 'There is no such a username.' });
+      return res.status(404).json({ message: req.t('There is no such a username.') });
     } catch (err) {
-      updateEventLog(req, err);
+      updateEventLog(req, { error: 'Error in deregistering a user.', details: err });
       return res.status(500).json({ message: err.message });
     }
   }
 );
-
-module.exports = router;

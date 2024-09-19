@@ -1,12 +1,14 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+const { body } = require('express-validator');
 const db = require('../../utils/database');
 const { generateResetPasswordLink, generateDecryptedObject, generatePasswordHash } = require('../../utils/generators');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { updateEventLog } = require('../../utils/logger');
 const { sendResetPasswordEmail } = require('../../emails/v1/emailService');
 const { userMustExist, testUrlAccessibility, checkRequestValidity } = require('../../utils/validations');
+
 const router = express.Router();
+module.exports = router;
 
 /**
  * @swagger
@@ -52,12 +54,24 @@ const router = express.Router();
 router.post('/reset_token', apiRequestLimiter,
     [
         body('username')
-            .exists().withMessage('Username is required.')
-            .isLength({ min: 5, max: 30 }).withMessage('Username must be between 5 and 30 characters.'),
+            .exists()
+            .withMessage((_, { req }) => req.t('Username is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Username must be a string.'))
+            .bail()
+            .isLength({ min: 5, max: 30 })
+            .withMessage('Username must be between 5 and 30 characters.'),
 
         body('passwordResetPageRedirectURL')
-            .exists().withMessage('Password reset page redirect URL is required.')
-            .custom(testUrlAccessibility).withMessage('The password reset page redirect URL is not a valid url.')
+            .exists()
+            .withMessage((_, { req }) => req.t('Password reset page redirect URL is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Password reset page redirect URL must be a string.'))
+            .bail()
+            .custom(testUrlAccessibility)
+            .withMessage((_, { req }) => req.t('Password reset page redirect URL is not a valid URL.'))
     ],
     checkRequestValidity,
     async (req, res) => {
@@ -73,9 +87,9 @@ router.post('/reset_token', apiRequestLimiter,
                 await sendResetPasswordEmail(req, result.username, result.display_name, result.email, resetPasswordLink);
             }
 
-            return res.status(200).json({ message: 'If an account with the provided username exists, a reset token has been successfully generated and sent to the associated email address.' });
+            return res.status(200).json({ message: req.t('If an account with the provided username exists, a reset token has been successfully generated and sent to the associated email address.') });
         } catch (err) {
-            updateEventLog(req, err);
+            updateEventLog(req, { error: 'Error in sending reset token.', details: err });
             // handle error, maybe record error log
             return res.status(500).json({ message: err.message });
         }
@@ -146,39 +160,61 @@ router.post('/reset_token', apiRequestLimiter,
  */
 router.put('/reset_password', apiRequestLimiter,
     [
-        // Validate username
         body('username')
+            .exists()
+            .withMessage((_, { req }) => req.t('Username is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Username must be a string.'))
+            .bail()
             .isLength({ min: 5, max: 30 })
-            .withMessage('Username must be between 5 and 30 characters.')
+            .withMessage((_, { req }) => req.t('Username must be between 5 and 30 characters.'))
             .matches(/^[a-zA-Z0-9_]+$/)
-            .withMessage('Username can only contain letters, numbers, and underscores.')
-            .custom(userMustExist),
+            .withMessage((_, { req }) => req.t('Username can only contain letters, numbers, and underscores.'))
+            .custom(userMustExist)
+            .toLowerCase(),
 
-        // Validate token
         body('token')
+            .exists()
+            .withMessage((_, { req }) => req.t('Token is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Token must be a string.'))
+            .bail()
             .isLength({ min: 32, max: 32 })
-            .withMessage('Invalid token format.')
+            .withMessage((_, { req }) => req.t('Invalid token format.'))
             .matches(/^[0-9a-fA-F]+$/)
-            .withMessage('Token must be a hexadecimal string.'),
+            .withMessage((_, { req }) => req.t('Token must be a hexadecimal string.')),
 
-        // Validate data (encryptedActivationObject)
         body('data')
+            .exists()
+            .withMessage((_, { req }) => req.t('Data is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Data must be a string.'))
+            .bail()
             .isLength({ min: 32 })
-            .withMessage('Invalid data format.')
+            .withMessage((_, { req }) => req.t('Invalid data format.'))
             .matches(/^[0-9a-fA-F]+$/)
-            .withMessage('Data must be a hexadecimal string.'),
+            .withMessage((_, { req }) => req.t('Data must be a hexadecimal string.')),
 
         body('password')
+            .exists()
+            .withMessage((_, { req }) => req.t('Password is required.'))
+            .bail()
+            .isString()
+            .withMessage((_, { req }) => req.t('Password must be a string.'))
+            .bail()
             .isLength({ min: 8, max: 30 })
-            .withMessage('Password must be between 8 and 30 characters.')
+            .withMessage((_, { req }) => req.t('Password must be between 8 and 30 characters.'))
             .matches(/[A-Z]/)
-            .withMessage('Password must contain at least one uppercase letter')
+            .withMessage((_, { req }) => req.t('Password must contain at least one uppercase letter.'))
             .matches(/[a-z]/)
-            .withMessage('Password must contain at least one lowercase letter')
+            .withMessage((_, { req }) => req.t('Password must contain at least one lowercase letter.'))
             .matches(/\d/)
-            .withMessage('Password must contain at least one digit')
+            .withMessage((_, { req }) => req.t('Password must contain at least one digit.'))
             .matches(/[`~!@#$%^&*()-_=+{}|\\[\]:";'<>?,./]/)
-            .withMessage('Password must contain at least one symbol')
+            .withMessage((_, { req }) => req.t('Password must contain at least one latin symbol.')),
     ],
     checkRequestValidity,
     async (req, res) => {
@@ -196,15 +232,13 @@ router.put('/reset_password', apiRequestLimiter,
             var isPasswordReset = await db.resetPassword(user);
 
             if (isPasswordReset === true) {
-                return res.status(200).json({ message: 'Password is reset.' });
+                return res.status(200).json({ message: req.t('Password has been reset.') });
             } else {
-                return res.status(417).json({ message: 'Could not reset password.' });
+                return res.status(417).json({ message: req.t("Couldn't reset password.") });
             }
         } catch (err) {
-            updateEventLog(req, err);
+            updateEventLog(req, { error: 'Error in reseting password.', details: err });
             return res.status(500).json({ message: err.message });
         }
     }
 );
-
-module.exports = router;

@@ -26,11 +26,11 @@ const sendEmail = async (req, email, subject, htmlContent) => {
         if(email.endsWith('@example.com'))
             return;
         await sgMail.send(msg);
-        updateEventLog(req, { success: 'Email sent successfully to ' + email});
+        updateEventLog(req, { success: 'Email sent successfully to: ' + email});
     } catch (err) {
-        updateEventLog(req, { error: 'Error sending email to ' + email});
-        updateEventLog(req, msg);
-        updateEventLog(req, err);
+        updateEventLog(req, { error: 'Error sending email to: ' + email});
+        updateEventLog(req, { info: 'The message was:', message: msg});
+        updateEventLog(req, { error: 'Error in sending email.', details: err });
         throw err;
     }
 };
@@ -66,14 +66,12 @@ const sendVerificationEmail = async (req, username, displayName, userEmail, acti
         emailTemplate = emailTemplate.split(placeholder).join(replacements[placeholder]);
     });
 
-
     // Send the email
     try {
         await sendEmail(req, userEmail, 'Verify Your Email', emailTemplate);
-        updateEventLog(req, { success: 'Verification email sent successfully for ' + username});
+        updateEventLog(req, { success: 'Verification email sent successfully for the username: ' + username});
     } catch (err) {
-        updateEventLog(req, { error: 'Error sending verification email.'});
-        updateEventLog(req, err);
+        updateEventLog(req, { error: 'Error in sending verification email.', details: err });
         throw err;
     }
 };
@@ -121,10 +119,9 @@ const sendEmailWithUsernames = async (req, users, userEmail) => {
     // Send the email
     try {
         await sendEmail(req, userEmail, 'List of your accounts', emailTemplate);
-        updateEventLog(req, 'List of emails sent successfully for ' + userEmail);
+        updateEventLog(req, 'List of emails sent successfully for the email: ' + userEmail);
     } catch (err) {
-        updateEventLog(req, { error: 'Error sending usernames email.'});
-        updateEventLog(req, err);
+        updateEventLog(req, { error: 'Error in sending email containing usernames.', details: err });
         throw err;
     }
 };
@@ -164,10 +161,9 @@ const sendResetPasswordEmail = async (req, username, displayName, userEmail, res
     // Send the email
     try {
         await sendEmail(req, userEmail, 'Reset Your password', emailTemplate);
-        updateEventLog(req, { success: 'Reset password email sent successfully for ' + username});
+        updateEventLog(req, { success: 'Reset password email sent successfully for: ' + username});
     } catch (err) {
-        updateEventLog(req, { error: 'Error sending reset password email.'});
-        updateEventLog(req, err);
+        updateEventLog(req, { error: 'Error in sending reset password email.', details: err });
         throw err;
     }
 };

@@ -1,11 +1,13 @@
 const express = require('express');
-const { query, validationResult } = require('express-validator');
+const { query } = require('express-validator');
 const { sendEmailWithUsernames } = require('../../emails/v1/emailService');
 const db = require('../../utils/database');
 const { apiRequestLimiter } = require('../../utils/rateLimit');
 const { updateEventLog } = require('../../utils/logger');
-const { checkRequestValidity } = require('../../utils/validations');
+const { checkRequestValidity, isValidEmail } = require('../../utils/validations');
+
 const router = express.Router();
+module.exports = router;
 
 /**
  * @swagger
@@ -42,9 +44,20 @@ const router = express.Router();
 router.get('/usernames', apiRequestLimiter,
   [
     query('email')
-      .isEmail()
-      .withMessage('Invalid email format.')
-  ], 
+      .exists()
+      .withMessage((_, { req }) => req.t('Email is required.'))
+      .bail()
+      .isLength({ min: 5, max: 255 })
+      .withMessage((_, { req }) => req.t('Email must be between 5 and 255 characters.'))
+      .bail()
+      .custom((value, { req }) => {
+        if (!isValidEmail(value)) {
+          throw new Error(req.t('Invalid email address.'));
+        }
+        return true;
+      })
+      .toLowerCase(),
+  ],
   checkRequestValidity,
   async (req, res) => {
     try {
@@ -53,14 +66,12 @@ router.get('/usernames', apiRequestLimiter,
       // Retrieve usernames associated with the email
       const usernames = await db.getUsernamesByEmail(email);
       if (usernames && usernames.length > 0) {
-            // Send email with the list of usernames
-            await sendEmailWithUsernames(req, usernames, email);
+        // Send email with the list of usernames
+        await sendEmailWithUsernames(req, usernames, email);
       }
-      return res.status(200).json({ message: 'If there are any usernames associated with the provided email address, a list of them has been sent to that email address.' });
+      return res.status(200).json({ message: req.t('If there are any usernames associated with the provided email address, a list of them has been sent to that email address.') });
     } catch (err) {
-      updateEventLog(req, err);
-      return res.status(500).json({ message: 'Internal server error.' });
+      updateEventLog(req, { error: 'Error in GET /usernames.', details: err });
+      return res.status(500).json({ message: req.t('Internal server error.') });
     }
-});
-
-module.exports = router;
+  });

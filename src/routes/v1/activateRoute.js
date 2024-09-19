@@ -7,6 +7,7 @@ const { generateDecryptedObject } = require('../../utils/generators');
 const { updateEventLog } = require('../../utils/logger');
 
 const router = express.Router();
+module.exports = router;
 
 /**
  * @swagger
@@ -84,27 +85,34 @@ const router = express.Router();
  */
 router.get('/activate', apiRequestLimiter,
   [
-    // Validate username
     query('username')
+      .exists()
+      .withMessage((_, { req }) => req.t('Username is required.'))
+      .bail()
       .isLength({ min: 5, max: 30 })
-      .withMessage('Username must be between 5 and 30 characters.')
+      .withMessage((_, { req }) => req.t('Username must be between 5 and 30 characters.'))
       .matches(/^[a-zA-Z0-9_]+$/)
-      .withMessage('Username can only contain letters, numbers, and underscores.')
-      .custom(userMustExist),
+      .withMessage((_, { req }) => req.t('Username can only contain letters, numbers, and underscores.'))
+      .custom(userMustExist)
+      .toLowerCase(),
 
-    // Validate token
     query('token')
+      .exists()
+      .withMessage((_, { req }) => req.t('Token is required.'))
+      .bail()
       .isLength({ min: 32, max: 32 })
-      .withMessage('Invalid token format.')
+      .withMessage((_, { req }) => req.t('Invalid token format.'))
       .matches(/^[0-9a-fA-F]+$/)
-      .withMessage('Token must be a hexadecimal string.'),
+      .withMessage((_, { req }) => req.t('Token must be a hexadecimal string.')),
 
-    // Validate data (encryptedActivationObject)
     query('data')
+      .exists()
+      .withMessage((_, { req }) => req.t('Data is required.'))
+      .bail()
       .isLength({ min: 32 })
-      .withMessage('Invalid data format.')
+      .withMessage((_, { req }) => req.t('Invalid data format.'))
       .matches(/^[0-9a-fA-F]+$/)
-      .withMessage('Data must be a hexadecimal string.')
+      .withMessage((_, { req }) => req.t('Data must be a hexadecimal string.'))
 
   ],
   checkRequestValidity,
@@ -136,18 +144,18 @@ router.get('/activate', apiRequestLimiter,
           return res.redirect(redirectLocation);
         } else if (isActivationLinkValid === false) {
           // RedirectURL is empty or not a valid URL and user is already activated
-          return res.status(202).json({ message: 'Account has been already activated.' });
+          return res.status(202).json({ message: req.t('Account has been already activated.') });
         } else {
           // RedirectURL is empty or not a valid URL
-          return res.status(200).json({ message: 'Account is activated successfully.' });
+          return res.status(200).json({ message: req.t('Account is activated successfully.') });
         }
       } else if (isActivationLinkValid === false) {
-        return res.status(404).json({ message: 'Activation link is invalid.' });
+        return res.status(404).json({ message: req.t('Activation link is invalid.') });
       }
 
-      throw new Exception('Couldn\'t activate a user while the activation link was valid.');
+      throw new Exception(req.t("Couldn't activate a user while the activation link was valid."));
     } catch (err) {
-      updateEventLog(req, err);
+      updateEventLog(req, { error: 'Error in activating user with link.', details: err });
       return res.status(500).json({ message: err.message });
     }
   }
@@ -207,16 +215,23 @@ router.post('/activate-by-code', apiRequestLimiter,
   [
     // Validate username
     body('username')
+      .exists()
+      .withMessage((_, { req }) => req.t('Username is required.'))
+      .bail()
       .isLength({ min: 5, max: 30 })
-      .withMessage('Username must be between 5 and 30 characters.')
+      .withMessage((_, { req }) => req.t('Username must be between 5 and 30 characters.'))
       .matches(/^[a-zA-Z0-9_]+$/)
-      .withMessage('Username can only contain letters, numbers, and underscores.')
-      .custom(userMustExist),
+      .withMessage((_, { req }) => req.t('Username can only contain letters, numbers, and underscores.'))
+      .custom(userMustExist)
+      .toLowerCase(),
 
     // Activation code
     body('activationCode')
+      .exists()
+      .withMessage((_, { req }) => req.t('ActivationCode is required.'))
+      .bail()
       .isLength({ min: 32, max: 64 })
-      .withMessage('Invalid activation code.'),
+      .withMessage((_, { req }) => req.t('ActivationCode is invalid.')),
 
   ],
   checkRequestValidity,
@@ -237,17 +252,15 @@ router.post('/activate-by-code', apiRequestLimiter,
 
       // Database operation and response handling 
       if (isActiveUser === true || result === true) {
-          return res.status(200).json({ message: 'Account is activated successfully.' });
+        return res.status(200).json({ message: req.t('Account is activated successfully.') });
       } else if (isActivationCodeValid === false) {
-        return res.status(404).json({ message: 'Activation link is invalid.' });
+        return res.status(404).json({ message: req.t('Activation link is invalid.') });
       }
 
-      throw new Exception('Couldn\'t activate a user while the activation link was valid.');
+      throw new Exception(req.t("Couldn't activate a user while the activation link was valid."));
     } catch (err) {
-      updateEventLog(req, err);
+      updateEventLog(req, { error: 'Error in activating user using code.', details: err });
       return res.status(500).json({ message: err.message });
     }
   }
 );
-
-module.exports = router;

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { auditLogMiddleware } = require('./auditLogMiddleware');
+const auditLogMiddleware = require('../../utils/logger');
 const registerRoute = require('./registerRoute');
 const activateRoute = require('./activateRoute');
 const sessionRoutes = require('./sessionRoutes');

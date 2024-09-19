@@ -49,4 +49,29 @@ const updateEventLog = async (req, comments) => {
     }
 };
 
-module.exports = { createEventLog, updateEventLog };
+/**
+ * Middleware function to create an audit log for each request.
+ * Captures request details and logs them into the database.
+ * Adds a 'logId' property to the request object for further reference in the request lifecycle.
+ *
+ * @param {object} req - The Express request object.
+ * @param {object} _ - The Express response object.
+ * @param {function} next - The next middleware function in the Express stack.
+ */
+const auditLogMiddleware = async (req, _, next) => {
+    try {
+        const logId = await createEventLog(req);
+        req.logId = logId;
+        next();
+    } catch (err) {
+        console.error(err);
+        next();
+    }
+};
+
+// Default export for auditLogMiddleware
+module.exports = auditLogMiddleware;
+
+// Named exports for createEventLog and updateEventLog
+module.exports.createEventLog = createEventLog;
+module.exports.updateEventLog = updateEventLog;

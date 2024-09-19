@@ -1,10 +1,25 @@
 const { userMustNotExist, userMustExist, testUrlAccessibility, isValidUrl, authenticateToken } = require('../../utils/validations');
 const db = require('../../utils/database');
 const { generateMockUserDB, generateRandomString, generateAuthToken } = require('../../utils/generators');
+const Backend = require('i18next-fs-backend');
+const i18next = require('i18next');
+const path = require('path');
 
 describe('Test validation functions', () => {
 
-    // Ensure the pool is closed after all tests
+    // For translations it is needed to init the i18next
+    beforeAll(async () => {
+        // Initialize i18next for testing without the full app
+        await i18next.use(Backend).init({
+            fallbackLng: 'en',
+            preload: ['en'], // Preload the necessary languages
+            backend: {
+                loadPath: path.join(__dirname, '../locales/{{lng}}.json'), // Path to translation files
+            }
+        });
+    });
+
+    // Ensure the app resources are closed after all tests
     afterAll(async () => {
         await db.closeDBConnections();
     });
@@ -29,19 +44,19 @@ describe('Test validation functions', () => {
         const strangeUserName = generateRandomString(30);
 
         test('userMustNotExist should reject if user exists', async () => {
-            await expect(userMustNotExist(mockUser.username)).rejects.toEqual('Username already exists.');
+            await expect(userMustNotExist(mockUser.username, {req: i18next})).rejects.toEqual('Username already exists.');
         });
 
         test('userMustNotExist should resolve if user does not exist', async () => {
-            await expect(userMustNotExist(strangeUserName)).resolves.toBeUndefined();
+            await expect(userMustNotExist(strangeUserName, {req: i18next})).resolves.toBeUndefined();
         });
 
         test('userMustExist should resolve if user exists', async () => {
-            await expect(userMustExist(mockUser.username)).resolves.toBeUndefined();
+            await expect(userMustExist(mockUser.username, {req: i18next})).resolves.toBeUndefined();
         });
 
         test('userMustExist should reject if user does not exist', async () => {
-            await expect(userMustExist(strangeUserName)).rejects.toEqual('Username does not exist.');
+            await expect(userMustExist(strangeUserName, {req: i18next})).rejects.toEqual('Username does not exist.');
         });
     });
 
@@ -81,7 +96,7 @@ describe('Test validation functions', () => {
         });
 
         test('authenticateToken sends 403 if invalid token is provided', async () => {
-            const req = { headers: { authorization: `Bearer ${invalidToken}` } };
+            const req = { ...i18next, headers: { authorization: `Bearer ${invalidToken}` } };
             const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
             const next = jest.fn();
 
@@ -92,7 +107,7 @@ describe('Test validation functions', () => {
         });
 
         test('authenticateToken sends 401 if no token is provided', async () => {
-            const req = { headers: { authorization: 'Bearer' } };
+            const req = { ...i18next, headers: { authorization: 'Bearer' } };
             const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
             const next = jest.fn();
 
@@ -103,7 +118,7 @@ describe('Test validation functions', () => {
         });
 
         test('authenticateToken sends 401 if no auth header is provided', async () => {
-            const req = { headers: {} };
+            const req = { ...i18next, headers: {} };
             const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
             const next = jest.fn();
 
@@ -114,4 +129,5 @@ describe('Test validation functions', () => {
         });
 
     });
+    
 });

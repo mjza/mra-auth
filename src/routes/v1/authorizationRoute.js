@@ -7,6 +7,7 @@ const { listRolesForUserInDomains } = require('../../casbin/casbinSingleton');
 const customDataStore = require('../../utils/customDataStore');
 
 const router = express.Router();
+module.exports = router;
 
 /**
  * Middleware array for validating authorization request parameters.
@@ -23,17 +24,44 @@ const router = express.Router();
  * If all validations pass, control is passed to the next middleware in the chain.
  */
 const validateAuthorizationRequest = [
-    body('dom').isString().withMessage('Domain (dom) must be a string').notEmpty().withMessage('Domain (dom) is required'),
-    body('obj').isString().withMessage('Object (obj) must be a string').notEmpty().withMessage('Object (obj) is required'),
-    body('act').isString().withMessage('Action (act) must be a string').notEmpty().withMessage('Action (act) is required'),
-    body('attrs').optional().isObject().withMessage('Attributes (attrs) must be a JSON object if provided'),
+    body('dom')
+        .notEmpty()
+        .withMessage((_, { req }) => req.t('Domain (dom) is required'))
+        .bail()
+        .isString()
+        .withMessage((_, { req }) => req.t('Domain (dom) must be a string')),
+
+    body('obj')
+        .notEmpty()
+        .withMessage((_, { req }) => req.t('Object (obj) is required'))
+        .bail()
+        .isString()
+        .withMessage((_, { req }) => req.t('Object (obj) must be a string')),
+
+    body('act')
+        .notEmpty()
+        .withMessage((_, { req }) => req.t('Action (act) is required'))
+        .bail()
+        .isString()
+        .withMessage((_, { req }) => req.t('Action (act) must be a string')),
+
+    body('attrs')
+        .optional()
+        .isObject()
+        .withMessage((_, { req }) => req.t('Attributes (attrs) must be a JSON object if provided')),
+
     (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            updateEventLog(req, errors);
-            return res.status(400).json({ errors: errors.array() });
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                updateEventLog(req, { error: 'Validation errors.', details: errors });
+                return res.status(400).json({ errors: errors.array() });
+            }
+            next();
+        } catch (err) {
+            updateEventLog(req, { error: 'An error occurred while validating auth elements.', details: err });
+            return res.status(500).json({ message: err.message });
         }
-        next();
     }
 ];
 
@@ -109,16 +137,13 @@ async function authorize(req, res, next) {
         const authorized = await enforcer.enforce(sub, dom, obj, act, attrs);
 
         if (!authorized) {
-            let message = 'User is not authorized.';
-            updateEventLog(req, { error: message });
-            return res.status(403).json({ message });
+            updateEventLog(req, { error: 'User is not authorized.' });
+            return res.status(403).json({ message: req.t('User is not authorized.') });
         }
         next();
-    } catch (error) {
-        let message = 'An error occurred while processing your request.'
-        updateEventLog(req, message);
-        updateEventLog(req, error);
-        return res.status(500).json({ message });
+    } catch (err) {
+        updateEventLog(req, { error: 'An error occurred while processing the request for authorization.', details: err });
+        return res.status(500).json({ message: err.message });
     }
 }
 
@@ -181,10 +206,13 @@ router.post('/authorize',
     authenticateUser,
     authorize,
     async (req, res) => {
-        const roles = await listRolesForUserInDomains(req.user.username);
-        const conditions = customDataStore.getData();
-        res.json({ user: req.user, roles, conditions });
+        try {
+            const roles = await listRolesForUserInDomains(req.user.username);
+            const conditions = customDataStore.getData();
+            res.json({ user: req.user, roles, conditions });
+        } catch (err) {
+            updateEventLog(req, { error: 'An error occurred in /authorize request.', details: err });
+            return res.status(500).json({ message: err.message });
+        }
     }
 );
-
-module.exports = router;
