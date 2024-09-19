@@ -60,12 +60,12 @@ module.exports = router;
 router.get('/domain-roles', apiRequestLimiter,
     [
         query('role')
-            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('If you provide the role, it must be a string.')),
 
         query('domain')
-            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('Domain must be a string.'))
             .bail()
@@ -149,7 +149,7 @@ router.get('/domain-roles', apiRequestLimiter,
 router.get('/my-roles', apiRequestLimiter,
     [
         query('domain')
-            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('Domain must be a string.'))
             .bail()
@@ -235,7 +235,7 @@ router.get('/my-roles', apiRequestLimiter,
 router.get('/user-roles', apiRequestLimiter,
     [
         query('username')
-            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('If you provide a username, it must be a string.'))
             .bail()
@@ -246,7 +246,7 @@ router.get('/user-roles', apiRequestLimiter,
             .toLowerCase(),
 
         query('domain')
-            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('Domain must be a string.'))
             .bail()
@@ -357,7 +357,7 @@ router.get('/user-roles', apiRequestLimiter,
 router.post('/user-role', apiRequestLimiter,
     [
         body('username')
-            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('If you provide a username, it must be a string.'))
             .bail()
@@ -378,7 +378,7 @@ router.post('/user-role', apiRequestLimiter,
             .withMessage((_, { req }) => req.t('Role must not exceed 255 characters.')),
 
         body('domain')
-            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .default('0')
             .isString()
             .withMessage((_, { req }) => req.t('Domain must be a string.'))
@@ -478,7 +478,7 @@ router.post('/user-role', apiRequestLimiter,
 router.delete('/user-role', apiRequestLimiter,
     [
         body('username')
-            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('If you provide a username, it must be a string.'))
             .bail()
@@ -499,7 +499,7 @@ router.delete('/user-role', apiRequestLimiter,
             .withMessage((_, { req }) => req.t('Role must not exceed 255 characters.')),
 
         body('domain')
-            .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .default('0')
             .isString()
             .withMessage((_, { req }) => req.t('Domain must be a string.'))
@@ -630,7 +630,7 @@ router.delete('/user-role', apiRequestLimiter,
 router.post('/policies',
     [
         body('subject')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('Subject is optional and can be string or null.')),
 
@@ -650,27 +650,27 @@ router.post('/policies',
             }),
 
         body('object')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('Object can be string or null.')),
 
         body('action')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null])
             .withMessage((_, { req }) => req.t("Action is optional and can be 'C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', empty string or null.")),
 
         body('effect')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isIn(['allow', 'deny', '', null])
             .withMessage((_, { req }) => req.t("Effect is optional and can be 'allow', 'deny', empty string or null.")),
 
         body('condition')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isIn(['check_relationship', 'check_ownership', 'none', '', null])
             .withMessage((_, { req }) => req.t("Condition is optional and can be one of 'check_relationship', 'check_ownership', 'none', empty string or null.")),
 
         body('attributes')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .custom((value, { req }) => {
                 if (typeof value === 'object') {
                     return true; // Directly pass through objects without attempting to parse
@@ -833,13 +833,13 @@ router.post('/policy',
             .isIn(['allow', 'deny']).withMessage((_, { req }) => req.t('Effect must be either "allow" or "deny".')),
 
         body('condition')
-            .optional({ nullable: true, checkFalsy: true }) // Allows missing or falsy values
+            .optional({ nullable: true, checkFalsy: false })
             .default('none')
             .isIn(['check_relationship', 'check_ownership', 'none'])
             .withMessage((_, { req }) => req.t('Condition must be one of "check_relationship", "check_ownership", or "none".')),
 
         body('attributes')
-            .optional({ nullable: true, checkFalsy: true }) // Allows missing or falsy values
+            .optional({ nullable: true, checkFalsy: false })
             .custom((value, { req }) => {
                 if (typeof value === 'object') {
                     return true; // Directly pass through objects without attempting to parse
@@ -977,7 +977,7 @@ router.post('/policy',
 router.delete('/policies',
     [
         body('subject')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('Subject is optional and can be string or null.')),
 
@@ -997,27 +997,27 @@ router.delete('/policies',
             }),
 
         body('object')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isString()
             .withMessage((_, { req }) => req.t('Object can be string or null.')),
 
         body('action')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isIn(['C', 'R', 'U', 'D', 'GC', 'GR', 'GU', 'GD', '', null])
             .withMessage((_, { req }) => req.t('Action is optional, but can be null, empty string or one of the [C, R, U, D, GC, GR, GU, GD].')),
 
         body('effect')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isIn(['allow', 'deny', '', null])
             .withMessage((_, { req }) => req.t('Effect is optional, but can be null, empty string or one of the [allow, deny].')),
 
         body('condition')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .isIn(['check_relationship', 'check_ownership', 'none', '', null])
             .withMessage((_, { req }) => req.t('Condition is optional, but can be null, empty string or one of the [check_relationship, check_ownership].')),
 
         body('attributes')
-            .optional({ nullable: true, checkFalsy: false }) // Allows missing but doesn't allow falsy values
+            .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
             .custom((value, { req }) => {
                 if (typeof value === 'object') {
                     return true; // Directly pass through objects without attempting to parse

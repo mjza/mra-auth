@@ -130,7 +130,7 @@ describe('Generator Functions', () => {
             expect(user).toHaveProperty('username');
             expect(user).toHaveProperty('email');
             expect(user).toHaveProperty('password', 'Pasword1$');
-            expect(user).toHaveProperty('loginRedirectURL', 'http://localhost:3000/login');
+            expect(user).toHaveProperty('loginRedirectURL', 'http://example.com/');
 
             // Check that the email includes the username
             expect(user.email).toBe(user.email);

@@ -93,7 +93,7 @@ router.post('/register', registerAccountLimiter,
       }),
 
     body('displayName')
-      .optional({ checkFalsy: true }) // Allows missing or falsy values
+      .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
       .isString()
       .withMessage((_, { req }) => req.t('DisplayName must be a string.'))
       .bail()
@@ -102,8 +102,8 @@ router.post('/register', registerAccountLimiter,
 
     body('email')
       .exists()
-      .withMessage((_, { req }) => req.t('Email is required.'))  
-      .bail()    
+      .withMessage((_, { req }) => req.t('Email is required.'))
+      .bail()
       .isString()
       .withMessage((_, { req }) => req.t('Email must be a string.'))
       .bail()
@@ -132,11 +132,11 @@ router.post('/register', registerAccountLimiter,
       .withMessage((_, { req }) => req.t('Password must contain at least one lowercase letter.'))
       .matches(/\d/)
       .withMessage((_, { req }) => req.t('Password must contain at least one digit.'))
-      .matches(/[`~!@#$%^&*()-_=+{}|\\[\]:";'<>?,./]/)
+      .matches(/[`~!@#$%^&*()\-_=+{}|\[\]:";'<>?,.\/\\]/)
       .withMessage((_, { req }) => req.t('Password must contain at least one latin symbol.')),
 
     body('loginRedirectURL')
-      .optional()
+      .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
       .isURL({
         protocols: ['http', 'https'],
         require_protocol: true,
@@ -144,8 +144,13 @@ router.post('/register', registerAccountLimiter,
       })
       .withMessage((_, { req }) => req.t('The login redirect URL must be a valid URL starting with http:// or https://.'))
       .bail()
-      .custom(testUrlAccessibility)
-      .withMessage((_, { req }) => req.t('The login redirect URL is not a valid URL.')),
+      .custom(async (value, { req }) => {
+        const res = await testUrlAccessibility(value);
+        if(res === false){
+          throw new Error(req.t('The login redirect URL is not a valid URL.'));
+        }
+        return true;
+      }),
   ],
   checkRequestValidity,
   async (req, res) => {
@@ -170,7 +175,7 @@ router.post('/register', registerAccountLimiter,
       // Let's use the original username to respect its cases
       const activationLink = generateActivationLink(username, user.activation_code, loginRedirectURL);
 
-      // Update user's updated time to now, to give 5 more timeframe
+      // Update user's updated time to now, to give 5 more days timeframe
       db.updateUserUpdatedAtToNow(username);
 
       // Send verification email
@@ -267,8 +272,11 @@ router.post('/resend-activation', registerAccountLimiter,
       })
       .withMessage((_, { req }) => req.t('The login redirect URL must be a valid URL starting with http:// or https://.'))
       .bail()
-      .custom(testUrlAccessibility)
-      .withMessage((_, { req }) => req.t('The login redirect URL is not a valid URL.')),
+      .custom(async (value, { req }) => {
+        const res = await testUrlAccessibility(value);
+        if(res === false)
+          throw new Error(req.t('The login redirect URL is not a valid URL.'));
+      }),
   ],
   checkRequestValidity,
   async (req, res) => {
@@ -361,7 +369,7 @@ router.post('/resend-activation', registerAccountLimiter,
 router.delete('/deregister', apiRequestLimiter,
   [
     body('username')
-      .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+      .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
       .isString()
       .withMessage((_, { req }) => req.t('If you provide a username, it must be a string.'))
       .bail()
@@ -372,7 +380,7 @@ router.delete('/deregister', apiRequestLimiter,
       .toLowerCase(),
 
     body('domain')
-      .optional({ checkFalsy: false }) // Allows missing but doesn't allow falsy values
+      .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
       .isString()
       .withMessage((_, { req }) => req.t('Domain must be a string.'))
       .bail()
@@ -414,8 +422,8 @@ router.delete('/deregister', apiRequestLimiter,
   async (req, res) => {
     try {
       const { username } = req.conditions.where;
-      const result = await db.deleteUser(req.conditions.where);      
-      if (!isNaN(result) && result > 0) {    
+      const result = await db.deleteUser(req.conditions.where);
+      if (!isNaN(result) && result > 0) {
         await removeRolesForUserInAllDomains(username);
         return res.status(200).json({ message: req.t('User has been removed successfully.') });
       }

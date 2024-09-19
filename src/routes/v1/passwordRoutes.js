@@ -70,8 +70,11 @@ router.post('/reset_token', apiRequestLimiter,
             .isString()
             .withMessage((_, { req }) => req.t('Password reset page redirect URL must be a string.'))
             .bail()
-            .custom(testUrlAccessibility)
-            .withMessage((_, { req }) => req.t('Password reset page redirect URL is not a valid URL.'))
+            .custom(async (value, { req }) => {
+                const res = await testUrlAccessibility(value);
+                if (res === false)
+                    throw new Error(req.t('The login redirect URL is not a valid URL.'));
+            }),
     ],
     checkRequestValidity,
     async (req, res) => {

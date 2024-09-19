@@ -203,7 +203,7 @@ const generateMockUserRoute = () => {
         username: username,
         email: 'info@example.com',
         password: 'Pasword1$',
-        loginRedirectURL: 'http://localhost:3000/login'
+        loginRedirectURL: 'http://example.com/'
     }
 };
 
