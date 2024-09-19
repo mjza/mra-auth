@@ -69,7 +69,7 @@ describe('Test DB functions', () => {
     describe('Blacklist Token Functions', () => {
         const mockTokenData = {
             token: generateRandomString(32),
-            expiry: Math.floor(Date.now() / 1000) + 1 // 1 seconds from now
+            expiry: Math.floor(Date.now() / 1000) + 3 // 3 seconds from now
         };
 
         describe('insertBlacklistToken', () => {
@@ -84,9 +84,6 @@ describe('Test DB functions', () => {
 
         describe('isTokenBlacklisted', () => {
             it('should return true if the token is in the blacklist', async () => {
-                // Wait for 1 second before checking the blacklist status
-                await sleep(1000);
-
                 // Assuming the test token is already inserted from previous test
                 const isExpired = await db.isTokenBlacklisted(mockTokenData.token);
                 expect(isExpired).toBeTruthy();
@@ -97,12 +94,12 @@ describe('Test DB functions', () => {
                 expect(isExpired).toBeFalsy();
             });
 
-            it('should check by inserting new token the old one is deleted after 2 seconds', async () => {
-                await sleep(2000); // Sleep for 2 seconds
+            it('should check by inserting new token the old one is deleted after 3 seconds', async () => {
+                await sleep(3000); // Sleep for 3 seconds
 
                 const newMockTokenData = {
                     token: generateRandomString(32),
-                    expiry: Math.floor(Date.now() / 1000) - 2 // 1 seconds in past from now
+                    expiry: Math.floor(Date.now() / 1000) - 2 // 2 seconds in past from now
                 };
 
                 // must delete expired token immediately after inserting 
