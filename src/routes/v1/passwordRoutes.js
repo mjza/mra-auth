@@ -216,7 +216,7 @@ router.put('/reset_password', apiRequestLimiter,
             .withMessage((_, { req }) => req.t('Password must contain at least one lowercase letter.'))
             .matches(/\d/)
             .withMessage((_, { req }) => req.t('Password must contain at least one digit.'))
-            .matches(/[`~!@#$%^&*()-_=+{}|\\[\]:";'<>?,./]/)
+            .matches(/[`~!@#$%^&*()\-_=+{}|\[\]:";'<>?,.\/\\]/)
             .withMessage((_, { req }) => req.t('Password must contain at least one latin symbol.')),
     ],
     checkRequestValidity,
