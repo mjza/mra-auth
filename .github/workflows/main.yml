@@ -23,6 +23,7 @@ jobs:
       DB_PORT: ${{ secrets.DB_PORT }}
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      X_DEVELOPMENT_TOKEN: ${{ secrets.X_DEVELOPMENT_TOKEN }}
       # Setting an environment variable with the value of a configuration variable
       BASE_URL: ${{ vars.BASE_URL }}
       PORT: ${{ vars.PORT }}
