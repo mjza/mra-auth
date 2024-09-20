@@ -6,6 +6,11 @@ const { generateMockUserRoute } = require('../../utils/generators');
 describe('Test authorization endpoints', () => {
 
     let app;
+
+    const headers = {
+        'x-development-token': process.env.X_DEVELOPMENT_TOKEN,
+    };
+
     beforeAll(async () => {
         app = await createApp();
     });
@@ -17,6 +22,7 @@ describe('Test authorization endpoints', () => {
             mockUser = generateMockUserRoute();
             const res = (await request(app)
                 .post('/v1/register')
+                .set(headers)
                 .send(mockUser)).body;
             if (isNaN(res.userId))
                 throw new Error("Couldn't register a mock user.");
@@ -25,6 +31,7 @@ describe('Test authorization endpoints', () => {
             await db.activateUser(user);
             const authData = (await request(app)
                 .post('/v1/login')
+                .set(headers)
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;
             validToken = `Bearer ${authData.token}`;
         });
@@ -32,15 +39,17 @@ describe('Test authorization endpoints', () => {
         afterAll(async () => {
             const res = (await request(app)
                 .post('/v1/deregister')
-                .send({username: mockUser.username}));
-            if(res.statusCode >= 400){
+                .set(headers)
+                .send({ username: mockUser.username }));
+            if (res.statusCode >= 400) {
                 await db.deleteUserByUsername(mockUser.username);
-            } 
+            }
         });
 
         it('should return 403 as authorization token is missing', async () => {
             const res = await request(app)
                 .post('/v1/authorize')
+                .set(headers)
                 .send({
                     dom: '0',
                     obj: 'mra_users',
@@ -55,6 +64,7 @@ describe('Test authorization endpoints', () => {
         it('should return 403 as authorization token is invalid', async () => {
             const res = await request(app)
                 .post('/v1/authorize')
+                .set(headers)
                 .set('Authorization', validToken + 'x')
                 .send({
                     dom: '0',
@@ -71,6 +81,7 @@ describe('Test authorization endpoints', () => {
 
             const res = await request(app)
                 .post('/v1/authorize')
+                .set(headers)
                 .set('Authorization', validToken)
                 .send({
                     dom: '0',
@@ -96,6 +107,7 @@ describe('Test authorization endpoints', () => {
         it('should return 400 Bad Request for missing required fields', async () => {
             const res = await request(app)
                 .post('/v1/authorize')
+                .set(headers)
                 .set('Authorization', validToken)
                 .send({
                     dom: '',
@@ -126,6 +138,7 @@ describe('Test authorization endpoints', () => {
         it('should return 400 Bad Request for passing wrong types for fields', async () => {
             const res = await request(app)
                 .post('/v1/authorize')
+                .set(headers)
                 .set('Authorization', validToken)
                 .send({
                     dom: 1,
@@ -152,6 +165,7 @@ describe('Test authorization endpoints', () => {
         it('should return 403 Forbidden if the user is not authorized for the action', async () => {
             const res = await request(app)
                 .post('/v1/authorize')
+                .set(headers)
                 .set('Authorization', validToken)
                 .send({
                     dom: '0',

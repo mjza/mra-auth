@@ -1,11 +1,15 @@
 const request = require('supertest');
-const {createApp, closeApp} = require('../../app');
+const { createApp, closeApp } = require('../../app');
 const db = require('../../utils/database');
 const { generateMockUserDB } = require('../../utils/generators');
 
 describe('GET /usernames Endpoint', () => {
 
     let app, mockUser, testUser;
+
+    const headers = {
+        'x-development-token': process.env.X_DEVELOPMENT_TOKEN,
+    };
 
     beforeAll(async () => {
         app = await createApp();
@@ -17,6 +21,7 @@ describe('GET /usernames Endpoint', () => {
     it('should return 200 code', async () => {
         const res = await request(app)
             .get('/v1/usernames')
+            .set(headers)
             .query({
                 email: testUser.email
             });
@@ -28,6 +33,7 @@ describe('GET /usernames Endpoint', () => {
     it('should return 200 code even for incorrect email', async () => {
         const res = await request(app)
             .get('/v1/usernames')
+            .set(headers)
             .query({
                 email: 'x' + testUser.email
             });
@@ -40,12 +46,13 @@ describe('GET /usernames Endpoint', () => {
 
         const res = await request(app)
             .get('/v1/usernames')
+            .set(headers)
             .query({
                 email: 'xyz'
             });
 
         expect(res.statusCode).toBe(400);
-        expect(res.body.errors).toBeDefined();        
+        expect(res.body.errors).toBeDefined();
     });
 
 

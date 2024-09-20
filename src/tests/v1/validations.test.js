@@ -44,19 +44,19 @@ describe('Test validation functions', () => {
         const strangeUserName = generateRandomString(30);
 
         test('userMustNotExist should reject if user exists', async () => {
-            await expect(userMustNotExist(mockUser.username, {req: i18next})).rejects.toEqual('Username already exists.');
+            await expect(userMustNotExist(mockUser.username, { req: i18next })).rejects.toEqual('Username already exists.');
         });
 
         test('userMustNotExist should resolve if user does not exist', async () => {
-            await expect(userMustNotExist(strangeUserName, {req: i18next})).resolves.toBeUndefined();
+            await expect(userMustNotExist(strangeUserName, { req: i18next })).resolves.toBeUndefined();
         });
 
         test('userMustExist should resolve if user exists', async () => {
-            await expect(userMustExist(mockUser.username, {req: i18next})).resolves.toBeUndefined();
+            await expect(userMustExist(mockUser.username, { req: i18next })).resolves.toBeUndefined();
         });
 
         test('userMustExist should reject if user does not exist', async () => {
-            await expect(userMustExist(strangeUserName, {req: i18next})).rejects.toEqual('Username does not exist.');
+            await expect(userMustExist(strangeUserName, { req: i18next })).rejects.toEqual('Username does not exist.');
         });
     });
 
@@ -129,5 +129,5 @@ describe('Test validation functions', () => {
         });
 
     });
-    
+
 });

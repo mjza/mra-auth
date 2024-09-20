@@ -7,6 +7,10 @@ describe('GET /v1/activate Endpoint', () => {
 
   let app, mockUser;
 
+  const headers = {
+    'x-development-token': process.env.X_DEVELOPMENT_TOKEN,
+  };
+
   beforeAll(async () => {
     app = await createApp();
     mockUser = await generateMockUserDB();
@@ -34,6 +38,7 @@ describe('GET /v1/activate Endpoint', () => {
 
     const res = await request(app)
       .get('/v1/activate')
+      .set(headers)
       .query({
         username: testUser.username,
         token: activationObject.token,
@@ -53,6 +58,7 @@ describe('GET /v1/activate Endpoint', () => {
 
     const res = await request(app)
       .get('/v1/activate')
+      .set(headers)
       .query({
         username: testUser.username,
         token: activationObject.token,
@@ -72,6 +78,7 @@ describe('GET /v1/activate Endpoint', () => {
 
     let res = await request(app)
       .get('/v1/activate')
+      .set(headers)
       .query({
         username: testUser.username,
         token: activationObject.token,
@@ -80,6 +87,7 @@ describe('GET /v1/activate Endpoint', () => {
 
     res = await request(app)
       .get('/v1/activate')
+      .set(headers)
       .query({
         username: testUser.username,
         token: activationObject.token,
@@ -97,6 +105,7 @@ describe('GET /v1/activate Endpoint', () => {
   it('should handle invalid activation link', async () => {
     const res = await request(app)
       .get('/v1/activate')
+      .set(headers)
       .query({
         username: 'invalidFormat',
         token: 'invalidFormat',
@@ -112,6 +121,7 @@ describe('GET /v1/activate Endpoint', () => {
 
     const res = await request(app)
       .get('/v1/activate')
+      .set(headers)
       .query({
         username: testUser.username,
         token: activationObject.token,

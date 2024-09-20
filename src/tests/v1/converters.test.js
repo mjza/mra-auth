@@ -103,10 +103,10 @@ describe('Test converters', () => {
                 body: {
                     password: 'secret',
                     email: 'test@example.com',
-                    dateOfBirth: new Date(), 
-                    profilePictureUrl: 'abc', 
+                    dateOfBirth: new Date(),
+                    profilePictureUrl: 'abc',
                     profilePictureThumbnailUrl: 'def',
-                },                
+                },
                 query: {
                     token: 'abcdef',
                     page: 1
@@ -137,10 +137,10 @@ describe('Test converters', () => {
                 body: {
                     password: '****',
                     email: '****',
-                    dateOfBirth: '****', 
-                    profilePictureUrl: '****', 
+                    dateOfBirth: '****',
+                    profilePictureUrl: '****',
                     profilePictureThumbnailUrl: '****',
-                },                
+                },
                 query: {
                     token: '****',
                     page: 1

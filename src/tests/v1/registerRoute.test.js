@@ -13,7 +13,7 @@ describe('POST /v1/register endpoint', () => {
 
   // Utility function to create test requests
   const register = async (data) => await request(app).post('/v1/register').set(headers).send(data);
-  const deregister = async (data) => await request(app).post('/v1/deregister').set(headers).send(data);
+  const deregister = async (data) => await request(app).delete('/v1/deregister').set(headers).send(data);
 
   beforeAll(async () => {
     app = await createApp();
@@ -80,7 +80,7 @@ describe('POST /v1/register endpoint', () => {
     const reservedUsernames = ['super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support',
       'admin', 'admindata', 'officer', 'agent', 'enduser', 'public', 'administrator',
       'manager', 'staff', 'employee'];
-    for(const username of reservedUsernames) { 
+    for (const username of reservedUsernames) {
       mockUser = { username, email: 'test@example.com', password: 'Password123!' };
       const res = await register(mockUser);
       expect(res.statusCode).toBe(400);
