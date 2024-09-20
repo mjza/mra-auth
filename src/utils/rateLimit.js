@@ -36,7 +36,7 @@ const apiRequestLimiter = rateLimit({
     max: 60, // Limit each IP to 30 requests per `window` (here, per 1 minutes)
     message: { message: 'Too many requests from this IP, please try again after 15 minutes.' },
     skip: (req, _) => {
-        if (['development', 'test'].includes(process.env.NODE_ENV) && process.env.X_DEVELOPMENT_TOKEN) {
+        if (process.env.X_DEVELOPMENT_TOKEN) {
             const developmentToken = req.headers['x-development-token'];
             return developmentToken === process.env.X_DEVELOPMENT_TOKEN;
         }
@@ -59,7 +59,7 @@ const authorizationApiRequestLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minutes in milliseconds
     max: 100, // Limit each IP to 30 requests per `window` (here, per 15 minutes)
     message: { message: 'Too many requests from this IP, please try again after 15 minutes.' },
-    skip: (req, res) => {
+    skip: (req, _) => {
         if (process.env.NODE_ENV === 'development') {
             const ip = req.ip || req.connection.remoteAddress;
             return ip === '127.0.0.1' || ip === '::1';
@@ -106,7 +106,7 @@ const registerAccountLimiter = rateLimit({
     max: 5, // limit each IP to 5 requests per windowMs
     message: { message: 'Too many registration requests from this IP, please try again after an hour.' },
     skip: (req, _) => {
-        if (['development', 'test'].includes(process.env.NODE_ENV) && process.env.X_DEVELOPMENT_TOKEN) {
+        if (process.env.X_DEVELOPMENT_TOKEN) {
             const developmentToken = req.headers['x-development-token'];
             return developmentToken === process.env.X_DEVELOPMENT_TOKEN;
         }
