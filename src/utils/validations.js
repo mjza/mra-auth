@@ -215,7 +215,7 @@ const authorizeUser = (extraData) => async (req, res, next) => {
         };
 
         let authRes;
-        if (process.env.NODE_ENV === 'local-test' && req.appInstance) {
+        if ((process.env.NODE_ENV === 'local-test' || process.env.NODE_ENV === 'test') && req.appInstance) {
             const response = await request(req.appInstance)
                 .post('/v1/authorize')
                 .set('Authorization', req.headers['authorization'])
