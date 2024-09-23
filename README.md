@@ -69,3 +69,11 @@ They are needed in the workflow codes that we generated for automatically taggin
 
 `main.yml` is run automatically when we push to main branch. However, after a seccessful push to Heroku, we must run the other workflow in GitHub manually. 
 ![](./images/figure5.png)
+
+## Update nodejs packages
+Use tools like npm-check-updates to automate the process of checking and updating your dependencies:
+
+```bash
+npx npm-check-updates -u
+npm install
+```
