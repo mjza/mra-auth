@@ -127,7 +127,7 @@ const toSnakeCase = (obj) => {
  */
 function convertRequestData(req) {
     // Array of properties to hide
-    const forbiddenProperties = ['password', 'token', 'email', 'firstName', 'middleName', 'lastName', 'dateOfBirth', 'profilePictureUrl', 'profilePictureThumbnailUrl'];
+    const forbiddenProperties = ['password', 'token', 'email', 'firstName', 'middleName', 'lastName', 'dateOfBirth', 'profilePictureUrl', 'profilePictureThumbnailUrl', 'x-development-token'];
 
     const requestData = {
         method: req.method,

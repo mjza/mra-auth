@@ -16,7 +16,7 @@ describe('Test authorization endpoints', () => {
     });
 
     describe('/v1/authorize endpoints', () => {
-        let mockUser, testUser, validToken;
+        let mockUser, testUser, authToken;
 
         beforeAll(async () => {
             mockUser = generateMockUserRoute();
@@ -33,16 +33,17 @@ describe('Test authorization endpoints', () => {
                 .post('/v1/login')
                 .set(headers)
                 .send({ usernameOrEmail: mockUser.username, password: mockUser.password })).body;
-            validToken = `Bearer ${authData.token}`;
+            authToken = `Bearer ${authData.token}`;
         });
 
         afterAll(async () => {
-            const res = (await request(app)
-                .post('/v1/deregister')
+            const res = await request(app)
+                .delete('/v1/deregister')
                 .set(headers)
-                .send({ username: mockUser.username }));
+                .set('Authorization', authToken);
             if (res.statusCode >= 400) {
                 await db.deleteUserByUsername(mockUser.username);
+                console.log(`Couldn't delete the user: '${mockUser.username}'`);
             }
         });
 
@@ -65,7 +66,7 @@ describe('Test authorization endpoints', () => {
             const res = await request(app)
                 .post('/v1/authorize')
                 .set(headers)
-                .set('Authorization', validToken + 'x')
+                .set('Authorization', authToken + 'x')
                 .send({
                     dom: '0',
                     obj: 'mra_users',
@@ -82,7 +83,7 @@ describe('Test authorization endpoints', () => {
             const res = await request(app)
                 .post('/v1/authorize')
                 .set(headers)
-                .set('Authorization', validToken)
+                .set('Authorization', authToken)
                 .send({
                     dom: '0',
                     obj: 'mra_users',
@@ -108,7 +109,7 @@ describe('Test authorization endpoints', () => {
             const res = await request(app)
                 .post('/v1/authorize')
                 .set(headers)
-                .set('Authorization', validToken)
+                .set('Authorization', authToken)
                 .send({
                     dom: '',
                     obj: '',
@@ -139,7 +140,7 @@ describe('Test authorization endpoints', () => {
             const res = await request(app)
                 .post('/v1/authorize')
                 .set(headers)
-                .set('Authorization', validToken)
+                .set('Authorization', authToken)
                 .send({
                     dom: 1,
                     obj: 2.2,
@@ -166,7 +167,7 @@ describe('Test authorization endpoints', () => {
             const res = await request(app)
                 .post('/v1/authorize')
                 .set(headers)
-                .set('Authorization', validToken)
+                .set('Authorization', authToken)
                 .send({
                     dom: '0',
                     obj: 'mra_customers',
