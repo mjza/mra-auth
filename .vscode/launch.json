@@ -37,7 +37,29 @@
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",
             "env": {
-                "NODE_ENV": "development"
+                "NODE_ENV": "local-test"
+            },
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug a Selected Test File",
+            "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
+            "args": [
+                "--runInBand",
+                "--detectOpenHandles",
+                "--verbose",
+                "--bail",
+                "--testPathPattern",
+                "${fileBasename}"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "env": {
+                "NODE_ENV": "local-test"
             },
             "skipFiles": [
                 "<node_internals>/**"

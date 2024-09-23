@@ -11,7 +11,7 @@ const filePath = path.join(__dirname, '../../logs/sequelize.log');
  * Stream for logging Sequelize messages to a file.
  */
 try {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local-test') {
     if (!fs.existsSync(filePath)) {
       fs.writeFileSync(filePath, '');
     } else {
@@ -39,13 +39,13 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   dialect: 'postgres',
   dialectOptions: {
     useUTC: true, // for reading from database
-    ssl: process.env.NODE_ENV !== 'development' ? {
+    ssl: process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'local-test' ? {
       require: true,
       rejectUnauthorized: false
     } : false,
   },
   timezone: '+00:00', // for writing to database
-  logging: process.env.NODE_ENV === 'development' ? logToFileStream : false,
+  logging: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local-test' ? logToFileStream : false,
   hooks: {
     afterConnect: (connection, config) => {
       return new Promise((resolve, reject) => {

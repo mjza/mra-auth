@@ -204,6 +204,24 @@ const getUserByUsername = async (username) => {
 };
 
 /**
+ * Retrieves a user from the database based on the provided userId.
+ *
+ * @param {integer} userId - The userId of the user to retrieve.
+ * @returns {Object|null} The user object if found, null otherwise.
+ */
+const getUserByUserId = async (userId) => {
+  if (isNaN(userId)) {
+    return null;
+  }
+  const user = await MraUsers.findOne({
+    where: { user_id: userId }
+  });
+
+  return user && user.get({ plain: true });
+
+};
+
+/**
  * Retrieves a user ID from the database based on the provided username.
  *
  * @param {string} username - The username of the user to retrieve.
@@ -703,6 +721,7 @@ module.exports = {
   deleteUserByUsername,
   getUserPrivatePictureUrl,
   getUserByUsername,
+  getUserByUserId,
   getUserIdByUsername,
   getUserByUsernameOrEmail,
   getUsernamesByEmail,

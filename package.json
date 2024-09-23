@@ -6,7 +6,7 @@
   "scripts": {
     "start": "cross-env NODE_ENV=development node src/index.js",
     "dev": "cross-env NODE_ENV=development nodemon src/index.js",
-    "local-test": "cross-env NODE_ENV=development jest --detectOpenHandles --verbose --bail",
+    "local-test": "cross-env NODE_ENV=local-test jest --detectOpenHandles --verbose --bail",
     "github-test": "jest --detectOpenHandles --verbose --bail",
     "generate-docs": "jsdoc -c src/config/jsdoc.json"
   },

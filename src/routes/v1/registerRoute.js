@@ -1,5 +1,5 @@
 const express = require('express');
-const { body } = require('express-validator');
+const { body, query } = require('express-validator');
 const db = require('../../utils/database');
 const { sendVerificationEmail } = require('../../emails/v1/emailService');
 const { userMustNotExist } = require('../../utils/validations');
@@ -317,25 +317,22 @@ router.post('/resend-activation', registerAccountLimiter,
  *     tags: [1st]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *                 minLength: 5
- *                 maxLength: 30
- *                 pattern: '^[A-Za-z0-9_]+$'
- *                 description: "Username of the user from whom the role is to be removed. Optional. If not provided, assumes the current user."
- *                 example: "username1"
- *               domain:
- *                 type: string
- *                 description: "The domain from which to remove the role. Optional. If not provided, defaults to '0'."
- *                 example: "1"
- *             required:
+ *     parameters:
+ *       - in: query
+ *         name: username
+ *         schema:
+ *           type: string
+ *           minLength: 5
+ *           maxLength: 30
+ *           pattern: '^[A-Za-z0-9_]+$'
+ *         description: "Username of the user to be removed. Optional. If not provided, assumes the current user."
+ *         example: "username1"
+ *       - in: query
+ *         name: domain
+ *         schema:
+ *           type: string
+ *           description: "The domain from which to remove the user. Optional. If not provided, defaults to '0'. Must be a string containing digits."
+ *         example: "1"
  *     responses:
  *       200:
  *         description: User has been removed successfully.
@@ -368,7 +365,7 @@ router.post('/resend-activation', registerAccountLimiter,
  */
 router.delete('/deregister', apiRequestLimiter,
   [
-    body('username')
+    query('username')
       .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
       .isString()
       .withMessage((_, { req }) => req.t('If you provide a username, it must be a string.'))
@@ -379,7 +376,7 @@ router.delete('/deregister', apiRequestLimiter,
       .withMessage((_, { req }) => req.t('Username can only contain letters, numbers, and underscores.'))
       .toLowerCase(),
 
-    body('domain')
+    query('domain')
       .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
       .isString()
       .withMessage((_, { req }) => req.t('Domain must be a string.'))
@@ -398,9 +395,9 @@ router.delete('/deregister', apiRequestLimiter,
   async (req, res, next) => {
     const roles = await listRolesForUserInDomains(req.user.username);
     const type = getUserType(roles);
-    const domain = (type === 'internal' || !req.body.domain ? '0' : req.body.domain);
-    const customerId = (type === 'internal' || domain !== '0' ? req.body.domain : null);
-    const username = req.body.username ?? req.user.username;
+    const domain = (type === 'internal' || !req.query.domain ? '0' : req.query.domain);
+    const customerId = (type === 'internal' || domain !== '0' ? req.query.domain : null);
+    const username = req.query.username ?? req.user.username;
     const userId = await db.getUserIdByUsername(username);
     if (userId === null) {
       return res.status(404).json({ message: req.t('There is no such a username.') });

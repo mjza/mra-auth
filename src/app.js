@@ -84,8 +84,7 @@ async function createApp() {
     app.use(express.urlencoded({ extended: true }));
 
     // Cookie-parser middleware for parsing cookies
-    app.use(cookieParser())
-
+    app.use(cookieParser());
 
     // This will enable CORS for specific routes
     const defaultUrl = process.env.BASE_URL || localhost;
@@ -128,8 +127,27 @@ async function createApp() {
     await setupCasbinMiddleware();
     app.use(casbinMiddleware);
 
+    // Attach the app instance to the request object in the test environment.
+    // This is used in the `authorizeUser` function during testing to ensure that 
+    // authentication requests are sent to the same app instance rather than making 
+    // external HTTP calls. 
+    // Please note that in tests we create a app for testing our routes.
+    // By using the internal app instance, we simulate the full request lifecycle 
+    // within the test suite, avoiding external dependencies and 
+    // ensuring consistency in testing.
+    app.use(attachAppInstance(app));
+
     // Use routes
     app.use('/v1', v1Routes);
+
+    // Detach the app instance from the request object after all routes.
+    // This is necessary to prevent memory leaks or open handles that could
+    // keep the app reference alive and cause issues during testing.
+    // Specifically, it addresses the following Jest error:
+    // "Jest has detected the following 1 open handle potentially keeping Jest from exiting."
+    // By detaching the app instance, we ensure that all references are removed,
+    // allowing Jest to properly clean up and exit after the tests are completed.
+    app.use(detachAppInstance());
 
     // Alternatively, consider other truthy values
     const activateSwagger = ['true', '1', 'yes'].includes(process.env.ACTIVATE_SWAGGER ? process.env.ACTIVATE_SWAGGER.toLowerCase() : '');
@@ -251,5 +269,46 @@ async function closeApp() {
         console.error('Error closing resources:', error);
     }
 }
+
+/**
+ * Middleware to attach the app instance to the request object in the test environment.
+ * 
+ * This middleware checks if the `NODE_ENV` environment variable is set to 'test' or 'local-test'.
+ * If it is, the `app` instance is attached to the `req` object as `req.appInstance`.
+ * This allows access to the app instance in route handlers and other middlewares
+ * during testing.
+ * 
+ * @param {Object} app - The Express app instance to be attached.
+ * @returns {Function} Middleware function that attaches the app instance to the request.
+ */
+const attachAppInstance = (app) => {
+    return (req, _, next) => {
+        // Check if the environment is related to testing
+        if (process.env.NODE_ENV === 'local-test' || process.env.NODE_ENV === 'test') {
+            req.appInstance = app; // Attach the app instance only in the test environment
+        }
+        next();
+    };
+};
+
+/**
+ * Middleware to remove the app instance from the request object.
+ * 
+ * This middleware checks if the `req.appInstance` exists and deletes it
+ * from the `req` object. This can be used to clean up after tests where
+ * the app instance is no longer needed, avoiding memory leaks or open handles.
+ * 
+ * @returns {Function} Middleware function that removes `appInstance` from the request.
+ */
+const detachAppInstance = () => {
+    return (req, _, next) => {
+        if (req.appInstance) {
+            delete req.appInstance; // Remove the app instance reference from the request object
+        }
+        next();
+    };
+};
+
+
 
 module.exports = { createApp, closeApp };

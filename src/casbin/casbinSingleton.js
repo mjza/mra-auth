@@ -52,7 +52,7 @@ async function initCasbin() {
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    ssl: process.env.NODE_ENV !== 'development' ? {
+    ssl: process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'local-test' ? {
       require: true,
       rejectUnauthorized: false,
     } : false,
@@ -139,17 +139,22 @@ async function setupCasbinMiddleware() {
  * @param {import('express').Response} res - The response object provided by Express.js.
  * @param {import('express').NextFunction} next - The next function in the middleware chain.
  */
-function casbinMiddleware(req, res, next) {
-  if (!enforcerPromiseInstance) {
-    console.error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
-    return res.status(500).send('Internal Server Error');
-  }
+async function casbinMiddleware(req, res, next) {
+  try {
+    if (!enforcerPromiseInstance) {
+      console.error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
+      return res.status(500).send('Internal Server Error');
+    }
 
-  enforcerPromiseInstance.then(enforcer => {
+    // Await the enforcer instance from the promise
+    const enforcer = await enforcerPromiseInstance;
     req.enforcer = enforcer;
     next();
-  }).catch(next);
+  } catch (error) {
+    next(error); // Pass any errors to the error-handling middleware
+  }
 }
+
 
 /**
  * Asynchronously lists roles for a user. This function relies on a globally
@@ -335,9 +340,10 @@ async function addRoleForUserInDomain(username, role, domain) {
     throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
   }
 
-  return enforcerPromiseInstance.then(enforcer => {
-    return addRoleForUserInDomainWithEnforcer(enforcer, username, role, domain);
-  });
+  // Await the promise to get the enforcer instance
+  const enforcer = await enforcerPromiseInstance;
+
+  return await addRoleForUserInDomainWithEnforcer(enforcer, username, role, domain);
 }
 
 /**
@@ -355,9 +361,8 @@ async function removeRoleForUserInDomain(username, role, domain) {
     throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
   }
 
-  return enforcerPromiseInstance.then(enforcer => {
-    return removeRoleForUserInDomainWithEnforcer(enforcer, username, role, domain);
-  });
+  const enforcer = await enforcerPromiseInstance;
+  await removeRoleForUserInDomainWithEnforcer(enforcer, username, role, domain);
 }
 
 /**
@@ -374,9 +379,9 @@ async function removeRolesForUserInDomain(username, domain) {
     throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
   }
 
-  return enforcerPromiseInstance.then(enforcer => {
-    return removeRolesForUserInDomainWithEnforcer(enforcer, username, domain);
-  });
+  const enforcer = await enforcerPromiseInstance;
+  await removeRolesForUserInDomainWithEnforcer(enforcer, username, domain);
+
 }
 
 /**
@@ -392,9 +397,8 @@ async function removeRolesForUserInAllDomains(username) {
     throw new Error('Casbin enforcer is not initialized. Call setupCasbinMiddleware before using this method.');
   }
 
-  return enforcerPromiseInstance.then(enforcer => {
-    return removeRolesForUserInAllDomainsWithEnforcer(enforcer, username);
-  });
+  const enforcer = await enforcerPromiseInstance;
+  await removeRolesForUserInAllDomainsWithEnforcer(enforcer, username);
 }
 
 /**
@@ -429,10 +433,9 @@ async function addPolicyInDomain(sub, dom, obj, act, cond = 'none', attrs = {}, 
   // If no error was thrown, proceed with the policy addition
   const policy = [sub, dom, obj, act, cond, attrsStr, eft];
 
-  return enforcerPromiseInstance.then(async enforcer => {
-    await enforcer.addPolicy(...policy);
-    await enforcer.savePolicy();
-  });
+  const enforcer = await enforcerPromiseInstance;
+  await enforcer.addPolicy(...policy);
+  await enforcer.savePolicy();
 }
 
 /**

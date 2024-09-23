@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const request = require('supertest');
 const axios = require('axios');
 const { Agent } = require('https');
 const { promisify } = require('util');
@@ -213,17 +214,24 @@ const authorizeUser = (extraData) => async (req, res, next) => {
             attrs: extraData.attrs
         };
 
-        const serviceUrl = process.env.BASE_URL + '/v1/authorize';
-
-        const authHeader = req.headers['authorization'];
-
-        const response = await axios.post(serviceUrl, body, {
-            headers: {
-                Authorization: authHeader
-            }
-        });
-
-        const { user, roles, conditions } = response.data;
+        let authRes;
+        if (process.env.NODE_ENV === 'local-test' && req.appInstance) {
+            const response = await request(req.appInstance)
+                .post('/v1/authorize')
+                .set('Authorization', req.headers['authorization'])
+                .send(body);
+            authRes = response.body;
+        } else {
+            const serviceUrl = process.env.BASE_URL + '/v1/authorize';
+            const authHeader = req.headers['authorization'];
+            const response = await axios.post(serviceUrl, body, {
+                headers: {
+                    Authorization: authHeader
+                }
+            });
+            authRes = response.data;
+        }
+        const { user, roles, conditions } = authRes;
         if (!req.logId) {
             const logId = await createEventLog(req, user.userId);
             req.logId = logId;
@@ -234,7 +242,7 @@ const authorizeUser = (extraData) => async (req, res, next) => {
             req.user = user;
             req.roles = roles;
             req.conditions = conditions;
-            await updateEventLog(req, { success: 'User has been authorized.', details: response.data });
+            await updateEventLog(req, { success: 'User has been authorized.', details: authRes });
         }
         next();
     } catch (error) {
