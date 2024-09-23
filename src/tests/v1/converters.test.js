@@ -98,7 +98,8 @@ describe('Test converters', () => {
                 originalUrl: '/api/users/123',
                 headers: {
                     'authorization': 'Bearer xyz123',
-                    'content-type': 'application/json'
+                    'content-type': 'application/json',
+                    'x-development-token': 'abcd'
                 },
                 body: {
                     password: 'secret',
@@ -132,7 +133,8 @@ describe('Test converters', () => {
                 url: '/api/users/123',
                 headers: {
                     'authorization': '****',
-                    'content-type': 'application/json'
+                    'content-type': 'application/json',
+                    'x-development-token': '****'
                 },
                 body: {
                     password: '****',
