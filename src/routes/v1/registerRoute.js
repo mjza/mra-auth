@@ -6,7 +6,7 @@ const { userMustNotExist } = require('../../utils/validations');
 const { registerAccountLimiter, apiRequestLimiter } = require('../../utils/rateLimit');
 const { generateActivationLink, generatePasswordHash } = require('../../utils/generators');
 const { updateEventLog } = require('../../utils/logger');
-const { authenticateUser, authorizeUser, checkRequestValidity, testUrlAccessibility, isValidEmail } = require('../../utils/validations');
+const { authenticateToken, authenticateUser, authorizeUser, checkRequestValidity, testUrlAccessibility, isValidEmail } = require('../../utils/validations');
 const { listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRolesForUserInAllDomains } = require('../../casbin/casbinSingleton');
 
 const router = express.Router();
@@ -391,7 +391,7 @@ router.delete('/deregister', apiRequestLimiter,
       })
   ],
   checkRequestValidity,
-  authenticateUser,
+  authenticateToken,
   async (req, res, next) => {
     const roles = await listRolesForUserInDomains(req.user.username);
     const type = getUserType(roles);

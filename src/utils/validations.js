@@ -220,16 +220,29 @@ const authorizeUser = (extraData) => async (req, res, next) => {
                 .post('/v1/authorize')
                 .set('Authorization', req.headers['authorization'])
                 .send(body);
+            if (response.status >= 400) {
+                return res.status(response.status).json(response.body);
+            }
             authRes = response.body;
         } else {
-            const serviceUrl = process.env.BASE_URL + '/v1/authorize';
-            const authHeader = req.headers['authorization'];
-            const response = await axios.post(serviceUrl, body, {
-                headers: {
-                    Authorization: authHeader
+            try {
+                const serviceUrl = process.env.BASE_URL + '/v1/authorize';
+                const authHeader = req.headers['authorization'];
+                const response = await axios.post(serviceUrl, body, {
+                    headers: {
+                        Authorization: authHeader
+                    }
+                });
+                authRes = response.data;
+            } catch (err) {
+                if (err.response) {
+                    // Relay the entire response from the external service
+                    return res.status(err.response.status).json(err.response.data);
                 }
-            });
-            authRes = response.data;
+                await updateEventLog(req, { error: 'Error in authorize user.', details: err });
+                // Default to a 500 status code if no specific response is available
+                return res.sendStatus(500);
+            }
         }
         const { user, roles, conditions } = authRes;
         if (!req.logId) {
@@ -245,12 +258,8 @@ const authorizeUser = (extraData) => async (req, res, next) => {
             await updateEventLog(req, { success: 'User has been authorized.', details: authRes });
         }
         next();
-    } catch (error) {
-        await updateEventLog(req, { error: 'Error in authorize user.', details: error });
-        if (error.response) {
-            // Relay the entire response from the external service
-            return res.status(error.response.status).json(error.response.data);
-        }
+    } catch (err) {
+        await updateEventLog(req, { error: 'Error in authorize user.', details: err });
         // Default to a 500 status code if no specific response is available
         return res.sendStatus(500);
     }
