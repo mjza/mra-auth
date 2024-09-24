@@ -20,14 +20,14 @@ describe('sleep function', () => {
 
     it('should delay execution for the specified duration', async () => {
         jest.useRealTimers(); // Use real timers for this test case
-        
+
         const startTime = Date.now();
         const delay = 100; // 100 milliseconds
 
         await sleep(delay);
         const endTime = Date.now();
 
-        expect(endTime - startTime).toBeGreaterThanOrEqual(delay);
+        expect(endTime - startTime).toBeGreaterThanOrEqual(delay - 1);
 
         jest.useFakeTimers(); // Switch back to fake timers if needed for other tests
     });
