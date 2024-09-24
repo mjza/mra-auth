@@ -6,7 +6,7 @@ const { userMustNotExist } = require('../../utils/validations');
 const { registerAccountLimiter, apiRequestLimiter } = require('../../utils/rateLimit');
 const { generateActivationLink, generatePasswordHash } = require('../../utils/generators');
 const { updateEventLog } = require('../../utils/logger');
-const { authenticateToken, authenticateUser, authorizeUser, checkRequestValidity, testUrlAccessibility, isValidEmail } = require('../../utils/validations');
+const { authenticateToken, authorizeUser, checkRequestValidity, testUrlAccessibility, isValidEmail } = require('../../utils/validations');
 const { listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRolesForUserInAllDomains } = require('../../casbin/casbinSingleton');
 
 const router = express.Router();
@@ -367,9 +367,6 @@ router.delete('/deregister', apiRequestLimiter,
   [
     query('username')
       .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
-      .isString()
-      .withMessage((_, { req }) => req.t('If you provide a username, it must be a string.'))
-      .bail()
       .isLength({ min: 5, max: 30 })
       .withMessage((_, { req }) => req.t('Username must be between 5 and 30 characters.'))
       .matches(/^[A-Za-z0-9_]+$/)
@@ -378,13 +375,10 @@ router.delete('/deregister', apiRequestLimiter,
 
     query('domain')
       .optional({ nullable: true, checkFalsy: false }) // if a field is present but has a value considered falsy (like null, "", 0, false, or NaN), it will still be passed for validation except null.
-      .isString()
-      .withMessage((_, { req }) => req.t('Domain must be a string.'))
-      .bail()
       .custom((value, { req }) => {
         // Check if the value is numeric in string form
         if (!/^\d+$/.test(value)) {
-          throw new Error(req.t('Domain must be a string containing digits.'));
+          throw new Error(req.t('Domain must be a string containing only digits.'));
         }
 
         return true; // Passes validation

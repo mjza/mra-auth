@@ -1,7 +1,7 @@
 const request = require('supertest');
 const { createApp, closeApp } = require('../../app');
 const db = require('../../utils/database');
-const { generateMockUserRoute } = require('../../utils/generators');
+const { generateMockUserRoute, generateMockUserDB } = require('../../utils/generators');
 
 describe('Test register route', () => {
 
@@ -13,6 +13,7 @@ describe('Test register route', () => {
 
   // Utility function to create test requests
   const register = async (data) => await request(app).post('/v1/register').set(headers).send(data);
+  const activate = async (data) => await request(app).post('/v1/resend-activation').set(headers).send(data);
   const deregister = async (authToken, params) => await request(app).delete('/v1/deregister').set(headers).set('Authorization', authToken).query(params);
 
   beforeAll(async () => {
@@ -284,6 +285,78 @@ describe('Test register route', () => {
     });
   });
 
+  describe('Test POST /v1/resend-activation endpoint', () => {
+    let res;
+
+    it('should return 400 for missing usernameOrEmail', async () => {
+      res = await activate({ loginRedirectURL: 'http://example.com' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: 'Username or email is required.' })])
+      );
+    });
+
+    it('should return 400 for non-string usernameOrEmail', async () => {
+      res = await activate({ usernameOrEmail: 12345, loginRedirectURL: 'http://example.com' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: 'Username or email must be a string.' })])
+      );
+    });
+
+    it('should return 400 for invalid email format', async () => {
+      res = await activate({ usernameOrEmail: 'invalid@Email', loginRedirectURL: 'http://example.com' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: 'Invalid email address.' })])
+      );
+    });
+
+    it('should return 400 for short username', async () => {
+      res = await activate({ usernameOrEmail: 'abc', loginRedirectURL: 'http://example.com' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: 'Username must be between 5 and 30 characters.' })])
+      );
+    });
+
+    it('should return 400 for invalid username characters', async () => {
+      res = await activate({ usernameOrEmail: 'invalid*user', loginRedirectURL: 'http://example.com' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: 'Username can only contain letters, numbers, and underscores.' })])
+      );
+    });
+
+    it('should return 400 for invalid loginRedirectURL format', async () => {
+      res = await activate({ usernameOrEmail: 'validUsername', loginRedirectURL: 'invalid-url' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: 'The login redirect URL must be a valid URL starting with http:// or https://.' })])
+      );
+    });
+
+    it('should return 400 for non-accessible loginRedirectURL', async () => {
+      res = await activate({ usernameOrEmail: 'validUsername', loginRedirectURL: 'https://thisurldoesnotexist1234.com' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: 'The login redirect URL is not a valid URL.' })])
+      );
+    });
+
+    it('should return 200 for valid inputs (username)', async () => {
+      res = await activate({ usernameOrEmail: 'validUser123', loginRedirectURL: 'http://example.com' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.message).toBe('A new activation link has been sent if there is a registered user related to the provided email or username.');
+    });
+
+    it('should return 200 for valid inputs (email)', async () => {
+      res = await activate({ usernameOrEmail: 'a@b.com', loginRedirectURL: 'http://example.com' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.message).toBe('A new activation link has been sent if there is a registered user related to the provided email or username.');
+    });
+  });
+
   describe('Test DELETE /v1/deregister endpoint', () => {
     let res, user, authorization;
 
@@ -307,22 +380,46 @@ describe('Test register route', () => {
       authorization = `Bearer ${authData.token}`;
     });
 
-    it('should return 401 for deregistering with no auth', async () => {      
+    it('should return 401 for deregistering with no auth', async () => {
       res = await deregister('');
       expect(res.statusCode).toBe(401);
     });
 
-    it('should return 403 for deregistering other user in a domain', async () => {      
-      res = await deregister(authorization, {username: 'superuser', domain: '0'});
+    it('should return 400 for providing am integer usernamer', async () => {
+      res = await deregister(authorization, { username: 4, domain: '0' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: 'Username must be between 5 and 30 characters.' })])
+      );
+    });
+
+    it('should return 400 for providing am integer usernamer', async () => {
+      res = await deregister(authorization, { username: 'abcd%', domain: '0' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: 'Username can only contain letters, numbers, and underscores.' })])
+      );
+    });
+
+    it('should return 400 for providing am integer usernamer', async () => {
+      res = await deregister(authorization, { username: 'abcd5', domain: 'a1' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ msg: 'Domain must be a string containing only digits.' })])
+      );
+    });
+
+    it('should return 403 for deregistering other users in a domain', async () => {
+      res = await deregister(authorization, { username: 'superuser', domain: '0' });
       expect(res.statusCode).toBe(403);
     });
 
-    it('should return 403 for deregistering other user without a domain', async () => {      
-      res = await deregister(authorization, {username: 'superuser'});
+    it('should return 403 for deregistering other users even without a domain', async () => {
+      res = await deregister(authorization, { username: 'superuser' });
       expect(res.statusCode).toBe(403);
     });
 
-    it('should return 200 for successful deregistration', async () => {      
+    it('should return 200 for successful deregistration', async () => {
       res = await deregister(authorization);
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual({
