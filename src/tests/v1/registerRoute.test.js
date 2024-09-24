@@ -1,7 +1,8 @@
 const request = require('supertest');
 const { createApp, closeApp } = require('../../app');
 const db = require('../../utils/database');
-const { generateMockUserRoute, generateMockUserDB } = require('../../utils/generators');
+const { generateMockUserRoute } = require('../../utils/generators');
+const { sleep } = require('../../utils/miscellaneous');
 
 describe('Test register route', () => {
 
@@ -275,10 +276,12 @@ describe('Test register route', () => {
         password: 'pass' // Invalid password
       };
 
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 5; i++) {
         res = await request(app).post('/v1/register').send(mockUser);
+        expect(res.statusCode).toBe(400);
       }
 
+      res = await request(app).post('/v1/register').send(mockUser);
       expect(res.statusCode).toBe(429);
       expect(res.body.message).toBeDefined();
       expect(res.body.message).toBe('Too many registration requests from this IP, please try again after an hour.');
@@ -355,6 +358,18 @@ describe('Test register route', () => {
       expect(res.statusCode).toBe(200);
       expect(res.body.message).toBe('A new activation link has been sent if there is a registered user related to the provided email or username.');
     });
+
+    it('should return 429 after 6 attempts', async () => {
+      // As we hit the maximum requests with this ip,
+      // we must wait for 1 hour to make sure rate limit works.
+      // But in practice we cannot wait for 1 hour and then do this test.
+      for (let i = 0; i < 6; i++) {
+        res = await request(app).post('/v1/resend-activation').send({ usernameOrEmail: 'a@b.com', loginRedirectURL: 'http://example.com' });
+      }
+      expect(res.statusCode).toBe(429);
+      expect(res.body.message).toBeDefined();
+      expect(res.body.message).toBe('Too many registration requests from this IP, please try again after an hour.');
+    });
   });
 
   describe('Test DELETE /v1/deregister endpoint', () => {
@@ -419,6 +434,17 @@ describe('Test register route', () => {
       expect(res.statusCode).toBe(403);
     });
 
+    it('should return 429 after 60 attempts', async () => {
+      for (let i = 0; i < 60; i++) {
+        res = await request(app).delete('/v1/deregister').set('Authorization', authorization).query({ username: 'abcde' });
+        expect(res.statusCode).toBe(404);
+      }
+      res = await request(app).delete('/v1/deregister').set('Authorization', authorization).query({ username: 'abcde' });
+      expect(res.statusCode).toBe(429);
+      expect(res.body.message).toBeDefined();
+      expect(res.body.message).toBe('Too many requests from this IP, please try again after 1 minutes.');
+    });
+
     it('should return 200 for successful deregistration', async () => {
       res = await deregister(authorization);
       expect(res.statusCode).toBe(200);
@@ -426,7 +452,5 @@ describe('Test register route', () => {
         message: 'User has been removed successfully.'
       });
     });
-
-
   });
 });

@@ -1,9 +1,6 @@
 const db = require('../../utils/database');
 const { generateMockUserDB, generateRandomString } = require('../../utils/generators');
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+const { sleep } = require('../../utils/miscellaneous');
 
 describe('Test DB functions', () => {
 
@@ -150,7 +147,7 @@ describe('Test DB functions', () => {
             expect(usersByEmail.length).toBeGreaterThan(0);
             const foundByEmail = usersByEmail.find(user => user.username === mockUser.username.toLowerCase());
 
-            
+
             expect(userByUsername[0].username).toBe(mockUser.username.toLowerCase());
             expect(userByUsername[0].email).toBe(mockUser.email.toLowerCase());
             expect(foundByEmail.username).toBe(mockUser.username.toLowerCase());
@@ -228,19 +225,19 @@ describe('Test DB functions', () => {
 
     describe('resetPassword', () => {
         it('should set a new password_hash for the user', async () => {
-            const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.reset_token, passwordHash: mockUser.passwordHash + 'x'};
+            const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.reset_token, passwordHash: mockUser.passwordHash + 'x' };
             const resetResult = await db.resetPassword(userToResetItsPassowrd);
             expect(resetResult).toBeTruthy();
         });
 
         it('should not set a new password_hash for wrong username', async () => {
-            const userToResetItsPassowrd = { username: insertedUser.username + 'x', resetToken: insertedUser.reset_token, passwordHash: mockUser.passwordHash + 'x'};
+            const userToResetItsPassowrd = { username: insertedUser.username + 'x', resetToken: insertedUser.reset_token, passwordHash: mockUser.passwordHash + 'x' };
             const resetResult = await db.resetPassword(userToResetItsPassowrd);
             expect(resetResult).toBeFalsy();
         });
 
         it('should not set a new password_hash for wrong reset token', async () => {
-            const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.reset_token + 'x', passwordHash: mockUser.passwordHash + 'x'};
+            const userToResetItsPassowrd = { username: insertedUser.username, resetToken: insertedUser.reset_token + 'x', passwordHash: mockUser.passwordHash + 'x' };
             const resetResult = await db.resetPassword(userToResetItsPassowrd);
             expect(resetResult).toBeFalsy();
         });

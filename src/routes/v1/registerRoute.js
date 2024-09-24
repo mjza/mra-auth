@@ -82,7 +82,6 @@ router.post('/register', registerAccountLimiter,
       .withMessage((_, { req }) => req.t('Username can only contain letters, numbers, and underscores.'))
       .custom(userMustNotExist)
       .custom((value, { req }) => {
-        // TODO: Make a test for it.
         const reservedUsernames = ['super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support',
           'admin', 'admindata', 'officer', 'agent', 'enduser', 'public', 'administrator',
           'manager', 'staff', 'employee', 'user'];
