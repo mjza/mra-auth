@@ -218,6 +218,9 @@ router.post('/activate-by-code', apiRequestLimiter,
       .exists()
       .withMessage((_, { req }) => req.t('Username is required.'))
       .bail()
+      .isString()
+      .withMessage((_, { req }) => req.t('Username must be a string.'))
+      .bail()
       .isLength({ min: 5, max: 30 })
       .withMessage((_, { req }) => req.t('Username must be between 5 and 30 characters.'))
       .matches(/^[a-zA-Z0-9_]+$/)
@@ -229,6 +232,9 @@ router.post('/activate-by-code', apiRequestLimiter,
     body('activationCode')
       .exists()
       .withMessage((_, { req }) => req.t('ActivationCode is required.'))
+      .bail()
+      .isString()
+      .withMessage((_, { req }) => req.t('ActivationCode must be a string.'))
       .bail()
       .isLength({ min: 32, max: 64 })
       .withMessage((_, { req }) => req.t('ActivationCode is invalid.')),
@@ -242,22 +248,25 @@ router.post('/activate-by-code', apiRequestLimiter,
 
       // Now you can use the activationCode for further processing
       const user = { username, activationCode };
-
+      const isActivedUser = await db.isActiveUser(username);
+      if (isActivedUser) {
+        return res.status(202).json({ message: req.t('Account has been already activated.') });
+      }
       // first check if the user has not been already activated
-      var isActivationCodeValid = await db.isActivationCodeValid(user);
-      var result = false;
+      const isActivationCodeValid = await db.isActivationCodeValid(user);
+      let result = false;
       if (isActivationCodeValid)
         result = await db.activateUser(user);
-      var isActiveUser = await db.isActiveUser(username);
+      const isActiveUser = await db.isActiveUser(username);
 
       // Database operation and response handling 
       if (isActiveUser === true || result === true) {
         return res.status(200).json({ message: req.t('Account is activated successfully.') });
       } else if (isActivationCodeValid === false) {
-        return res.status(404).json({ message: req.t('Activation link is invalid.') });
+        return res.status(404).json({ message: req.t('Activation code is invalid.') });
       }
 
-      throw new Exception(req.t("Couldn't activate a user while the activation link was valid."));
+      throw new Exception(req.t("Couldn't activate the user while the activation link was valid."));
     } catch (err) {
       updateEventLog(req, { error: 'Error in activating user using code.', details: err });
       return res.status(500).json({ message: err.message });
