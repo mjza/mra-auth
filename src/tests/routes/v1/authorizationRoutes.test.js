@@ -1,7 +1,7 @@
 const request = require('supertest');
-const { createApp, closeApp } = require('../../app');
-const db = require('../../utils/database');
-const { generateMockUserRoute } = require('../../utils/generators');
+const { createApp, closeApp } = require('../../../app');
+const db = require('../../../utils/database');
+const { generateMockUserRoute } = require('../../../utils/generators');
 
 describe('Test authorization endpoints', () => {
 
