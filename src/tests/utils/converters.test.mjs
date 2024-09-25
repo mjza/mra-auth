@@ -11,7 +11,6 @@ describe('Test converters', () => {
         const base64Encrypted = 'eyJpdiI6ImIxNmJmMzYxODkzYTlhODc0NjcxMDkwYTRjOTY5YmE2IiwiY29udGVudCI6Ijc0ZmFhZjk0ZjE4YSJ9';
 
         test('encrypt should return a base64 string', () => {
-            console.log(process.env.SECRET_KEY);
             const encryted = encrypt(rawString, iv);
             expect(encryted).not.toBe(rawString);
             expect(typeof encryted).toBe('string');
