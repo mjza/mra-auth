@@ -8,7 +8,7 @@
     "start": "cross-env NODE_ENV=development node src/index.mjs",
     "dev": "cross-env NODE_ENV=development nodemon src/index.mjs",
     "local-test": "cross-env NODE_ENV=local-test jest --detectOpenHandles --verbose --bail --config=src/config/jest.config.mjs",
-    "github-test": "jest --detectOpenHandles --verbose --bail",
+    "github-test": "jest --detectOpenHandles --verbose --bail --config=src/config/jest.config.mjs",
     "generate-docs": "jsdoc -c src/config/jsdoc.json"
   },
   "keywords": [],
