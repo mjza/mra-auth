@@ -17,7 +17,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/src/index.js",  // Explicitly reference your entry point
+            "program": "${workspaceFolder}/src/index.mjs",  // Explicitly reference your entry point
             "env": {
                 "NODE_ENV": "development"
             },
