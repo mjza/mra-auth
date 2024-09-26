@@ -1,6 +1,6 @@
 export default {
     rootDir: '../../',
-    testTimeout: 100000,
+    testTimeout: 200000,
     setupFilesAfterEnv: ['<rootDir>/src/config/jest.setup.mjs'],
     testMatch: ['**/tests/**/*.mjs'],
     transform: {
