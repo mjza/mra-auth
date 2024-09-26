@@ -2,6 +2,37 @@ import { newEnforcer } from 'casbin';
 import TypeORMAdapter from 'typeorm-adapter';
 import { customeEval } from './casbinEvaluation.mjs';
 import { addRoleForUserInDomain as addRoleForUserInDomainWithEnforcer, deletePoliciesForDomainZero, importPoliciesOrRolesFromCSV, listRolesForUserInDomain as listRolesForUserInDomainWithEnforcer, listRolesForUserInDomains as listRolesForUserInDomainsWithEnforcer, listRolesForUser as listRolesForUserWithEnforcer, removeRoleForUserInDomain as removeRoleForUserInDomainWithEnforcer, removeRolesForUserInAllDomains as removeRolesForUserInAllDomainsWithEnforcer, removeRolesForUserInDomain as removeRolesForUserInDomainWithEnforcer } from './casbinRoleManagement.mjs';
+
+/**
+ * @typedef {Object} CasbinEnforcer
+ * @property {function(string, string): Promise<boolean>} hasPolicy Checks if a policy exists.
+ * @property {function(string, string): Promise<void>} removePolicy Removes a policy.
+ */
+
+/**
+ * @typedef {Object} ExpressRequest
+ * @property {Object} body - The body of the request (if any).
+ * @property {Object} query - The query string parameters of the request.
+ * @property {Object} params - The route parameters of the request.
+ * @property {Object} headers - The request headers.
+ * @property {string} method - The HTTP method of the request (e.g., GET, POST).
+ * @property {string} url - The URL of the request.
+ */
+
+/**
+ * @typedef {Object} ExpressResponse
+ * @property {function} send - Sends a response to the client.
+ * @property {function} json - Sends a JSON response to the client.
+ * @property {function} status - Sets the HTTP status for the response.
+ * @property {function} redirect - Redirects to a different URL.
+ * @property {function} set - Sets a response header.
+ */
+
+/**
+ * @typedef {function} NextFunction
+ * @description A callback function to move to the next middleware in the chain.
+ */
+
 /**
  * A global instance of a promise that resolves to a Casbin enforcer. This variable
  * is used to ensure that the initialization of the Casbin enforcer through `initCasbin`
@@ -9,7 +40,7 @@ import { addRoleForUserInDomain as addRoleForUserInDomainWithEnforcer, deletePol
  * managing the asynchronous nature of the Casbin enforcer setup and ensures that the
  * enforcer is readily available for middleware and other components of the application.
  *
- * @type {Promise<import('casbin').Enforcer> | undefined}
+ * @type {Promise<CasbinEnforcer> | undefined}
  */
 let enforcerPromiseInstance;
 
@@ -32,7 +63,7 @@ let adapter;
  * purposes and should be adjusted or removed as per your application's requirements.
  *
  * @async
- * @returns {Promise<import('casbin').Enforcer>} A promise that resolves with the initialized Casbin enforcer.
+ * @returns {Promise<CasbinEnforcer>} A promise that resolves with the initialized Casbin enforcer.
  */
 async function initCasbin() {
 
@@ -133,9 +164,9 @@ async function setupCasbinMiddleware() {
  * Internal Server Error response, indicating that the `setupCasbinMiddleware`
  * needs to be called prior to this middleware's use.
  *
- * @param {import('express').Request} req - The request object provided by Express.js.
- * @param {import('express').Response} res - The response object provided by Express.js.
- * @param {import('express').NextFunction} next - The next function in the middleware chain.
+ * @param {ExpressRequest} req - The request object provided by Express.js.
+ * @param {ExpressResponse} res - The response object provided by Express.js.
+ * @param {NextFunction} next - The next function in the middleware chain.
  */
 async function casbinMiddleware(req, res, next) {
   try {

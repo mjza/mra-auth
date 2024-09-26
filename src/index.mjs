@@ -1,12 +1,12 @@
-import './config/config.mjs';
 import { closeApp, createApp } from './app.mjs';
+import './config/config.mjs';
 
 /**
  * A reference to the HTTP server created by Express. This variable is used
  * to store the server instance returned by the `app.listen` method, allowing
  * for operations such as shutting down the server programmatically.
  * 
- * @type {import('http').Server|null}
+ * @type {http.Server|null}
  */
 let server = null;
 

@@ -15,6 +15,13 @@ import { closeDBConnections } from './utils/database.mjs';
 import { checkJSONBody } from './utils/validations.mjs';
 
 /**
+ * @typedef {Object} ExpressApp
+ * @property {function} get
+ * @property {function} post
+ * @property {function} listen
+ */
+
+/**
  * Asynchronously initializes and configures the Express application. This function
  * sets up middleware, routes, and any other required configurations necessary for
  * the application to run. It's designed to be called at the start of the application
@@ -28,7 +35,7 @@ import { checkJSONBody } from './utils/validations.mjs';
  *
  * @async
  * @function createApp
- * @returns {Promise<import('express').Application>} A promise that resolves with the
+ * @returns {Promise<ExpressApp>} A promise that resolves with the
  *                                                   configured Express application
  *                                                   instance. This allows for asynchronous
  *                                                   operations needed during the app's

@@ -3,12 +3,18 @@ import { parse } from 'csv-parse';
 import { getUserDomains } from '../utils/database.mjs';
 
 /**
+ * @typedef {Object} CasbinEnforcer
+ * @property {function(string, string): Promise<boolean>} hasPolicy Checks if a policy exists.
+ * @property {function(string, string): Promise<void>} removePolicy Removes a policy.
+ */
+
+/**
  * Deletes all policies where the domain is '0'.
  * This function iterates over all policies filtered by the domain value '0',
  * and removes each one from the current policy set.
  * After deletion, it saves the policy changes to the storage.
  * 
- * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {CasbinEnforcer} enforcer The Casbin enforcer instance.
  * @returns {Promise<void>} A promise that resolves once all matching policies are deleted and changes are saved.
  */
 async function deletePoliciesForDomainZero(enforcer) {
@@ -27,7 +33,7 @@ async function deletePoliciesForDomainZero(enforcer) {
  * Undefined values within a policy are filtered out before addition.
  * After importing all policies, it saves the policy changes to the storage.
  * 
- * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {CasbinEnforcer} enforcer The Casbin enforcer instance.
  * @param {string} csvFilePath Path to the CSV file containing policies to import.
  * @returns {Promise<void>} A promise that resolves once all policies are imported and changes are saved.
  */
@@ -73,7 +79,7 @@ async function importPoliciesOrRolesFromCSV(enforcer, csvFilePath) {
 
 /**
  * Adds a role to a user within a specific domain.
- * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {CasbinEnforcer} enforcer The Casbin enforcer instance.
  * @param {string} username The username of the user.
  * @param {string} role The role to be added to the user.
  * @param {string} domain The domain within which the role is added.
@@ -88,7 +94,7 @@ async function addRoleForUserInDomain(enforcer, username, role, domain) {
 
 /**
  * Removes a role from a user within a specific domain.
- * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {CasbinEnforcer} enforcer The Casbin enforcer instance.
  * @param {string} username The username of the user.
  * @param {string} role The role to be removed from the user.
  * @param {string} domain The domain within which the role is removed.
@@ -103,7 +109,7 @@ async function removeRoleForUserInDomain(enforcer, username, role, domain) {
 
 /**
  * Removes all roles from a user within a specific domain.
- * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {CasbinEnforcer} enforcer The Casbin enforcer instance.
  * @param {string} username The username of the user.
  * @param {string} domain The domain within which the role is removed.
  */
@@ -117,7 +123,7 @@ async function removeRolesForUserInDomain(enforcer, username, domain) {
 
 /**
  * Removes all roles from a user in all domains.
- * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {CasbinEnforcer} enforcer The Casbin enforcer instance.
  * @param {string} username The username of the user.
  */
 async function removeRolesForUserInAllDomains(enforcer, username) {
@@ -130,7 +136,7 @@ async function removeRolesForUserInAllDomains(enforcer, username) {
 
 /**
  * Checks if a user has a role within a specific domain.
- * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {CasbinEnforcer} enforcer The Casbin enforcer instance.
  * @param {string} username The username of the user.
  * @param {string} role The role to check.
  * @param {string} domain The domain within which to check the role.
@@ -143,7 +149,7 @@ async function hasRoleForUserInDomain(enforcer, username, role, domain) {
 
 /**
  * Lists all roles a user has within a specific domain.
- * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {CasbinEnforcer} enforcer The Casbin enforcer instance.
  * @param {string} username The username of the user.
  * @param {string} domain The domain within which to list the roles.
  * @returns {Promise<string[]>} An array of role names.
@@ -178,7 +184,7 @@ async function listRolesForUserInDomains(enforcer, username) {
 
 /**
  * Lists all roles a user has.
- * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {CasbinEnforcer} enforcer The Casbin enforcer instance.
  * @param {string} username The username of the user.
  * @returns {Promise<string[]>} An array of role names.
  */
@@ -188,7 +194,7 @@ async function listRolesForUser(enforcer, username) {
 
 /**
  * Gets permissions for a given role within a specific domain.
- * @param {import('casbin').Enforcer} enforcer The Casbin enforcer instance.
+ * @param {CasbinEnforcer} enforcer The Casbin enforcer instance.
  * @param {string} role The role to retrieve permissions for.
  * @param {string} domain The domain within which to retrieve permissions.
  * @returns {Promise<string[][]>} An array of permissions.
