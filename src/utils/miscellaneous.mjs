@@ -13,3 +13,23 @@ const sleep = (ms) => {
 };
 
 export { sleep };
+
+/**
+ * Checks if an object is empty.
+ *
+ * An object is considered empty if it has no own enumerable properties.
+ *
+ * @param {Object} obj - The object to check.
+ * @returns {boolean} Returns `true` if the object is empty, otherwise `false`.
+ *
+ * @example
+ *
+ * const obj1 = {};
+ * console.log(isEmptyObject(obj1)); // true
+ *
+ * const obj2 = { key: 'value' };
+ * console.log(isEmptyObject(obj2)); // false
+ */
+const isEmptyObject = (obj) => Object.keys(obj).length === 0;
+
+export { isEmptyObject };

@@ -1,7 +1,7 @@
 import { convertRequestData, decrypt, encrypt, toLowerCamelCase, toSnakeCase } from '../../utils/converters.mjs';
 
 describe('Test converters', () => {
-    
+
     describe('Encryption and Decryption Tests', () => {
 
         process.env.SECRET_KEY = '0a06bb4c1e6d2b8f62ec71166d8997f588b3b3b1c313bbf14fcdfc9ba882827c';
@@ -23,7 +23,7 @@ describe('Test converters', () => {
             expect(decryted).toBe(rawString);
         });
     });
-    
+
     describe('toLowerCamelCase', () => {
         test('should convert keys from snake_case to lowerCamelCase', () => {
             const inputObj = {
@@ -101,18 +101,64 @@ describe('Test converters', () => {
                     'x-development-token': 'abcd'
                 },
                 body: {
-                    password: 'secret',
-                    email: 'test@example.com',
-                    dateOfBirth: new Date(),
-                    profilePictureUrl: 'abc',
-                    profilePictureThumbnailUrl: 'def',
+                    key: 'Bvalue',
+                    anotherKey: 'BanotherValue',
+                    nullValue: null,
+                    falseValue: false,
+                    trueValue: true,
+                    zero: 0,
+                    negative: -123,
+                    posetive: 456,
+                    float: 89.5623,
+                    password: '1abc',
+                    token: '2def',
+                    email: 'a@b.com',
+                    firstName: 'John',
+                    middleName: null,
+                    lastName: 'Doh',
+                    dateOfBirth: new Date('1985-05-15'),
+                    profilePictureUrl: 'https://abc.com/g.jpg',
+                    profilePictureThumbnailUrl: 'https://example.com/h.bmp'
                 },
                 query: {
-                    token: 'abcdef',
-                    page: 1
+                    key: 'Qvalue',
+                    anotherKey: 'QanotherValue',
+                    nullValue: null,
+                    falseValue: false,
+                    trueValue: true,
+                    zero: 0,
+                    negative: -123,
+                    posetive: 456,
+                    float: 89.5623,
+                    password: '1abc',
+                    token: '2def',
+                    email: 'a@b.com',
+                    firstName: 'John',
+                    middleName: null,
+                    lastName: 'Doh',
+                    dateOfBirth: new Date('1985-05-15'),
+                    profilePictureUrl: 'https://abc.com/g.jpg',
+                    profilePictureThumbnailUrl: 'https://example.com/h.bmp'
                 },
                 params: {
-                    id: '123'
+                    key: 'Pvalue',
+                    anotherKey: 'PanotherValue',
+                    nullValue: null,
+                    falseValue: false,
+                    trueValue: true,
+                    zero: 0,
+                    negative: -123,
+                    posetive: 456,
+                    float: 89.5623,
+                    password: '1abc',
+                    token: '2def',
+                    email: 'a@b.com',
+                    firstName: 'John',
+                    middleName: null,
+                    lastName: 'Doh',
+                    dateOfBirth: new Date('1985-05-15'),
+                    profilePictureUrl: 'https://abc.com/g.jpg',
+                    profilePictureThumbnailUrl: 'https://example.com/h.bmp'
                 },
                 ip: '127.0.0.1',
                 hostname: 'localhost',
@@ -121,33 +167,94 @@ describe('Test converters', () => {
                 cookies: {
                     sessionId: 'abc123',
                     userId: '456',
-                    firstName: 'Mahdi',
-                    middleName: 'Jaberzadeh',
-                    lastName: 'Ansari'
+                    key: 'Cvalue',
+                    anotherKey: 'CanotherValue',
+                    nullValue: null,
+                    falseValue: false,
+                    trueValue: true,
+                    zero: 0,
+                    negative: -123,
+                    posetive: 456,
+                    float: 89.5623,
+                    password: '1abc',
+                    token: '2def',
+                    email: 'a@b.com',
+                    firstName: 'John',
+                    middleName: null,
+                    lastName: 'Doh',
+                    dateOfBirth: new Date('1985-05-15'),
+                    profilePictureUrl: 'https://abc.com/g.jpg',
+                    profilePictureThumbnailUrl: 'https://example.com/h.bmp'
                 }
             };
 
             const expectedOutput = {
                 method: 'GET',
-                url: '/api/users/123',
+                originalUrl: '/api/users/123',
                 headers: {
                     'authorization': '****',
                     'content-type': 'application/json',
                     'x-development-token': '****'
                 },
                 body: {
+                    key: 'Bvalue',
+                    anotherKey: 'BanotherValue',
+                    nullValue: null,
+                    falseValue: false,
+                    trueValue: true,
+                    zero: 0,
+                    negative: -123,
+                    posetive: 456,
+                    float: 89.5623,
                     password: '****',
+                    token: '****',
                     email: '****',
+                    firstName: '****',
+                    middleName: '****',
+                    lastName: '****',
                     dateOfBirth: '****',
                     profilePictureUrl: '****',
-                    profilePictureThumbnailUrl: '****',
+                    profilePictureThumbnailUrl: '****'
                 },
                 query: {
+                    key: 'Qvalue',
+                    anotherKey: 'QanotherValue',
+                    nullValue: null,
+                    falseValue: false,
+                    trueValue: true,
+                    zero: 0,
+                    negative: -123,
+                    posetive: 456,
+                    float: 89.5623,
+                    password: '****',
                     token: '****',
-                    page: 1
+                    email: '****',
+                    firstName: '****',
+                    middleName: '****',
+                    lastName: '****',
+                    dateOfBirth: '****',
+                    profilePictureUrl: '****',
+                    profilePictureThumbnailUrl: '****'
                 },
                 params: {
-                    id: '123'
+                    key: 'Pvalue',
+                    anotherKey: 'PanotherValue',
+                    nullValue: null,
+                    falseValue: false,
+                    trueValue: true,
+                    zero: 0,
+                    negative: -123,
+                    posetive: 456,
+                    float: 89.5623,
+                    password: '****',
+                    token: '****',
+                    email: '****',
+                    firstName: '****',
+                    middleName: '****',
+                    lastName: '****',
+                    dateOfBirth: '****',
+                    profilePictureUrl: '****',
+                    profilePictureThumbnailUrl: '****'
                 },
                 ip: '127.0.0.1',
                 hostname: 'localhost',
@@ -156,9 +263,24 @@ describe('Test converters', () => {
                 cookies: {
                     sessionId: 'abc123',
                     userId: '456',
+                    key: 'Cvalue',
+                    anotherKey: 'CanotherValue',
+                    nullValue: null,
+                    falseValue: false,
+                    trueValue: true,
+                    zero: 0,
+                    negative: -123,
+                    posetive: 456,
+                    float: 89.5623,
+                    password: '****',
+                    token: '****',
+                    email: '****',
                     firstName: '****',
                     middleName: '****',
-                    lastName: '****'
+                    lastName: '****',
+                    dateOfBirth: '****',
+                    profilePictureUrl: '****',
+                    profilePictureThumbnailUrl: '****'
                 }
             };
 

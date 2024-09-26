@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
+import { listRolesForUserInDomains } from '../../casbin/casbinSingleton.mjs';
+import { getData } from '../../utils/customDataStore.mjs';
 import { updateEventLog } from '../../utils/logger.mjs';
 import { authorizationApiRequestLimiter } from '../../utils/rateLimit.mjs';
 import { authenticateUser } from '../../utils/validations.mjs';
-import { listRolesForUserInDomains } from '../../casbin/casbinSingleton.mjs';
-import { getAllData } from '../../utils/customDataStore.mjs';
 
 const router = Router();
 export default router;
@@ -208,7 +208,7 @@ router.post('/authorize',
     async (req, res) => {
         try {
             const roles = await listRolesForUserInDomains(req.user.username);
-            const conditions = getAllData();
+            const conditions = getData();
             res.json({ user: req.user, roles, conditions });
         } catch (err) {
             updateEventLog(req, { error: 'An error occurred in /authorize request.', details: err });

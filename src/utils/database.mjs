@@ -1,23 +1,6 @@
 import { CasbinRule, closeSequelize, col, fn, MraAuditLogsAuthentication, MraStatuses, MraSubscriptions, MraTables, MraTickets, MraTokenBlacklist, MraUserCustomers, MraUserDetails, MraUsers, Sequelize } from '../models/index.mjs';
 import { decrypt } from './converters.mjs';
-
-/**
- * Checks if an object is empty.
- *
- * An object is considered empty if it has no own enumerable properties.
- *
- * @param {Object} obj - The object to check.
- * @returns {boolean} Returns `true` if the object is empty, otherwise `false`.
- *
- * @example
- *
- * const obj1 = {};
- * console.log(isEmptyObject(obj1)); // true
- *
- * const obj2 = { key: 'value' };
- * console.log(isEmptyObject(obj2)); // false
- */
-const isEmptyObject = (obj) => Object.keys(obj).length === 0;
+import { isEmptyObject } from './miscellaneous.mjs';
 
 /**
  * Closes the database connection pool.
@@ -25,6 +8,8 @@ const isEmptyObject = (obj) => Object.keys(obj).length === 0;
 const closeDBConnections = async () => {
   await closeSequelize();
 };
+
+export { closeDBConnections };
 
 /**
  * Inserts a new token into the blacklist database.
@@ -47,6 +32,8 @@ const insertBlacklistToken = async (tokenData) => {
   return insertedToken;
 };
 
+export { insertBlacklistToken };
+
 /**
  * Checks if a token is expired by looking it up in the blacklist table.
  *
@@ -63,6 +50,35 @@ const isTokenBlacklisted = async (token) => {
   });
   return tokenCount > 0;
 };
+
+export { isTokenBlacklisted };
+
+/**
+ * Retrieves an audit log from the database based on the logId.
+ *
+ * @param {number} logId - The ID of the log entry to be retrieved.
+ * @returns {Object|null} The log object if found, or null if not found.
+ */
+const getAuditLogById = async (logId) => {
+  if (isNaN(logId) || logId <= 0) {
+    return null;
+  }
+
+  try {
+    const log = await MraAuditLogsAuthentication.findOne({
+      where: {
+        log_id: logId,
+      },
+    });
+
+    return log ? log.get({ plain: true }) : null;
+  } catch (err) {
+    console.error(`Error retrieving audit log with ID ${logId}:`, err);
+    return null;
+  }
+};
+
+export { getAuditLogById };
 
 /**
  * Inserts a new audit log into the database.
@@ -81,6 +97,8 @@ const insertAuditLog = async (log) => {
   });
   return insertedLog && insertedLog.get({ plain: true });
 };
+
+export { insertAuditLog };
 
 /**
  * Updates an existing audit log in the database.
@@ -104,6 +122,8 @@ const updateAuditLog = async (log) => {
   return updateCount === 0 ? null : updatedLogs[0].get({ plain: true });
 };
 
+export { updateAuditLog };
+
 /**
  * Deletes a test audit log from the database.
  *
@@ -125,6 +145,8 @@ const deleteAuditLog = async (logId) => {
   return { success: deleteCount > 0 };
 };
 
+export { deleteAuditLog };
+
 /**
  * Fetches the private profile picture URL for a user from the database using Sequelize models.
  *
@@ -135,16 +157,18 @@ const deleteAuditLog = async (logId) => {
  */
 async function getUserPrivatePictureUrl(userId) {
   const userDetails = await MraUserDetails.findOne({
-    where:{ user_id: userId},
+    where: { user_id: userId },
     attributes: ['private_profile_picture_url'],
   });
 
-  if(userDetails) {
-    const privateProfilePictureUrl =  userDetails.get({ plain: true }).private_profile_picture_url;
+  if (userDetails) {
+    const privateProfilePictureUrl = userDetails.get({ plain: true }).private_profile_picture_url;
     return privateProfilePictureUrl && decrypt(privateProfilePictureUrl);
   }
   return null;
 }
+
+export { getUserPrivatePictureUrl };
 
 /**
  * Deletes a user from the database based on the provided username.
@@ -170,6 +194,8 @@ const deleteUserByUsername = async (username) => {
   return user && user.get({ plain: true });
 };
 
+export { deleteUserByUsername };
+
 /**
  * Deletes a user from the database based on the provided condition.
  *
@@ -185,6 +211,8 @@ const deleteUser = async (where) => {
 
   return deletedCount; // Return the number of deleted rows
 };
+
+export { deleteUser };
 
 /**
  * Retrieves a user from the database based on the provided username.
@@ -203,6 +231,8 @@ const getUserByUsername = async (username) => {
   return user && user.get({ plain: true });
 };
 
+export { getUserByUsername };
+
 /**
  * Retrieves a user from the database based on the provided userId.
  *
@@ -218,8 +248,9 @@ const getUserByUserId = async (userId) => {
   });
 
   return user && user.get({ plain: true });
-
 };
+
+export { getUserByUserId };
 
 /**
  * Retrieves a user ID from the database based on the provided username.
@@ -239,6 +270,7 @@ const getUserIdByUsername = async (username) => {
   return user ? user.user_id : null; // Return the user ID if found, or null if not
 };
 
+export { getUserIdByUsername };
 
 /**
  * Retrieves a user from the database based on the provided username or email.
@@ -264,6 +296,8 @@ const getUserByUsernameOrEmail = async (usernameOrEmail) => {
 
   return users && users.map(user => user.get({ plain: true }));
 };
+
+export { getUserByUsernameOrEmail };
 
 /**
  * Retrieves all deactivated but not suspended users from the database
@@ -294,6 +328,8 @@ const getDeactivatedNotSuspendedUsers = async (usernameOrEmail) => {
   return users.map(user => user.get({ plain: true }));
 };
 
+export { getDeactivatedNotSuspendedUsers };
+
 /**
  * Updates the updated_at timestamp to the current time for a deactivated and not suspended user in the database.
  * It is needed for giving 5 days timeframe to the user to be able to activate their account.
@@ -312,7 +348,7 @@ const updateUserUpdatedAtToNow = async (username) => {
       where: {
         username: username.trim().toLowerCase(),
         confirmation_at: null, // confirmation_at IS NULL
-        suspended_at: null ,   // Not suspended users
+        suspended_at: null,   // Not suspended users
       },
       returning: true, // This option is specific to PostgreSQL
     }
@@ -321,6 +357,7 @@ const updateUserUpdatedAtToNow = async (username) => {
   return updateCount > 0; // Returns true if at least one row was updated
 };
 
+export { updateUserUpdatedAtToNow };
 
 /**
  * Retrieves all usernames from the database based on the provided email.
@@ -355,6 +392,8 @@ const getUsernamesByEmail = async (email) => {
   return users && users.map(user => user.get({ plain: true }));
 };
 
+export { getUsernamesByEmail };
+
 /**
  * Inserts a new user into the database.
  *
@@ -374,8 +413,9 @@ const insertUser = async (user) => {
   });
 
   return newUser && newUser.get({ plain: true });
-
 };
+
+export { insertUser };
 
 /**
  * Checks if a user is inactive based on the provided user information.
@@ -400,6 +440,8 @@ const isInactiveUser = async (user) => {
   // Return true if a matching user was found, indicating they are inactive, otherwise false
   return !!foundUser;
 };
+
+export { isInactiveUser };
 
 /**
  * Checks if a user is active based on the provided user information.
@@ -426,6 +468,8 @@ const isActiveUser = async (username) => {
   // Return true if a matching user was found, indicating they are active, otherwise false
   return !!foundUser;
 };
+
+export { isActiveUser };
 
 /**
  * Checks if an activation link is valid based on the provided user information.
@@ -462,6 +506,8 @@ const isActivationCodeValid = async (user) => {
     return false;
   }
 };
+
+export { isActivationCodeValid };
 
 /**
  * Activates a user in the database based on the provided user information.
@@ -504,6 +550,8 @@ const activateUser = async (user) => {
   return updateCount > 0; // Returns true if at least one row was updated  
 };
 
+export { activateUser };
+
 /**
  * Generates a reset token for a user and updates it in the database.
  * 
@@ -525,22 +573,26 @@ const generateResetToken = async (username) => {
   // Update the user's reset_token field
   await MraUsers.update(
     { reset_token: resetToken },
-    { where: { 
-      username: username.trim().toLowerCase() 
-    }, 
-    returning: true } // 'returning: true' is specific to PostgreSQL
+    {
+      where: {
+        username: username.trim().toLowerCase()
+      },
+      returning: true
+    } // 'returning: true' is specific to PostgreSQL
   );
 
   // Retrieve the updated user details
   const user = await MraUsers.findOne({
-    where: { 
-      username: username.trim().toLowerCase() 
+    where: {
+      username: username.trim().toLowerCase()
     },
     attributes: ['user_id', 'username', 'email', 'reset_token', 'display_name'], // Specify the fields to retrieve
   });
 
   return user && user.get({ plain: true });
-}
+};
+
+export { generateResetToken };
 
 /**
  * Resets a user's password in the database.
@@ -588,6 +640,8 @@ const resetPassword = async (user) => {
   return updateCount > 0; // Returns true if at least one row was updated
 };
 
+export { resetPassword };
+
 /**
  * Retrieves user domains.
  * WE DO NOT TEST THIS FUNCTION AS CASBIN IS CONTROLLED BY CASBIN ADAPTER.
@@ -595,7 +649,7 @@ const resetPassword = async (user) => {
  * @param {string} username - The user's unique identifier.
  * @returns {Array} List of user's domains.
  */
-async function getUserDomains(username) {
+const getUserDomains = async (username) => {
   if (typeof username !== 'string' || username.trim() === '') {
     return [];
   }
@@ -613,7 +667,9 @@ async function getUserDomains(username) {
   // Map over the casbinRules and return an array of the v2 values
   const domains = casbinRules.map(rule => rule.v2);
   return domains;
-}
+};
+
+export { getUserDomains };
 
 /**
  * Retrieves a row from the MraTables model based on the provided tableName.
@@ -624,10 +680,12 @@ async function getUserDomains(username) {
  * @param {string} tableName - The name of the table to retrieve from the MraTables model.
  * @returns {Promise<Model|null>} A promise that resolves with the found model instance or null if no match is found.
  */
-async function getTableByTableName(tableName) {
+const getTableByTableName = async (tableName) => {
   const table = await MraTables.findOne({ where: { table_name: tableName } });
   return table && table.get({ plain: true });
-}
+};
+
+export { getTableByTableName };
 
 /**
  * Retrieves valid relationship between a user and a customer from the database.
@@ -648,7 +706,7 @@ async function getTableByTableName(tableName) {
  * @returns {Promise<Object>} A promise that resolves to a plain objects,
  * which representing a valid relationship between the specified user and customer.
  */
-async function getValidRelationshipByUserCustomer(userId, customerId) {
+const getValidRelationshipByUserCustomer = async (userId, customerId) => {
   const relationship = await MraUserCustomers.findOne({
     where: {
       user_id: userId,
@@ -656,7 +714,7 @@ async function getValidRelationshipByUserCustomer(userId, customerId) {
       customer_accepted_at: { [Sequelize.Op.lte]: Sequelize.literal("now()") },
       user_accepted_at: { [Sequelize.Op.lte]: Sequelize.literal("now()") },
       valid_from: { [Sequelize.Op.lte]: Sequelize.literal("now()") },
-      valid_to: { 
+      valid_to: {
         [Sequelize.Op.or]: [
           { [Sequelize.Op.gte]: Sequelize.literal("now()") },
           null
@@ -667,7 +725,9 @@ async function getValidRelationshipByUserCustomer(userId, customerId) {
     }
   });
   return relationship && relationship.get({ plain: true });
-}
+};
+
+export { getValidRelationshipByUserCustomer };
 
 /**
  * Fetches a single row identified by the columnName and its value from the specified table.
@@ -681,7 +741,7 @@ async function getValidRelationshipByUserCustomer(userId, customerId) {
  *
  * @throws {Error} - Throws an error if the table name does not match any known models or if the database operation fails.
  */
-async function getRowById(tableName, columnName, columnValue) {
+const getRowById = async (tableName, columnName, columnValue) => {
   const model = getModelByTableName(tableName);
   if (!model) {
     throw new Error(`No model found for table name: ${tableName}`);
@@ -692,7 +752,9 @@ async function getRowById(tableName, columnName, columnValue) {
     },
     raw: true
   });
-}
+};
+
+export { getRowById };
 
 /**
  * Maps the table name to the corresponding ORM model.
@@ -701,42 +763,13 @@ async function getRowById(tableName, columnName, columnValue) {
  *
  * @returns {Model|null} - The ORM model associated with the given table name, or null if no model matches.
  */
-function getModelByTableName(tableName) {
+const getModelByTableName = (tableName) => {
   const tableMap = {
     'mra_statuses': MraStatuses,
     'mra_tickets': MraTickets,
     'mra_subscriptions': MraSubscriptions
   };
   return tableMap[tableName] || null;
-}
-
-
-export {
-  closeDBConnections,
-  insertBlacklistToken,
-  isTokenBlacklisted,
-  insertAuditLog,
-  updateAuditLog,
-  deleteAuditLog,
-  deleteUserByUsername,
-  getUserPrivatePictureUrl,
-  getUserByUsername,
-  getUserByUserId,
-  getUserIdByUsername,
-  getUserByUsernameOrEmail,
-  getUsernamesByEmail,
-  getDeactivatedNotSuspendedUsers,
-  updateUserUpdatedAtToNow,
-  insertUser,
-  deleteUser,
-  isActiveUser,
-  isInactiveUser,
-  isActivationCodeValid,
-  activateUser,
-  resetPassword,
-  generateResetToken,
-  getUserDomains,
-  getTableByTableName,
-  getValidRelationshipByUserCustomer,
-  getRowById
 };
+
+export { getModelByTableName };

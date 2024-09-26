@@ -2,16 +2,16 @@ class CustomDataStore {
     constructor() {
         this.data = {};
         this.setData = this.setData.bind(this);
-        this.getData = this.getData.bind(this);
+        this.getValue = this.getValue.bind(this);
         this.resetData = this.resetData.bind(this);
-        this.getAllData = this.getAllData.bind(this);
+        this.getData = this.getData.bind(this);
     }
 
     setData(key, value) {
         this.data[key] = value;
     }
 
-    getData(key) {
+    getValue(key) {
         return this.data[key];
     }
 
@@ -19,9 +19,10 @@ class CustomDataStore {
         this.data = {};
     }
 
-    getAllData() {
+    getData() {
         return this.data;
     }
 }
-const { setData, getData, resetData, getAllData } = new CustomDataStore();
-export {setData, getData, resetData, getAllData} 
+const { setData, getValue, resetData, getData } = new CustomDataStore();
+export { getData, getValue, resetData, setData };
+

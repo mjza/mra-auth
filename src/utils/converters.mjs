@@ -138,7 +138,7 @@ function convertRequestData(req) {
 
     const requestData = {
         method: req.method,
-        url: req.originalUrl,
+        originalUrl: req.originalUrl,
         headers: hideSensitiveData(req.headers, ['Authorization', 'x-development-token']),
         body: hideSensitiveData(req.body, forbiddenProperties),
         query: hideSensitiveData(req.query, forbiddenProperties),

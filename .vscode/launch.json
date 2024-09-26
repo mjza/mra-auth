@@ -32,7 +32,8 @@
                 "--runInBand", // Runs all tests in a single process, important for debugging
                 "--detectOpenHandles",
                 "--verbose",
-                "--bail"
+                "--bail",
+                "--config=src/config/jest.config.mjs"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",
@@ -40,7 +41,8 @@
                 "NODE_ENV": "local-test"
             },
             "skipFiles": [
-                "<node_internals>/**"
+                "<node_internals>/**",
+                "node_modules/**"
             ]
         },
         {
@@ -53,6 +55,7 @@
                 "--detectOpenHandles",
                 "--verbose",
                 "--bail",
+                "--config=src/config/jest.config.mjs",
                 "--testPathPattern",
                 "${fileBasename}"
             ],
@@ -62,7 +65,8 @@
                 "NODE_ENV": "local-test"
             },
             "skipFiles": [
-                "<node_internals>/**"
+                "<node_internals>/**",
+                "node_modules/**"
             ]
         }
     ]

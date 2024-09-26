@@ -1,8 +1,8 @@
 {
     "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": true, // Apply ESLint fixes
-      "source.organizeImports": true, // Organize imports
-      "source.fixAll.tslint": true // Apply TSLint fixes if applicable
+      "source.fixAll.eslint": "explicit",
+      "source.organizeImports": "explicit",
+      "source.fixAll.tslint": "explicit"
     }
   }
   
