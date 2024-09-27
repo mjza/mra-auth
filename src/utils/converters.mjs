@@ -1,11 +1,43 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { getCreptoConfig } from './miscellaneous.mjs';
 
+/**
+ * Hides sensitive data within an object by masking specified properties. This function
+ * iterates through each property of the provided object. If a property's name matches
+ * any of the given forbidden properties (case-insensitive), its value is replaced with
+ * a mask ('****'). Properties not listed as forbidden are left unchanged.
+ *
+ * This function is non-destructive; it returns a new object with the modified values
+ * while leaving the original object intact.
+ *
+ * @param {Object} obj - The object containing potential sensitive data to be masked.
+ * @param {Array<string>} forbiddenProperties - An array of property names (strings)
+ *                   that, if found in the object, should have their values masked.
+ *                   Matching is case-insensitive.
+ * @param {WeakSet} visited - (Optional) A WeakSet to keep track of visited objects to handle circular references.
+ * @returns {Object} A new object with sensitive data masked. If the input is not an
+ *                   object, the input is returned unchanged.
+ */
+const hideSensitiveData = (obj, forbiddenProperties, visited = new WeakSet()) => {
+    if (!obj || typeof obj !== 'object' || visited.has(obj)) {
+        return obj;
+    }
 
-const getCreptoConfig = () => {
-    const algorithm = 'aes-256-ctr';
-    const secretKeyHex = process.env.SECRET_KEY;
-    const secretKey = Buffer.from(secretKeyHex, 'hex');
-    return {algorithm, secretKey};
+    visited.add(obj);
+
+    const newObj = {};
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            const value = obj[key];
+            if (forbiddenProperties.some(prop => key.toLowerCase().includes(prop.toLowerCase()))) {
+                newObj[key] = '****';
+            } else {
+                newObj[key] = hideSensitiveData(value, forbiddenProperties, visited);
+            }
+        }
+    }
+
+    return newObj;
 };
 
 /**
@@ -30,6 +62,8 @@ const encrypt = (text, iv) => {
     }
 };
 
+export { encrypt };
+
 /**
  * Decrypts a base64 encoded string that was encrypted using the encrypt function.
  * 
@@ -48,6 +82,8 @@ const decrypt = (base64String) => {
         return base64String;
     }
 };
+
+export { decrypt };
 
 /**
  * Converts the keys of an object from snake_case to lowerCamelCase.
@@ -83,6 +119,8 @@ const toLowerCamelCase = (obj) => {
         return acc;
     }, {});
 };
+
+export { toLowerCamelCase };
 
 /**
  * Converts the keys of an object from lowerCamelCase to snake_case.
@@ -125,6 +163,8 @@ const toSnakeCase = (obj) => {
     }, {});
 };
 
+export { toSnakeCase };
+
 /**
  * Extracts key information from the Express request object and returns it as a JSON string.
  * Handles circular references in the object structure to ensure proper JSON serialization.
@@ -132,7 +172,7 @@ const toSnakeCase = (obj) => {
  * @param {object} req - The Express request object.
  * @returns {string} A JSON string representing key information from the request object.
  */
-function convertRequestData(req) {
+const convertRequestData = (req) => {
     // Array of properties to hide
     const forbiddenProperties = ['password', 'token', 'email', 'firstName', 'middleName', 'lastName', 'dateOfBirth', 'profilePictureUrl', 'profilePictureThumbnailUrl'];
 
@@ -151,46 +191,6 @@ function convertRequestData(req) {
     };
 
     return requestData;
-}
+};
 
-/**
- * Hides sensitive data within an object by masking specified properties. This function
- * iterates through each property of the provided object. If a property's name matches
- * any of the given forbidden properties (case-insensitive), its value is replaced with
- * a mask ('****'). Properties not listed as forbidden are left unchanged.
- *
- * This function is non-destructive; it returns a new object with the modified values
- * while leaving the original object intact.
- *
- * @param {Object} obj - The object containing potential sensitive data to be masked.
- * @param {Array<string>} forbiddenProperties - An array of property names (strings)
- *                   that, if found in the object, should have their values masked.
- *                   Matching is case-insensitive.
- * @param {WeakSet} visited - (Optional) A WeakSet to keep track of visited objects to handle circular references.
- * @returns {Object} A new object with sensitive data masked. If the input is not an
- *                   object, the input is returned unchanged.
- */
-function hideSensitiveData(obj, forbiddenProperties, visited = new WeakSet()) {
-    if (!obj || typeof obj !== 'object' || visited.has(obj)) {
-        return obj;
-    }
-
-    visited.add(obj);
-
-    const newObj = {};
-    for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            const value = obj[key];
-            if (forbiddenProperties.some(prop => key.toLowerCase().includes(prop.toLowerCase()))) {
-                newObj[key] = '****';
-            } else {
-                newObj[key] = hideSensitiveData(value, forbiddenProperties, visited);
-            }
-        }
-    }
-
-    return newObj;
-}
-
-export { convertRequestData, decrypt, encrypt, toLowerCamelCase, toSnakeCase };
-
+export { convertRequestData };

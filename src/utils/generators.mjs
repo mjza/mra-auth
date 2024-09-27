@@ -1,10 +1,7 @@
 import { genSalt, hash } from 'bcrypt';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
-import pkg from 'jsonwebtoken';
-const { sign, verify } = pkg;
-
-const secretKeyHex = process.env.SECRET_KEY;
-const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
+import { sign, verify } from 'jsonwebtoken';
+import { getCreptoConfig } from './miscellaneous.mjs';
 
 /**
  * Generates an encrypted activation/reset object containing the activation/reset code and redirect URL.
@@ -14,9 +11,10 @@ const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
  */
 const generateEncryptedObject = (code, redirectURL) => {
     try {
+        const config = getCreptoConfig();
         // Encrypt the activation object using a secret key        
         const iv = randomBytes(16);
-        const cipher = createCipheriv('aes-256-cbc', secretKeyBuffer, iv);
+        const cipher = createCipheriv(config.algorithm, config.secretKey, iv);
         let encryptedObject = cipher.update(JSON.stringify({ code, redirectURL }), 'utf8', 'hex');
         encryptedObject += cipher.final('hex');
         return { token: iv.toString('hex'), data: encryptedObject };
@@ -24,6 +22,8 @@ const generateEncryptedObject = (code, redirectURL) => {
         return { token: '', data: '' };
     }
 };
+
+export { generateEncryptedObject };
 
 /**
  * Decrypts an activation/reset object from the given token and encrypted data.
@@ -33,15 +33,14 @@ const generateEncryptedObject = (code, redirectURL) => {
  */
 const generateDecryptedObject = (token, data) => {
     try {
+        const config = getCreptoConfig();
         // Convert token (which includes IV) to a buffer
         const iv = Buffer.from(token, 'hex');
-
         // Decrypt the encrypted data using the secret key and IV
-        const decipher = createDecipheriv('aes-256-cbc', secretKeyBuffer, iv);
+        const decipher = createDecipheriv(config.algorithm, config.secretKey, iv);
         // Decrypt the encryptedObject
         let decryptedObjectHex = decipher.update(data, 'hex', 'utf8');
         decryptedObjectHex += decipher.final('utf8');
-
         // Parse the JSON back into an object
         const decryptedObject = JSON.parse(decryptedObjectHex);
         return decryptedObject;
@@ -49,6 +48,8 @@ const generateDecryptedObject = (token, data) => {
         return { code: '', redirectURL: '' };
     }
 };
+
+export { generateDecryptedObject };
 
 /**
  * Generates an activation link using the username, activation code, and redirect URL.
@@ -64,6 +65,8 @@ const generateActivationLink = (username, activationCode, redirectURL) => {
     return activationLink;
 };
 
+export { generateActivationLink };
+
 /**
  * Generates a reset password link using the username, reset token, and redirect URL.
  * @param {string} username - The username for which the activation link is generated.
@@ -78,6 +81,8 @@ const generateResetPasswordLink = (username, resetToken, redirectURL) => {
     return passwordResetLink;
 };
 
+export { generateResetPasswordLink };
+
 /**
  * Generates an authentication token for a user.
  * 
@@ -90,12 +95,15 @@ const generateResetPasswordLink = (username, resetToken, redirectURL) => {
  */
 const generateAuthToken = (user) => {
     try {
-        const token = sign({ userId: user.userId, username: user.username, email: user.email }, secretKeyBuffer, { expiresIn: '1d' });
+        const config = getCreptoConfig();
+        const token = sign({ userId: user.userId, username: user.username, email: user.email }, config.secretKey, { expiresIn: '1d' });
         return token;
     } catch {
         return null;
     }
 };
+
+export { generateAuthToken };
 
 /**
  * Extracts user data from a given JWT token.
@@ -109,12 +117,15 @@ const generateAuthToken = (user) => {
  */
 const extractUserDataFromAuthToke = (token) => {
     try {
-        const decodedToken = verify(token, secretKeyBuffer);
+        const config = getCreptoConfig();
+        const decodedToken = verify(token, config.secretKey);
         return decodedToken;
     } catch {
         return null;
     }
 };
+
+export { extractUserDataFromAuthToke };
 
 /**
  * Decodes a JSON Web Token (JWT) and returns its payload as a JSON object.
@@ -147,6 +158,8 @@ const parseJwt = (token) => {
     }
 };
 
+export { parseJwt };
+
 /**
  * Generates a hash for a given password using bcrypt.
  * 
@@ -159,6 +172,8 @@ const generatePasswordHash = async (password) => {
     const passwordHash = await hash(password, salt);
     return passwordHash;
 };
+
+export { generatePasswordHash };
 
 /**
  * Generates a random string of a specified length.
@@ -174,6 +189,8 @@ const generateRandomString = (length = 8) => {
     return str;
 };
 
+export { generateRandomString };
+
 /**
  * Asynchronously generates a mock user object with hashed password.
  * The function generates a random username and uses it to create an email.
@@ -185,11 +202,13 @@ const generateMockUserDB = async () => {
     var username = generateRandomString();
     return {
         username: username,
-        email: 'infO@example.com',
+        email: 'info@example.com',
         password: 'Password1$',
         passwordHash: await generatePasswordHash('Password1$')
     };
 };
+
+export { generateMockUserDB };
 
 /**
  * Generates a mock user object for a user route.
@@ -208,4 +227,5 @@ const generateMockUserRoute = () => {
     }
 };
 
-export { extractUserDataFromAuthToke, generateActivationLink, generateAuthToken, generateDecryptedObject, generateEncryptedObject, generateMockUserDB, generateMockUserRoute, generatePasswordHash, generateRandomString, generateResetPasswordLink, parseJwt };
+export { generateMockUserRoute };
+

@@ -30,6 +30,30 @@ export { sleep };
  * const obj2 = { key: 'value' };
  * console.log(isEmptyObject(obj2)); // false
  */
-const isEmptyObject = (obj) => Object.keys(obj).length === 0;
+const isEmptyObject = (obj) => {
+    return obj !== null && typeof obj === 'object' && !Array.isArray(obj) && Object.keys(obj).length === 0;
+};
 
 export { isEmptyObject };
+
+/**
+ * Retrieves the cryptographic configuration for encryption.
+ * 
+ * @returns {{ algorithm: string, secretKey: Buffer }} The cryptographic configuration object containing the algorithm and secret key.
+ *
+ * @throws {Error} If the secret key is not defined in the environment variables.
+ */
+const getCreptoConfig = () => {
+    const algorithm = 'aes-256-ctr';
+    const secretKeyHex = process.env.SECRET_KEY;
+
+    // Check if the secret key is defined
+    if (!secretKeyHex) {
+        throw new Error('SECRET_KEY environment variable is not defined');
+    }
+
+    const secretKey = Buffer.from(secretKeyHex, 'hex');
+    return { algorithm, secretKey };
+};
+
+export { getCreptoConfig };

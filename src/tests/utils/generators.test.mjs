@@ -137,7 +137,7 @@ describe('Generator Functions', () => {
         });
     });
 
-    describe('Auth Token Tests', () => {
+    describe('generateAuthToken, extractUserDataFromAuthToke, parseJwt', () => {
         const user = { userId: 1, username: 'username1', email: 'test@example.com' };
         const secretKeyHex = process.env.SECRET_KEY;
         const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
