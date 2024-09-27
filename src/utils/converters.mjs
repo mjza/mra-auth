@@ -18,7 +18,7 @@ import { getCreptoConfig } from './miscellaneous.mjs';
  * @returns {Object} A new object with sensitive data masked. If the input is not an
  *                   object, the input is returned unchanged.
  */
-const hideSensitiveData = (obj, forbiddenProperties, visited = new WeakSet()) => {
+const _hideSensitiveData = (obj, forbiddenProperties, visited = new WeakSet()) => {
     if (!obj || typeof obj !== 'object' || visited.has(obj)) {
         return obj;
     }
@@ -32,7 +32,7 @@ const hideSensitiveData = (obj, forbiddenProperties, visited = new WeakSet()) =>
             if (forbiddenProperties.some(prop => key.toLowerCase().includes(prop.toLowerCase()))) {
                 newObj[key] = '****';
             } else {
-                newObj[key] = hideSensitiveData(value, forbiddenProperties, visited);
+                newObj[key] = _hideSensitiveData(value, forbiddenProperties, visited);
             }
         }
     }
@@ -179,15 +179,15 @@ const convertRequestData = (req) => {
     const requestData = {
         method: req.method,
         originalUrl: req.originalUrl,
-        headers: hideSensitiveData(req.headers, ['Authorization', 'x-development-token']),
-        body: hideSensitiveData(req.body, forbiddenProperties),
-        query: hideSensitiveData(req.query, forbiddenProperties),
-        params: hideSensitiveData(req.params, forbiddenProperties),
+        headers: _hideSensitiveData(req.headers, ['Authorization', 'x-development-token']),
+        body: _hideSensitiveData(req.body, forbiddenProperties),
+        query: _hideSensitiveData(req.query, forbiddenProperties),
+        params: _hideSensitiveData(req.params, forbiddenProperties),
         ip: req.ip,
         hostname: req.hostname,
         protocol: req.protocol,
         path: req.path,
-        cookies: hideSensitiveData(req.cookies, forbiddenProperties)
+        cookies: _hideSensitiveData(req.cookies, forbiddenProperties)
     };
 
     return requestData;

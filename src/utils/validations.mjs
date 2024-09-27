@@ -1,13 +1,11 @@
 import axios from 'axios';
 import { validationResult } from 'express-validator';
 import { Agent } from 'https';
-import pkg from 'jsonwebtoken';
-const { verify } = pkg;
+import { verify } from 'jsonwebtoken';
 import { promisify } from 'util';
 import { getUserByUsername, getUserIdByUsername, isTokenBlacklisted } from './database.mjs';
 import { createEventLog, updateEventLog } from './logger.mjs';
-
-const jwtVerify = promisify(verify);
+import { getCreptoConfig } from './miscellaneous.mjs';
 
 /**
  * Checks if a user does not exist in the database.
@@ -25,6 +23,8 @@ const userMustNotExist = async (value, { req }) => {
     }
 };
 
+export { userMustNotExist };
+
 /**
  * Checks if a user exists in the database.
  * If the user does not exist, it rejects the promise with a specific message.
@@ -40,6 +40,8 @@ const userMustExist = async (value, { req }) => {
         return Promise.reject(req.t('Username does not exist.'));
     }
 };
+
+export { userMustExist };
 
 /**
  * Tests if a given URL is accessible by making a HEAD request.
@@ -60,6 +62,8 @@ const testUrlAccessibility = async function (url) {
     }
 };
 
+export { testUrlAccessibility };
+
 /**
  * Validates whether the given input is a well-formed URL.
  *
@@ -74,6 +78,94 @@ const isValidUrl = (inputUrl) => {
         return false;
     }
 };
+
+export { isValidUrl };
+
+/**
+ * Function to validate an email address format.
+ * It uses a regular expression to check if the email follows the standard email format.
+ *
+ * @param {string} email - The email address to validate.
+ * @returns {boolean} - Returns true if the email is valid, otherwise false.
+ *
+ * @example
+ * isValidEmail('test@example.com'); // true
+ * isValidEmail('invalid-email'); // false
+ */
+const isValidEmail = (email) => {
+    // Improved regular expression for more robust email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?$/;
+    
+    // Check if email contains consecutive dots in the domain part
+    if (/\.\./.test(email.split('@')[1])) {
+        return false;
+    }
+
+    return emailRegex.test(email);
+};
+
+export { isValidEmail };
+
+/**
+ * Middleware to validate request data using validationResult.
+ * It checks if the request meets the validation criteria set by previous validation middlewares.
+ * If the validation fails, it sends a 400 status code with the validation errors.
+ * Otherwise, it passes control to the next middleware function in the stack.
+ *
+ * @param {object} req - The request object from Express.js containing the client's request data.
+ * @param {object} res - The response object from Express.js used to send back the desired HTTP response.
+ * @param {function} next - The callback function to pass control to the next middleware function.
+ */
+const checkRequestValidity = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+};
+
+export { checkRequestValidity };
+
+/**
+ * Middleware to handle and respond to invalid JSON format errors.
+ * This middleware captures `SyntaxError` thrown by the `express.json()` middleware
+ * when the incoming request contains invalid JSON. It extracts useful information
+ * about the error, including the error type, message, and position where the error
+ * occurred in the JSON string, and sends a detailed response back to the client.
+ *
+ * @param {object} err - The error object thrown by `express.json()` when it encounters malformed JSON.
+ * @param {object} req - The request object from Express.js containing the client's request data.
+ * @param {object} res - The response object from Express.js used to send back the desired HTTP response.
+ * @param {function} next - The callback function to pass control to the next middleware function.
+ *
+ * @returns {void|object} - Sends a 400 error response with details if the error is a `SyntaxError`.
+ *                          Otherwise, passes control to the next middleware.
+ *
+ * @example
+ * // Usage as part of the Express middleware stack:
+ * app.use(express.json());
+ * app.use(checkJSONBody);
+ */
+const checkJSONBody = (err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        // Extract relevant details from the error message
+        const position = err.message.match(/position (\d+)/)?.[1] || req.t('Unknown');
+        const errorSnippet = err.message.split('\n')[0]; // Get first line of the error
+
+        return res.status(400).json({
+            message: req.t('Invalid JSON format.'),
+            details: {
+                type: err.type,
+                error: errorSnippet,  // Include the main error message
+                position: position,  // Provide position of the error in the JSON string
+                hint: req.t('Ensure that all keys and values are properly enclosed in double quotes.')
+            }
+        });
+    }
+    next();
+};
+
+export { checkJSONBody };
 
 /**
  * @swagger
@@ -100,9 +192,8 @@ const isValidUrl = (inputUrl) => {
  * @param {function} next - The next middleware function in the Express.js route.
  */
 const authenticateToken = async (req, res, next) => {
-    if (req.user) {
-        next();
-    }
+    // prevent user injection in req by hackers
+    delete req.user;
     // Get the token from the request header
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -113,17 +204,15 @@ const authenticateToken = async (req, res, next) => {
     }
 
     try {
-        const secretKeyHex = process.env.SECRET_KEY;
-        const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
-
+        const config = getCreptoConfig();
+        const jwtVerify = promisify(verify);
         // Verify JWT Token
-        const tokenData = await jwtVerify(token, secretKeyBuffer);
+        const tokenData = await jwtVerify(token, config.secretKey);
         // Check if token is expired in database
         const isExpired = await isTokenBlacklisted(token);
         if (isExpired) {
             return res.status(401).json({ message: req.t('Provided JWT token is invalid.') });
         }
-
         // Add user information to request
         req.user = { userId: tokenData.userId, username: tokenData.username, email: tokenData.email };
         next(); // Proceed to the next middleware or route handler
@@ -133,6 +222,8 @@ const authenticateToken = async (req, res, next) => {
         return res.status(401).json({ message: req.t('Provided JWT token is invalid.') });
     }
 };
+
+export { authenticateToken };
 
 /**
  * Middleware to authenticate a JWT token present in the request header.
@@ -148,9 +239,8 @@ const authenticateToken = async (req, res, next) => {
  * @param {Function} next - The next middleware function in the Express.js route.
  */
 const authenticateUser = async (req, _, next) => {
-    if (req.user) {
-        next();
-    }
+    // prevent user injection in req by hackers
+    delete req.user;
     // Get the token from the request header
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -161,11 +251,11 @@ const authenticateUser = async (req, _, next) => {
         next();
     } else {
         try {
-            const secretKeyHex = process.env.SECRET_KEY;
-            const secretKeyBuffer = Buffer.from(secretKeyHex, 'hex');
-
+            const config = getCreptoConfig();
+            //
+            const jwtVerify = promisify(verify);
             // Verify JWT Token
-            const tokenData = await jwtVerify(token, secretKeyBuffer);
+            const tokenData = await jwtVerify(token, config.secretKey);
             const userId = await getUserIdByUsername(tokenData.username);
             // Check if token is expired in database
             const isExpired = await isTokenBlacklisted(token) || tokenData.userId != userId;
@@ -183,6 +273,8 @@ const authenticateUser = async (req, _, next) => {
         }
     }
 };
+
+export { authenticateUser };
 
 /**
  * @swagger
@@ -208,6 +300,11 @@ const authenticateUser = async (req, _, next) => {
  */
 const authorizeUser = (extraData) => async (req, res, next) => {
     try {
+        // prevent user injection in req by hackers
+        delete req.user;
+        delete req.roles;
+        delete req.conditions;
+        //
         const body = {
             dom: extraData.dom,
             obj: extraData.obj,
@@ -267,78 +364,4 @@ const authorizeUser = (extraData) => async (req, res, next) => {
     }
 };
 
-/**
- * Middleware to validate request data using validationResult.
- * It checks if the request meets the validation criteria set by previous validation middlewares.
- * If the validation fails, it sends a 400 status code with the validation errors.
- * Otherwise, it passes control to the next middleware function in the stack.
- *
- * @param {object} req - The request object from Express.js containing the client's request data.
- * @param {object} res - The response object from Express.js used to send back the desired HTTP response.
- * @param {function} next - The callback function to pass control to the next middleware function.
- */
-const checkRequestValidity = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-    next();
-};
-
-/**
- * Middleware to handle and respond to invalid JSON format errors.
- * This middleware captures `SyntaxError` thrown by the `express.json()` middleware
- * when the incoming request contains invalid JSON. It extracts useful information
- * about the error, including the error type, message, and position where the error
- * occurred in the JSON string, and sends a detailed response back to the client.
- *
- * @param {object} err - The error object thrown by `express.json()` when it encounters malformed JSON.
- * @param {object} req - The request object from Express.js containing the client's request data.
- * @param {object} res - The response object from Express.js used to send back the desired HTTP response.
- * @param {function} next - The callback function to pass control to the next middleware function.
- *
- * @returns {void|object} - Sends a 400 error response with details if the error is a `SyntaxError`.
- *                          Otherwise, passes control to the next middleware.
- *
- * @example
- * // Usage as part of the Express middleware stack:
- * app.use(express.json());
- * app.use(checkJSONBody);
- */
-const checkJSONBody = (err, req, res, next) => {
-    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-        // Extract relevant details from the error message
-        const position = err.message.match(/position (\d+)/)?.[1] || req.t('Unknown');
-        const errorSnippet = err.message.split('\n')[0]; // Get first line of the error
-
-        return res.status(400).json({
-            message: req.t('Invalid JSON format.'),
-            details: {
-                type: err.type,
-                error: errorSnippet,  // Include the main error message
-                position: position,  // Provide position of the error in the JSON string
-                hint: req.t('Ensure that all keys and values are properly enclosed in double quotes.')
-            }
-        });
-    }
-    next();
-};
-
-/**
- * Function to validate an email address format.
- * It uses a regular expression to check if the email follows the standard email format.
- *
- * @param {string} email - The email address to validate.
- * @returns {boolean} - Returns true if the email is valid, otherwise false.
- *
- * @example
- * isValidEmail('test@example.com'); // true
- * isValidEmail('invalid-email'); // false
- */
-const isValidEmail = (email) => {
-    // Regular expression for basic email validation
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
-};
-
-export { authenticateToken, authenticateUser, authorizeUser, checkJSONBody, checkRequestValidity, isValidEmail, isValidUrl, testUrlAccessibility, userMustExist, userMustNotExist };
+export { authorizeUser };
