@@ -208,8 +208,10 @@ const authenticateToken = async (req, res, next) => {
         const jwtVerify = promisify(verify);
         // Verify JWT Token
         const tokenData = await jwtVerify(token, config.secretKey);
+        // check the user is not deleted
+        const userId = await getUserIdByUsername(tokenData.username);
         // Check if token is expired in database
-        const isExpired = await isTokenBlacklisted(token);
+        const isExpired = await isTokenBlacklisted(token) || tokenData.userId != userId;
         if (isExpired) {
             return res.status(401).json({ message: req.t('Provided JWT token is invalid.') });
         }
@@ -244,10 +246,10 @@ const authenticateUser = async (req, _, next) => {
     // Get the token from the request header
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
+    const publicUser = { userId: 0, username: 'public', email: null }
     // If no token is provided
     if (!token) {
-        req.user = { userId: 0, username: 'public', email: null };
+        req.user = publicUser;
         next();
     } else {
         try {
@@ -256,19 +258,20 @@ const authenticateUser = async (req, _, next) => {
             const jwtVerify = promisify(verify);
             // Verify JWT Token
             const tokenData = await jwtVerify(token, config.secretKey);
+            // check the user is not deleted
             const userId = await getUserIdByUsername(tokenData.username);
             // Check if token is expired in database
             const isExpired = await isTokenBlacklisted(token) || tokenData.userId != userId;
             if (isExpired) {
-                req.user = { userId: 0, username: 'public', email: null };
+                req.user = publicUser;
                 next();
             } else {
                 req.user = { userId: tokenData.userId, username: tokenData.username, email: tokenData.email };
                 next();
             }
         } catch (err) {
-            updateEventLog(req, { error: 'Error in validating auth token.', details: err });
-            req.user = { userId: 0, username: 'public', email: null };
+            updateEventLog(req, { error: 'Error in validating auth user.', details: err });
+            req.user = publicUser;
             next();
         }
     }
