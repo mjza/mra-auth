@@ -1,4 +1,4 @@
-import { closeDBConnections, deleteAuditLog, insertAuditLog, updateAuditLog, insertBlacklistToken, isTokenBlacklisted, insertUser, getUserByUsername, getUserByUsernameOrEmail, getUsernamesByEmail, isInactiveUser, isActivationCodeValid as _isActivationCodeValid, activateUser, generateResetToken, resetPassword, deleteUserByUsername } from '../../utils/database.mjs';
+import { isActivationCodeValid, activateUser, closeDBConnections, deleteAuditLog, deleteUserByUsername, generateResetToken, getUserByUsername, getUserByUsernameOrEmail, getUsernamesByEmail, insertAuditLog, insertBlacklistToken, insertUser, isActiveUser, isInactiveUser, isTokenBlacklisted, resetPassword, updateAuditLog } from '../../utils/database.mjs';
 import { generateMockUserDB, generateRandomString } from '../../utils/generators.mjs';
 import { sleep } from '../../utils/miscellaneous.mjs';
 
@@ -14,7 +14,7 @@ describe('Test DB functions', () => {
         await closeDBConnections();
     });
 
-    describe('Audit Log DB functions', () => {
+    describe('insertAuditLog, updateAuditLog, deleteAuditLog', () => {
         let mockLog;
         let insertedLog;
         let updatedLog;
@@ -63,7 +63,7 @@ describe('Test DB functions', () => {
         });
     });
 
-    describe('Blacklist Token Functions', () => {
+    describe('insertBlacklistToken, isTokenBlacklisted', () => {
         const mockTokenData = {
             token: generateRandomString(32),
             expiry: Math.floor(Date.now() / 1000) + 3 // 3 seconds from now
@@ -171,10 +171,16 @@ describe('Test DB functions', () => {
 
     describe('isInactiveUser', () => {
         it('should check if a user is inactive', async () => {
-            // This depends on your database state and may need adjustment
             const inactiveUser = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const isInactive = await isInactiveUser(inactiveUser);
             expect(isInactive).toBeTruthy();
+        });
+    });
+
+    describe('isActiveUser', () => {
+        it('should check if a user is active', async () => {
+            const isActive = await isActiveUser(insertedUser.username);
+            expect(isActive).toBeFalsy();
         });
     });
 
@@ -182,8 +188,8 @@ describe('Test DB functions', () => {
         it('should check if a user is inactive', async () => {
             // This depends on your database state and may need adjustment
             const activationCode = { username: insertedUser.username, activationCode: insertedUser.activation_code };
-            const isActivationCodeValid = await _isActivationCodeValid(activationCode);
-            expect(isActivationCodeValid).toBeTruthy();
+            const isActivationCodeValidRes = await isActivationCodeValid(activationCode);
+            expect(isActivationCodeValidRes).toBeTruthy();
         });
     });
 
@@ -201,6 +207,13 @@ describe('Test DB functions', () => {
             const activedUser = { username: insertedUser.username, activationCode: insertedUser.activation_code };
             const isInactive = await isInactiveUser(activedUser);
             expect(isInactive).toBeFalsy();
+        });
+    });
+
+    describe('isActiveUser', () => {
+        it('should check if a user is active', async () => {
+            const isActive = await isActiveUser(insertedUser.username);
+            expect(isActive).toBeTruthy();
         });
     });
 

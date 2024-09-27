@@ -3,6 +3,22 @@ import { decrypt } from './converters.mjs';
 import { isEmptyObject } from './miscellaneous.mjs';
 
 /**
+ * Maps the table name to the corresponding ORM model.
+ *
+ * @param {string} tableName - The name of the table for which the corresponding model is needed.
+ *
+ * @returns {Model|null} - The ORM model associated with the given table name, or null if no model matches.
+ */
+const _getModelByTableName = (tableName) => {
+  const tableMap = {
+    'mra_statuses': MraStatuses,
+    'mra_tickets': MraTickets,
+    'mra_subscriptions': MraSubscriptions
+  };
+  return tableMap[tableName] || null;
+};
+
+/**
  * Closes the database connection pool.
  */
 const closeDBConnections = async () => {
@@ -310,7 +326,7 @@ const getDeactivatedNotSuspendedUsers = async (usernameOrEmail) => {
   if (!usernameOrEmail || !usernameOrEmail.trim()) return [];
 
   const users = await MraUsers.findAll({
-    attributes: ['username', 'email', 'activation_code', 'display_name'], // Select username and email fields
+    attributes: ['username', 'email', 'activation_code', 'display_name'],
     where: {
       [Sequelize.Op.and]: [
         {
@@ -742,7 +758,7 @@ export { getValidRelationshipByUserCustomer };
  * @throws {Error} - Throws an error if the table name does not match any known models or if the database operation fails.
  */
 const getRowById = async (tableName, columnName, columnValue) => {
-  const model = getModelByTableName(tableName);
+  const model = _getModelByTableName(tableName);
   if (!model) {
     throw new Error(`No model found for table name: ${tableName}`);
   }
@@ -756,20 +772,4 @@ const getRowById = async (tableName, columnName, columnValue) => {
 
 export { getRowById };
 
-/**
- * Maps the table name to the corresponding ORM model.
- *
- * @param {string} tableName - The name of the table for which the corresponding model is needed.
- *
- * @returns {Model|null} - The ORM model associated with the given table name, or null if no model matches.
- */
-const getModelByTableName = (tableName) => {
-  const tableMap = {
-    'mra_statuses': MraStatuses,
-    'mra_tickets': MraTickets,
-    'mra_subscriptions': MraSubscriptions
-  };
-  return tableMap[tableName] || null;
-};
 
-export { getModelByTableName };
