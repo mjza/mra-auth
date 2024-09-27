@@ -45,6 +45,8 @@ const apiRequestLimiter = rateLimit({
     }
 });
 
+export { apiRequestLimiter };
+
 /**
  * Rate limit configuration for the authorization API usage.
  * Limits the number of requests an IP can make in a set time window.
@@ -61,13 +63,15 @@ const authorizationApiRequestLimiter = rateLimit({
     message: { message: 'Too many requests from this IP, please try again after 1 minutes.' },
     skip: (req, _) => {
         if (process.env.NODE_ENV === 'development') {
-            const ip = req.ip || req.connection.remoteAddress;
-            return ip === '127.0.0.1' || ip === '::1';
+            const ip = req.ip;
+            return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
         }
         // Do not skip in production
         return false; 
     }
 });
+
+export { authorizationApiRequestLimiter };
 
 /**
  * @swagger
@@ -115,4 +119,4 @@ const registerAccountLimiter = rateLimit({
     }
 });
 
-export { apiRequestLimiter, authorizationApiRequestLimiter, registerAccountLimiter };
+export { registerAccountLimiter };

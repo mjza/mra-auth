@@ -271,7 +271,7 @@ const authenticateUser = async (req, _, next) => {
                 next();
             }
         } catch (err) {
-            updateEventLog(req, { error: 'Error in validating auth user.', details: err });
+            updateEventLog(req, { error: 'Error in authenticate user.', details: err });
             req.user = publicUser;
             next();
         }
