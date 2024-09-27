@@ -1,8 +1,8 @@
 import { genSalt, hash } from 'bcrypt';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
-import { sign, verify } from 'jsonwebtoken';
+import pkg from 'jsonwebtoken';
 import { getCreptoConfig } from './miscellaneous.mjs';
-
+const { sign, verify } = pkg;
 /**
  * Generates an encrypted activation/reset object containing the activation/reset code and redirect URL.
  * @param {string} code - The code/token to be encrypted.

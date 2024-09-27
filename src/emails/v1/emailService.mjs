@@ -3,8 +3,6 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { updateEventLog } from '../../utils/logger.mjs';
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 /**
  * Sends an email using SendGrid's email service.
  * 
@@ -25,6 +23,7 @@ const sendEmail = async (req, email, subject, htmlContent) => {
     try {
         if(email.endsWith('@example.com'))
             return;
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
         await sgMail.send(msg);
         updateEventLog(req, { success: 'Email sent successfully to: ' + email});
     } catch (err) {
@@ -169,7 +168,6 @@ const sendResetPasswordEmail = async (req, username, displayName, userEmail, res
 };
 
 export {
-    sendVerificationEmail,
     sendEmailWithUsernames,
-    sendResetPasswordEmail
+    sendResetPasswordEmail, sendVerificationEmail
 };

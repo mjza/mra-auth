@@ -1,11 +1,12 @@
 import axios from 'axios';
 import { validationResult } from 'express-validator';
 import { Agent } from 'https';
-import { verify } from 'jsonwebtoken';
+import pkg from 'jsonwebtoken';
 import { promisify } from 'util';
 import { getUserByUsername, getUserIdByUsername, isTokenBlacklisted } from './database.mjs';
 import { createEventLog, updateEventLog } from './logger.mjs';
 import { getCreptoConfig } from './miscellaneous.mjs';
+const { verify } = pkg;
 
 /**
  * Checks if a user does not exist in the database.
