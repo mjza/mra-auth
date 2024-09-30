@@ -1,6 +1,6 @@
 // globalTeardown.js
-import { closeApp } from '../app.mjs';
+//import { closeApp } from '../app.mjs';
 
 export default async () => {
-  await closeApp(global.__APP__);
+  //await closeApp(global.__APP__);
 };
