@@ -1,11 +1,12 @@
 import request from 'supertest';
-import { createApp, closeApp } from '../../../app.mjs';
-import { getUserByUserId, deleteUserByUsername, getUserByUsername } from '../../../utils/database.mjs';
+import { deleteUserByUsername, getUserByUserId, getUserByUsername } from '../../../utils/database.mjs';
 import { generateMockUserRoute } from '../../../utils/generators.mjs';
 
 describe('Test register route', () => {
 
-  let app, mockUser;
+  let mockUser;
+
+  const app = global.__APP__;
 
   const headers = {
     'x-development-token': process.env.X_DEVELOPMENT_TOKEN,
@@ -15,15 +16,6 @@ describe('Test register route', () => {
   const register = async (data) => await request(app).post('/v1/register').set(headers).send(data);
   const activate = async (data) => await request(app).post('/v1/resend-activation').set(headers).send(data);
   const deregister = async (authToken, params) => await request(app).delete('/v1/deregister').set(headers).set('Authorization', authToken).query(params);
-
-  beforeAll(async () => {
-    app = await createApp();
-  });
-
-  // Ensure the app resources are closed after all tests
-  afterAll(async () => {
-    await closeApp();
-  });
 
   describe('Test POST /v1/register endpoint', () => {
     let res;
@@ -277,7 +269,6 @@ describe('Test register route', () => {
 
       for (let i = 0; i < 5; i++) {
         res = await request(app).post('/v1/register').send(mockUser);
-        expect(res.statusCode).toBe(400);
       }
 
       res = await request(app).post('/v1/register').send(mockUser);

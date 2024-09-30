@@ -5,15 +5,11 @@ import { generateMockUserRoute } from '../../../utils/generators.mjs';
 
 describe('Test authorization endpoints', () => {
 
-    let app;
+    const app = global.__APP__;
 
     const headers = {
         'x-development-token': process.env.X_DEVELOPMENT_TOKEN,
     };
-
-    beforeAll(async () => {
-        app = await createApp();
-    });
 
     describe('/v1/authorize endpoints', () => {
         let mockUser, testUser, authToken;
@@ -177,11 +173,6 @@ describe('Test authorization endpoints', () => {
             expect(res.statusCode).toBe(403);
             expect(res.body).toHaveProperty('message', 'User is not authorized.');
         });
-    });
-
-    // Ensure the app resources are closed after all tests
-    afterAll(async () => {
-        await closeApp();
     });
 
 });

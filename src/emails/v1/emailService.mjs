@@ -12,7 +12,7 @@ import { updateEventLog } from '../../utils/logger.mjs';
  * @param {string} htmlContent - The HTML content of the email.
  * @throws Will throw an error if the email fails to send.
  */
-const sendEmail = async (req, email, subject, htmlContent) => {
+const _sendEmail = async (req, email, subject, htmlContent) => {
     const msg = {
         to: email,
         from: process.env.FROM_EMAIL,
@@ -21,14 +21,14 @@ const sendEmail = async (req, email, subject, htmlContent) => {
     };
 
     try {
-        if(email.endsWith('@example.com'))
+        if (email.endsWith('@example.com'))
             return;
         sgMail.setApiKey(process.env.SENDGRID_API_KEY);
         await sgMail.send(msg);
-        updateEventLog(req, { success: 'Email sent successfully to: ' + email});
+        updateEventLog(req, { success: 'Email sent successfully to: ' + email });
     } catch (err) {
-        updateEventLog(req, { error: 'Error sending email to: ' + email});
-        updateEventLog(req, { info: 'The message was:', message: msg});
+        updateEventLog(req, { error: 'Error sending email to: ' + email });
+        updateEventLog(req, { info: 'The message was:', message: msg });
         updateEventLog(req, { error: 'Error in sending email.', details: err });
         throw err;
     }
@@ -47,7 +47,7 @@ const sendEmail = async (req, email, subject, htmlContent) => {
  */
 const sendVerificationEmail = async (req, username, displayName, userEmail, activationLink) => {
     // Read the template file
-    const templatePath = join(__dirname, './verificationEmailTemplate.html');
+    const templatePath = join(process.cwd(), '/src/emails/v1/verificationEmailTemplate.html');
     let emailTemplate = readFileSync(templatePath, 'utf8');
 
     const replacements = {
@@ -67,8 +67,8 @@ const sendVerificationEmail = async (req, username, displayName, userEmail, acti
 
     // Send the email
     try {
-        await sendEmail(req, userEmail, 'Verify Your Email', emailTemplate);
-        updateEventLog(req, { success: 'Verification email sent successfully for the username: ' + username});
+        await _sendEmail(req, userEmail, 'Verify Your Email', emailTemplate);
+        updateEventLog(req, { success: 'Verification email sent successfully for the username: ' + username });
     } catch (err) {
         updateEventLog(req, { error: 'Error in sending verification email.', details: err });
         throw err;
@@ -86,7 +86,7 @@ const sendVerificationEmail = async (req, username, displayName, userEmail, acti
  */
 const sendEmailWithUsernames = async (req, users, userEmail) => {
     // Read the template file
-    const templatePath = join(__dirname, './usernamesEmailTemplate.html');
+    const templatePath = join(process.cwd(), '/src/emails/v1/usernamesEmailTemplate.html');
     let emailTemplate = readFileSync(templatePath, 'utf8');
 
     let tableBody = '';
@@ -117,7 +117,7 @@ const sendEmailWithUsernames = async (req, users, userEmail) => {
 
     // Send the email
     try {
-        await sendEmail(req, userEmail, 'List of your accounts', emailTemplate);
+        await _sendEmail(req, userEmail, 'List of your accounts', emailTemplate);
         updateEventLog(req, 'List of emails sent successfully for the email: ' + userEmail);
     } catch (err) {
         updateEventLog(req, { error: 'Error in sending email containing usernames.', details: err });
@@ -138,7 +138,7 @@ const sendEmailWithUsernames = async (req, users, userEmail) => {
  */
 const sendResetPasswordEmail = async (req, username, displayName, userEmail, resetPasswordLink) => {
     // Read the template file
-    const templatePath = join(__dirname, './resetPasswordEmailTemplate.html');
+    const templatePath = join(process.cwd(), '/src/emails/v1/resetPasswordEmailTemplate.html');
     let emailTemplate = readFileSync(templatePath, 'utf8');
 
     const replacements = {
@@ -159,8 +159,8 @@ const sendResetPasswordEmail = async (req, username, displayName, userEmail, res
 
     // Send the email
     try {
-        await sendEmail(req, userEmail, 'Reset Your password', emailTemplate);
-        updateEventLog(req, { success: 'Reset password email sent successfully for: ' + username});
+        await _sendEmail(req, userEmail, 'Reset Your password', emailTemplate);
+        updateEventLog(req, { success: 'Reset password email sent successfully for: ' + username });
     } catch (err) {
         updateEventLog(req, { error: 'Error in sending reset password email.', details: err });
         throw err;
@@ -169,5 +169,6 @@ const sendResetPasswordEmail = async (req, username, displayName, userEmail, res
 
 export {
     sendEmailWithUsernames,
-    sendResetPasswordEmail, sendVerificationEmail
+    sendResetPasswordEmail,
+    sendVerificationEmail
 };

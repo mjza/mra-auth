@@ -5,18 +5,22 @@ import { generateMockUserDB } from '../../../utils/generators.mjs';
 
 describe('GET /usernames Endpoint', () => {
 
-    let app, mockUser, testUser;
+    let mockUser, testUser;
+
+    const app = global.__APP__;
 
     const headers = {
         'x-development-token': process.env.X_DEVELOPMENT_TOKEN,
     };
 
     beforeAll(async () => {
-        app = await createApp();
         mockUser = await generateMockUserDB();
         testUser = await insertUser(mockUser);
     });
 
+    afterAll(async () => {
+        await deleteUserByUsername(mockUser.username);
+    });
 
     it('should return 200 code', async () => {
         const res = await request(app)
@@ -55,10 +59,4 @@ describe('GET /usernames Endpoint', () => {
         expect(res.body.errors).toBeDefined();
     });
 
-
-    // Ensure the app resources are closed after all tests
-    afterAll(async () => {
-        await deleteUserByUsername(mockUser.username);
-        await closeApp();
-    });
 });

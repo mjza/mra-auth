@@ -5,7 +5,7 @@ import { generateMockUserDB, generateEncryptedObject } from '../../../utils/gene
 
 describe('Test activate route', () => {
 
-  let app;
+  const app = global.__APP__;
 
   const headers = {
     'x-development-token': process.env.X_DEVELOPMENT_TOKEN,
@@ -13,15 +13,6 @@ describe('Test activate route', () => {
 
   const activate = async (data) => await request(app).get('/v1/activate').set(headers).query(data);
   const activateByCode = async (data) => await request(app).post('/v1/activate-by-code').set(headers).send(data);
-
-  beforeAll(async () => {
-    app = await createApp();    
-  });
-
-  // Ensure the app resources are closed after all tests
-  afterAll(async () => {
-    await closeApp();
-  });
 
   describe('GET /v1/activate Endpoint', () => {
     let mockUser, testUser, activationObject;

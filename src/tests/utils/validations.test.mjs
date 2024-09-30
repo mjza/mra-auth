@@ -17,7 +17,7 @@ describe('Test validation functions', () => {
             fallbackLng: 'en',
             preload: ['en'], // Preload the necessary languages
             backend: {
-                loadPath: join(__dirname, '../locales/{{lng}}.json'), // Path to translation files
+                loadPath: join(process.cwd(), '/src/locales/{{lng}}.json'), // Path to translation files
             }
         });
     });
