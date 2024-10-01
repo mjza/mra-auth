@@ -1,5 +1,4 @@
 import request from 'supertest';
-import { createApp, closeApp } from '../../../app.mjs';
 import { getUserByUsername, activateUser, deleteUserByUsername } from '../../../utils/database.mjs';
 import { generateMockUserRoute } from '../../../utils/generators.mjs';
 

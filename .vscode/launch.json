@@ -62,7 +62,8 @@
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",
             "env": {
-                "NODE_ENV": "local-test"
+                "NODE_ENV": "local-test",
+                "DO_NOT_CLOSE_APP": "TRUE"
             },
             "skipFiles": [
                 "<node_internals>/**",

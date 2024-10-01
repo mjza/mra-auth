@@ -2,5 +2,7 @@
 import { closeApp } from '../app.mjs';
 
 export default async () => {
-  await closeApp(global.__APP__);
+  if (!process.env.DO_NOT_CLOSE_APP) {
+    await closeApp();
+  }
 };

@@ -1,5 +1,4 @@
 import request from 'supertest';
-import { createApp, closeApp } from '../../../app.mjs';
 import { insertUser, activateUser, deleteUserByUsername, isTokenBlacklisted } from '../../../utils/database.mjs';
 import { generateMockUserDB, generateRandomString } from '../../../utils/generators.mjs';
 

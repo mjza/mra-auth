@@ -1,6 +1,5 @@
 import request from 'supertest';
-import { createApp, closeApp } from '../../../app.mjs';
-import { insertUser, deleteUserByUsername } from '../../../utils/database.mjs';
+import { deleteUserByUsername, insertUser } from '../../../utils/database.mjs';
 import { generateMockUserDB } from '../../../utils/generators.mjs';
 
 describe('GET /usernames Endpoint', () => {

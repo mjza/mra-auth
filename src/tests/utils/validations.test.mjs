@@ -310,7 +310,7 @@ describe('Test validation functions', () => {
         afterAll(async () => {
             // Clean up the test user from the database
             await deleteUserByUsername(mockUser.username);
-        });  
+        });
 
         test('authenticateToken sends 401 if no token is provided', async () => {
             const req = { ...i18next, headers: { authorization: 'Bearer' } };
@@ -409,10 +409,10 @@ describe('Test validation functions', () => {
         afterAll(async () => {
             // Clean up the test user from the database
             await deleteUserByUsername(mockUser.username);
-        });        
+        });
 
         test('authenticateUser authenticates a valid token', async () => {
-            const req = { headers: { authorization: `Bearer ${validToken}` } };            
+            const req = { headers: { authorization: `Bearer ${validToken}` } };
             const next = jest.fn((_) => {
                 expect(req.user).toEqual(user);
             });

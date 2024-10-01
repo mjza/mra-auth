@@ -1,5 +1,4 @@
 import request from 'supertest';
-import { createApp, closeApp } from '../../../app.mjs';
 import { insertUser, deleteUserByUsername, isActiveUser as _isActiveUser, getUserByUserId } from '../../../utils/database.mjs';
 import { generateMockUserDB, generateEncryptedObject } from '../../../utils/generators.mjs';
 
