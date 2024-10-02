@@ -163,7 +163,8 @@ const checkJSONBody = (err, req, res, next) => {
             }
         });
     }
-    next();
+    // Pass the error to the next error-handling middleware, if any
+    next(err);
 };
 
 export { checkJSONBody };

@@ -51,6 +51,7 @@
             "name": "Debug a Selected Test File",
             "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
             "args": [
+                "--coverage",
                 "--runInBand",
                 "--detectOpenHandles",
                 "--verbose",

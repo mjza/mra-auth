@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { body, query } from 'express-validator';
-import { insertUser, updateUserUpdatedAtToNow, getDeactivatedNotSuspendedUsers, getUserIdByUsername, deleteUser } from '../../utils/database.mjs';
+import { addRoleForUserInDomain, getUserType, listRolesForUserInDomains, removeRolesForUserInAllDomains } from '../../casbin/casbinSingleton.mjs';
 import { sendVerificationEmail } from '../../emails/v1/emailService.mjs';
-import { registerAccountLimiter, apiRequestLimiter } from '../../utils/rateLimit.mjs';
+import { deleteUserByUsername, getDeactivatedNotSuspendedUsers, getUserIdByUsername, insertUser, updateUserUpdatedAtToNow } from '../../utils/database.mjs';
 import { generateActivationLink, generatePasswordHash } from '../../utils/generators.mjs';
 import { updateEventLog } from '../../utils/logger.mjs';
-import { userMustNotExist, authenticateToken, authorizeUser, checkRequestValidity, testUrlAccessibility, isValidEmail } from '../../utils/validations.mjs';
-import { listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRolesForUserInAllDomains } from '../../casbin/casbinSingleton.mjs';
+import { apiRequestLimiter, registerAccountLimiter } from '../../utils/rateLimit.mjs';
+import { authenticateToken, authorizeUser, checkRequestValidity, isValidEmail, testUrlAccessibility, userMustNotExist } from '../../utils/validations.mjs';
 
 const router = Router();
 export default router;
@@ -411,8 +411,8 @@ router.delete('/deregister', apiRequestLimiter,
   async (req, res) => {
     try {
       const { username } = req.conditions.where;
-      const result = await deleteUser(req.conditions.where);
-      if (!isNaN(result) && result > 0) {
+      const result = await deleteUserByUsername(username);
+      if (result !== null && result.username === username.toLowerCase()) {
         await removeRolesForUserInAllDomains(username);
         return res.status(200).json({ message: req.t('User has been removed successfully.') });
       }

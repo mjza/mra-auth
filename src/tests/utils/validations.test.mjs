@@ -141,7 +141,7 @@ describe('Test validation functions', () => {
             app = express();
 
             // Mock the translation function for req.t in middleware
-            app.use((req, res, next) => {
+            app.use((req, _, next) => {
                 Object.assign(req, { ...i18next }); // Attach the entire i18next instance to the req object
                 next();
             });
@@ -185,6 +185,29 @@ describe('Test validation functions', () => {
             expect(response.status).toBe(200);
             expect(response.body).toEqual({ message: 'Success' });
         });
+
+        test('should call next middleware when no JSON syntax error occurs', async () => {
+            const nextSpy = jest.fn();  // Create a spy for next()
+        
+            // Add a new route that uses the middleware and passes valid JSON
+            app.post('/testNext', (req, res, next) => {
+                checkJSONBody(null, req, res, nextSpy); // Call the middleware without an error
+                next();  // Proceed to the next middleware or route handler
+            }, (_, res) => {
+                res.status(200).json({ message: 'Next middleware called' });
+            });
+        
+            // Trigger the route
+            const response = await request(app)
+                .post('/testNext')
+                .set('Content-Type', 'application/json')
+                .send({ validJSON: true });
+        
+            expect(nextSpy).toHaveBeenCalled();  // Ensure next() was called
+            expect(response.status).toBe(200);  // Check that the response reaches the next route
+            expect(response.body).toEqual({ message: 'Next middleware called' });
+        });
+        
     });
 
     describe('checkRequestValidity', () => {

@@ -1,6 +1,5 @@
 import { CasbinRule, closeSequelize, col, fn, MraAuditLogsAuthentication, MraStatuses, MraSubscriptions, MraTables, MraTickets, MraTokenBlacklist, MraUserCustomers, MraUserDetails, MraUsers, Sequelize } from '../models/index.mjs';
 import { decrypt } from './converters.mjs';
-import { isEmptyObject } from './miscellaneous.mjs';
 
 /**
  * Maps the table name to the corresponding ORM model.
@@ -34,8 +33,12 @@ export { closeDBConnections };
  * @returns {Object} The inserted token data object.
  */
 const insertBlacklistToken = async (tokenData) => {
+  if (!tokenData || typeof tokenData !== 'object') {
+    return null;
+  }
+
   const { token, expiry } = tokenData;
-  if (!token || !token.trim()) {
+  if (!token || !token.trim() || !expiry || isNaN(expiry)) {
     return null;
   }
 
@@ -59,11 +62,13 @@ export { insertBlacklistToken };
 const isTokenBlacklisted = async (token) => {
   if (!token || !token.trim())
     return true;
+
   const tokenCount = await MraTokenBlacklist.count({
     where: {
       token: token.trim(),
     },
   });
+
   return tokenCount > 0;
 };
 
@@ -103,7 +108,12 @@ export { getAuditLogById };
  * @returns {Object} The inserted log object.
  */
 const insertAuditLog = async (log) => {
+  if (!log || typeof log !== 'object') {
+    return null;
+  }
+
   const { methodRoute, req, comments, ipAddress, userId } = log;
+
   const insertedLog = await MraAuditLogsAuthentication.create({
     method_route: methodRoute,
     req,
@@ -111,6 +121,7 @@ const insertAuditLog = async (log) => {
     comments: comments || '',
     user_id: userId,
   });
+
   return insertedLog && insertedLog.get({ plain: true });
 };
 
@@ -123,9 +134,15 @@ export { insertAuditLog };
  * @returns {Object} The updated log object.
  */
 const updateAuditLog = async (log) => {
+  if (!log || typeof log !== 'object') {
+    return null;
+  }
+
   const { logId, comments } = log;
+
   if (isNaN(logId))
     return null;
+
   const [updateCount, updatedLogs] = await MraAuditLogsAuthentication.update({
     comments: comments,
   }, {
@@ -172,6 +189,11 @@ export { deleteAuditLog };
  *
  */
 async function getUserPrivatePictureUrl(userId) {
+  // Unfortunately, we cannot test this function in the microservice 
+  // as we have no insert mechanism here. 
+  if (isNaN(userId))
+    return null;
+
   const userDetails = await MraUserDetails.findOne({
     where: { user_id: userId },
     attributes: ['private_profile_picture_url'],
@@ -211,24 +233,6 @@ const deleteUserByUsername = async (username) => {
 };
 
 export { deleteUserByUsername };
-
-/**
- * Deletes a user from the database based on the provided condition.
- *
- * @param {object} where - The criteria for selecting the user to delete.
- * @returns {number|null} The number of deleted rows if successful, or null if no criteria were provided.
- */
-const deleteUser = async (where) => {
-  if (isEmptyObject(where))
-    return null;
-
-  // Delete the user(s) and get the number of deleted rows
-  const deletedCount = await MraUsers.destroy({ where });
-
-  return deletedCount; // Return the number of deleted rows
-};
-
-export { deleteUser };
 
 /**
  * Retrieves a user from the database based on the provided username.
@@ -323,7 +327,8 @@ export { getUserByUsernameOrEmail };
  * @returns {Array<Object>} An array of user objects if found, otherwise an empty array.
  */
 const getDeactivatedNotSuspendedUsers = async (usernameOrEmail) => {
-  if (!usernameOrEmail || !usernameOrEmail.trim()) return [];
+  if (!usernameOrEmail || !usernameOrEmail.trim())
+    return null;
 
   const users = await MraUsers.findAll({
     attributes: ['username', 'email', 'activation_code', 'display_name'],
@@ -335,13 +340,15 @@ const getDeactivatedNotSuspendedUsers = async (usernameOrEmail) => {
             { email: usernameOrEmail.trim().toLowerCase() }
           ]
         },
-        { confirmation_at: null }, // Deactivated users
+        { confirmation_at: null }, // Not activated users
+        { deleted_at: null },      // Not deleted users
         { suspended_at: null }     // Not suspended users
+
       ]
     }
   });
 
-  return users.map(user => user.get({ plain: true }));
+  return !users || users.length === 0 ? null : users.map(user => user.get({ plain: true }));
 };
 
 export { getDeactivatedNotSuspendedUsers };
@@ -363,8 +370,9 @@ const updateUserUpdatedAtToNow = async (username) => {
     {
       where: {
         username: username.trim().toLowerCase(),
-        confirmation_at: null, // confirmation_at IS NULL
-        suspended_at: null,   // Not suspended users
+        confirmation_at: null, // Not activated users
+        deleted_at: null,      // Not deleted users
+        suspended_at: null,    // Not suspended users
       },
       returning: true, // This option is specific to PostgreSQL
     }
@@ -417,6 +425,10 @@ export { getUsernamesByEmail };
  * @returns {Object} The inserted user object.
  */
 const insertUser = async (user) => {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+
   const { username, email, passwordHash, displayName } = user;
   if (!username || !username.trim() || !email || !email.trim() || !passwordHash || !passwordHash.trim())
     return null;
@@ -440,6 +452,10 @@ export { insertUser };
  * @returns {boolean} True if the user is inactive, false otherwise.
  */
 const isInactiveUser = async (user) => {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+
   const { username, activationCode } = user;
   if (!username || !username.trim() || !activationCode || !activationCode.trim())
     return false;
@@ -449,7 +465,9 @@ const isInactiveUser = async (user) => {
     where: {
       username: username.trim().toLowerCase(),
       activation_code: activationCode.trim(),
-      confirmation_at: null, // Check if the user hasn't been activated yet
+      confirmation_at: null, // Not activated users
+      deleted_at: null,      // Not deleted users
+      suspended_at: null,    // Not suspended users
     }
   });
 
@@ -475,9 +493,9 @@ const isActiveUser = async (username) => {
       confirmation_at: {
         [Sequelize.Op.ne]: null, // confirmation_at IS NOT NULL
       },
-      activation_code: null, // activation_code IS NULL
-      deleted_at: null, // deleted_at IS NULL
-      suspended_at: null, // suspended_at IS NULL
+      activation_code: null, // Not activated users
+      deleted_at: null,      // Not deleted users
+      suspended_at: null,    // Not suspended users
     }
   });
 
@@ -494,6 +512,10 @@ export { isActiveUser };
  * @returns {boolean} True if the user is inactive, false otherwise.
  */
 const isActivationCodeValid = async (user) => {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+
   const { username, activationCode } = user;
   if (!username || !username.trim() || !activationCode || !activationCode.trim())
     return false;
@@ -503,7 +525,9 @@ const isActivationCodeValid = async (user) => {
     where: {
       username: username.trim().toLowerCase(),
       activation_code: activationCode.trim(),
-      confirmation_at: null,
+      confirmation_at: null, // Not activated users
+      deleted_at: null,      // Not deleted users
+      suspended_at: null,    // Not suspended users
       created_at: {
         // Checking if the created_at is within the last 5 days
         [Sequelize.Op.gte]: Sequelize.literal("now() - INTERVAL '5 days'"),
@@ -532,6 +556,10 @@ export { isActivationCodeValid };
  * @returns {boolean} True if the user was successfully activated, false otherwise.
  */
 const activateUser = async (user) => {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+
   const { username, activationCode } = user;
   if (!username || !username.trim() || !activationCode || !activationCode.trim())
     return false;
@@ -557,7 +585,9 @@ const activateUser = async (user) => {
             }
           }
         ],
-        confirmation_at: null, // confirmation_at IS NULL
+        confirmation_at: null, // Not activated users
+        deleted_at: null,      // Not deleted users
+        suspended_at: null,    // Not suspended users
       },
       returning: true, // This option is specific to PostgreSQL
     }
@@ -626,6 +656,9 @@ export { generateResetToken };
  *                             token expired, or user not found).
  */
 const resetPassword = async (user) => {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
   const { username, resetToken, passwordHash } = user;
   if (!username || !username.trim() || !resetToken || !resetToken.trim() || !passwordHash || !passwordHash.trim())
     return false;
@@ -771,5 +804,3 @@ const getRowById = async (tableName, columnName, columnValue) => {
 };
 
 export { getRowById };
-
-
