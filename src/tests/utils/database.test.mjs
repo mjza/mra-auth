@@ -523,13 +523,27 @@ describe('Test DB functions', () => {
         });
 
         it('should retrieve a deactivated and not suspended user by email', async () => {
+            // Insert a second user with the same email
+            const secondUser = await generateMockUserDB();
+            await insertUser(secondUser);
+
             // Retrieve user by email
             const usersByEmail = await getDeactivatedNotSuspendedUsers(insertedUser.email);
 
             expect(usersByEmail).toBeDefined();
             expect(usersByEmail.length).toBeGreaterThan(0);
-            expect(usersByEmail[0].username).toBe(insertedUser.username.toLowerCase());
-            expect(usersByEmail[0].email).toBe(insertedUser.email.toLowerCase());
+
+            // Verify that all users retrieved have the correct email (case-insensitive)
+            usersByEmail.forEach(user => {
+                expect(user.email).toBe(mockUser.email.toLowerCase());
+            });
+
+            // Verify the usernames of the users retrieved
+            const foundUser = usersByEmail.find(user => user.username === mockUser.username.toLowerCase());
+
+            expect(foundUser).toBeDefined();
+            
+            await deleteUserByUsername(secondUser.username);
         });
 
         it('should return null for null, empty, or whitespace-only input', async () => {
@@ -553,6 +567,10 @@ describe('Test DB functions', () => {
 
     describe('getUsernamesByEmail', () => {
         it('should retrieve some users by email', async () => {
+            // Insert a second user with the same email
+            const secondUser = await generateMockUserDB();
+            await insertUser(secondUser);
+
             // Assuming the test user is already inserted from previous test
             const usersByEmail = await getUsernamesByEmail(mockUser.email);
 
@@ -564,6 +582,8 @@ describe('Test DB functions', () => {
             expect(foundByEmail.username).toBe(mockUser.username.toLowerCase());
             expect(foundByEmail.is_activated).toBeFalsy();
             expect(foundByEmail.is_suspended).toBeFalsy();
+
+            await deleteUserByUsername(secondUser.username);
         });
 
         it('should return null for a non-existent email', async () => {
