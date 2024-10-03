@@ -47,6 +47,27 @@ describe('Test DB functions', () => {
                 expect(insertedLog.ip_address).toBe(mockLog.ipAddress);
                 expect(insertedLog.user_id).toBe(mockLog.userId);
             });
+
+            it('should return null if log is null', async () => {
+                const result = await insertAuditLog(null);
+                expect(result).toBeNull();
+            });
+
+            it('should return null if log is not an object', async () => {
+                const result = await insertAuditLog('notAnObject');
+                expect(result).toBeNull();
+            });
+
+            it('should insert a log with null values for missing fields even if log is an empty object', async () => {
+                const result = await insertAuditLog({});
+                expect(result).toBeDefined();
+                expect(result.method_route).toBeNull();
+                expect(result.req).toBeNull();
+                expect(result.comments).toBe('');
+                expect(result.ip_address).toBeNull();
+                expect(result.user_id).toBeNull();
+            });
+
         });
 
         describe('updateAuditLog', () => {
@@ -58,8 +79,54 @@ describe('Test DB functions', () => {
                 updatedLog = await updateAuditLog(updateData);
 
                 expect(updatedLog).toBeDefined();
-                expect(updatedLog.comments).toContain('Initial comment,');
-                expect(updatedLog.comments).toContain('Updated comment');
+                expect(updatedLog.comments).toMatch(/^Initial comment,\nUpdated comment$/);
+            });
+
+            it('should return null if log is null', async () => {
+                const result = await updateAuditLog(null);
+                expect(result).toBeNull();
+            });
+
+            it('should return null if log is not an object', async () => {
+                const result = await updateAuditLog('invalidLog');
+                expect(result).toBeNull();
+            });
+
+            it('should return null if logId is missing', async () => {
+                const updateData = {
+                    comments: 'Missing logId'
+                };
+                const result = await updateAuditLog(updateData);
+                expect(result).toBeNull();
+            });
+
+            it('should return null if logId is not a number', async () => {
+                const updateData = {
+                    logId: 'invalidId',
+                    comments: 'Invalid logId'
+                };
+                const result = await updateAuditLog(updateData);
+                expect(result).toBeNull();
+            });
+
+            it('should return null if no log matches the provided logId', async () => {
+                const updateData = {
+                    logId: -1, // Assuming this logId does not exist
+                    comments: 'Non-existent log'
+                };
+                const result = await updateAuditLog(updateData);
+                expect(result).toBeNull();
+            });
+
+            it('should update comments to an empty string if provided', async () => {
+                const updateData = {
+                    logId: insertedLog.log_id,
+                    comments: ''
+                };
+                const result = await updateAuditLog(updateData);
+
+                expect(result).toBeDefined();
+                expect(result.comments).toMatch(/^Initial comment,\nUpdated comment,\n$/); // Comments should be updated to an empty string
             });
         });
 
@@ -263,6 +330,21 @@ describe('Test DB functions', () => {
             const userWithoutUsername = { ...mockUser, username: '' };
 
             const result = await insertUser(userWithoutUsername);
+            expect(result).toBeNull();
+        });
+
+        it('should return null if user is missing', async () => {
+            const result = await insertUser();
+            expect(result).toBeNull();
+        });
+
+        it('should return null if user is null', async () => {
+            const result = await insertUser(null);
+            expect(result).toBeNull();
+        });
+
+        it('should return null if user is not an object', async () => {
+            const result = await insertUser('invalidUser');
             expect(result).toBeNull();
         });
 
@@ -542,7 +624,7 @@ describe('Test DB functions', () => {
             const foundUser = usersByEmail.find(user => user.username === mockUser.username.toLowerCase());
 
             expect(foundUser).toBeDefined();
-            
+
             await deleteUserByUsername(secondUser.username);
         });
 
@@ -627,8 +709,23 @@ describe('Test DB functions', () => {
     describe('isInactiveUser', () => {
         it('should return true if a user is inactive', async () => {
             const inactiveUser = { username: insertedUser.username, activationCode: insertedUser.activation_code };
-            const isInactive = await isInactiveUser(inactiveUser);
-            expect(isInactive).toBeTruthy();
+            const result = await isInactiveUser(inactiveUser);
+            expect(result).toBeTruthy();
+        });
+
+        it('should return null if user is missing', async () => {
+            const result = await isInactiveUser();
+            expect(result).toBeNull();
+        });
+
+        it('should return null if user is null', async () => {
+            const result = await isInactiveUser(null);
+            expect(result).toBeNull();
+        });
+
+        it('should return null if user is not an object', async () => {
+            const result = await isInactiveUser('invalidUser');
+            expect(result).toBeNull();
         });
 
         it('should return false if username is missing', async () => {
@@ -718,10 +815,50 @@ describe('Test DB functions', () => {
     describe('isActivationCodeValid', () => {
         it('should check if a user is inactive', async () => {
             // This depends on your database state and may need adjustment
-            const activationCode = { username: insertedUser.username, activationCode: insertedUser.activation_code };
-            const isActivationCodeValidRes = await isActivationCodeValid(activationCode);
-            expect(isActivationCodeValidRes).toBeTruthy();
+            const userWithActivationCode = { username: insertedUser.username, activationCode: insertedUser.activation_code };
+            const result = await isActivationCodeValid(userWithActivationCode);
+            expect(result).toBeTruthy();
         });
+
+        it('should return false if user is missing', async () => {
+            const result = await isActivationCodeValid();
+            expect(result).toBeFalsy();
+        });
+
+        it('should return false if user is null', async () => {
+            const result = await isActivationCodeValid(null);
+            expect(result).toBeFalsy();
+        });
+
+        it('should return false if user is not an object', async () => {
+            const result = await isActivationCodeValid('invalidUser');
+            expect(result).toBeFalsy();
+        });
+
+        it('should return false if username is missing', async () => {
+            const userWithoutUsername = { activationCode: insertedUser.activation_code };
+            const result = await isActivationCodeValid(userWithoutUsername);
+            expect(result).toBeFalsy();
+        });
+    
+        it('should return false if activation code is missing', async () => {
+            const userWithoutActivationCode = { username: insertedUser.username };
+            const result = await isActivationCodeValid(userWithoutActivationCode);
+            expect(result).toBeFalsy();
+        });
+    
+        it('should return false if username is empty or only whitespace', async () => {
+            const userWithEmptyUsername = { username: '   ', activationCode: insertedUser.activation_code };
+            const result = await isActivationCodeValid(userWithEmptyUsername);
+            expect(result).toBeFalsy();
+        });
+    
+        it('should return false if activation code is empty or only whitespace', async () => {
+            const userWithEmptyActivationCode = { username: insertedUser.username, activationCode: '   ' };
+            const result = await isActivationCodeValid(userWithEmptyActivationCode);
+            expect(result).toBeFalsy();
+        });
+    
     });
 
     describe('updateUserUpdatedAtToNow', () => {

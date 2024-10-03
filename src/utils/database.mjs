@@ -513,7 +513,7 @@ export { isActiveUser };
  */
 const isActivationCodeValid = async (user) => {
   if (!user || typeof user !== 'object') {
-    return null;
+    return false;
   }
 
   const { username, activationCode } = user;
