@@ -44,7 +44,7 @@ export default router;
  *                 default: "Password1$"
  *               loginRedirectURL:
  *                 type: string   
- *                 default: "http://localhost:3000/login"
+ *                 default: "http://example.com/"
  *     responses:
  *       201:
  *         description: User registered successfully

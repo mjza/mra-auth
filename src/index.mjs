@@ -1,5 +1,5 @@
+import './config/config.mjs'; // This line must be before the app.mjs import
 import { closeApp, createApp } from './app.mjs';
-import './config/config.mjs';
 
 /**
  * A reference to the HTTP server created by Express. This variable is used
@@ -28,11 +28,11 @@ let server = null;
  *                          need to be handled by attaching a `.catch` handler when calling
  *                          this function.
  */
-async function startServer() {
+const startServer = async () => {
   const app = await createApp();
   const port = process.env.PORT || 3000;
   server = app.listen(port, () => console.log(`Server running on port ${port}`));
-}
+};
 
 startServer().catch(err => console.error('Error starting server:', err));
 
