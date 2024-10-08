@@ -1,4 +1,3 @@
-// globalTeardown.js
 import { closeApp } from '../app.mjs';
 
 export default async () => {
