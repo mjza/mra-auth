@@ -1,4 +1,4 @@
-name: Tag After CI Success
+name: Tag Version After CI Success
 
 on:
   workflow_run:
@@ -10,7 +10,7 @@ jobs:
   tag_after_ci_success:
     # Set the job name dynamically using expressions
     name: >
-      Tagging after CI Success : ${{ github.event.workflow_run.head_commit.message }}
+      Tagging after CI Success : ${({ github.event.workflow_run.head_commit.message }).split('\n')[0]}
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
@@ -18,23 +18,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Fetch the latest tag
+      - name: Fetch the latest versioned tag
         id: get_tag
         run: |
           # Fetch tags from the repository
           git fetch --tags
-          
-          # Check if any tags exist
-          TAG_COUNT=$(git tag -l | wc -l)
-          
-          if [ "$TAG_COUNT" -eq 0 ]; then
+      
+          # Check if any versioned tags exist that match the format vX.Y.Z
+          TAGS=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V)
+      
+          if [ -z "$TAGS" ]; then
             echo "No tags found, starting from v1.0.0"
             echo "v1.0.0" > latest_version
           else
-            # Get the latest tag
-            TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-            echo "Latest tag found: $TAG"
-            echo "$TAG" > latest_version
+            # Get the latest versioned tag (last in the sorted list)
+            LATEST_TAG=$(echo "$TAGS" | tail -n 1)
+            echo "Latest tag found: $LATEST_TAG"
+            echo "$LATEST_TAG" > latest_version
           fi
 
       - name: Extract version from package.json
