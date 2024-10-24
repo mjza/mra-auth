@@ -25,7 +25,7 @@ REM Split the commit message into lines
 REM Check if the first line matches the required pattern: [Label] Title
 echo !line1! | findstr /R "^\[[A-Za-z][^]]*\] .\+" >nul
 if errorlevel 1 (
-    echo Error: The first line must start with a label (i.e., Feature, Bugfix, Documentation, Git, Test, Package) in square brackets followed by a space and a title.
+    echo Error: The first line must start with a label (i.e., Feature, Bugfix, Documentation, Git, Test, Package, Update) in square brackets followed by a space and a title.
     exit /b 1
 )
 

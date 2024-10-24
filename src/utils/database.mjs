@@ -1,5 +1,6 @@
 import { CasbinRule, closeSequelize, col, fn, MraAuditLogsAuthentication, MraStatuses, MraSubscriptions, MraTables, MraTickets, MraTokenBlacklist, MraUserCustomers, MraUserDetails, MraUsers, Sequelize } from '../models/index.mjs';
-import { decrypt } from './converters.mjs';
+import { converters } from '@reportcycle/mra-utils';
+const { decrypt} = converters;
 
 /**
  * Maps the table name to the corresponding ORM model.

@@ -1,4 +1,5 @@
-import { convertRequestData } from './converters.mjs';
+import { converters } from '@reportcycle/mra-utils';
+const { convertRequestData } = converters;
 import { insertAuditLog, updateAuditLog } from './database.mjs';
 import { extractUserDataFromAuthToke } from './generators.mjs';
 
