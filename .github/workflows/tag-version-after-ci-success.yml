@@ -10,7 +10,7 @@ jobs:
   tag_after_ci_success:
     # Set the job name dynamically using expressions
     name: >
-      Tagging after CI Success : ${({ github.event.workflow_run.head_commit.message }).split('\n')[0]}
+      Tagging after CI Success of commit: ${{ github.event.workflow_run.head_commit.id }}
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
