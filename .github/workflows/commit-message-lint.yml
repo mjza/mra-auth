@@ -1,0 +1,25 @@
+name: Commit Message Lint
+
+on:
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  commit-message-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Commitlint
+        run: npm install @commitlint/cli @commitlint/config-conventional
+
+      - name: Lint Commit Messages
+        run: |
+          npx commitlint --from=${{ github.event.before }} --to=${{ github.sha }}
