@@ -223,7 +223,7 @@ describe('Test DB functions', () => {
     describe('insertBlacklistToken, isTokenBlacklisted', () => {
         const mockTokenData = {
             token: generateRandomString(32),
-            expiry: Math.floor(Date.now() / 1000) + 3 // 3 seconds from now
+            expiry: Math.floor(Date.now() / 1000) + 2 // 2 seconds from now
         };
 
         describe('insertBlacklistToken', () => {
@@ -273,6 +273,7 @@ describe('Test DB functions', () => {
 
         describe('isTokenBlacklisted', () => {
             it('should return true if the token is in the blacklist', async () => {
+                await sleep(3000); // Sleep for 3 seconds
                 // Assuming the test token is already inserted from previous test
                 const isExpired = await isTokenBlacklisted(mockTokenData.token);
                 expect(isExpired).toBeTruthy();
