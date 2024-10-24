@@ -50,6 +50,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@reportcycle'
+          always-auth: true
+          token: ${{ secrets.MY_PAT }}
 
       - name: Cache node modules
         uses: actions/cache@v4
@@ -58,11 +62,6 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-      
-      - name: Configure npm for GitHub Packages
-        run: |
-          echo "@reportcycle:registry=https://npm.pkg.github.com/" >> ~/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.MY_PAT }}" >> ~/.npmrc
 
       - name: Install dependencies
         run: npm install
