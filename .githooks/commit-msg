@@ -1,10 +1,14 @@
-#!/bin/bash
+#!/bin/sh
 
+# Read the commit message file
 commit_msg_file="$1"
 commit_msg=$(cat "$commit_msg_file")
 
+# Normalize line endings (Windows compatibility)
+commit_msg=$(echo "$commit_msg" | sed 's/\r//g')
+
 # Extract the first line (label and title)
-first_line=$(head -n1 "$commit_msg_file")
+first_line=$(echo "$commit_msg" | head -n 1)
 
 # Check if the first line matches the required pattern: [Label] Title
 if ! echo "$first_line" | grep -qE '^\[[A-Za-z]+\] .+'; then
@@ -13,14 +17,14 @@ if ! echo "$first_line" | grep -qE '^\[[A-Za-z]+\] .+'; then
 fi
 
 # Check for an empty second line
-second_line=$(sed -n '2p' "$commit_msg_file")
+second_line=$(echo "$commit_msg" | sed -n '2p')
 if [ -n "$second_line" ]; then
   echo "Error: The second line must be empty."
   exit 1
 fi
 
 # Check for the presence of a detailed description starting from the third line
-third_line=$(sed -n '3p' "$commit_msg_file")
+third_line=$(echo "$commit_msg" | sed -n '3p')
 if [ -z "$third_line" ]; then
   echo "Error: A detailed description is required after the empty line."
   exit 1

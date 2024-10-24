@@ -1,6 +1,6 @@
 # mra-auth
 
-## **Run the Setup Script**
+## GitHub Setup
 
 ### Setup Instructions for Mac
 
@@ -8,6 +8,12 @@ After cloning the repository, run the following command to set up the commit mes
 
 ```bash
 ./setup.sh
+```
+
+You need to make sure the script has execute permissions:
+
+```bash
+chmod +x setup.sh
 ```
 
 This will configure Git to use the commit message template for this repository only.
@@ -19,6 +25,76 @@ Open Command Prompt or PowerShell, navigate to the repository directory, and run
 ```bash
 .\setup.bat
 ```
+
+## Loading `MY_PAT` from `.env` File Automatically
+
+If you want `MY_PAT` to be loaded from a `.env` file automatically, as you need it for installing private packages, you can use a tool like `dotenv-cli` to load the environment variables before running `npm install`. Here’s how to set it up:
+
+### Step 1: Install `dotenv-cli` globally
+
+First, you need to install `dotenv-cli`, which helps load `.env` variables into your environment.
+
+```bash
+npm install -g dotenv-cli
+```
+
+If face with the following error:
+
+```bash
+npm error The operation was rejected by your operating system.
+npm error It is likely you do not have the permissions to access this file as the current user
+npm error
+npm error If you believe this might be a permissions issue, please double-check the
+npm error permissions of the file and its containing directories, or try running
+npm error the command again as root/Administrator.
+```
+
+Then it means you must use the command `sudo ` before the `npm install -g dotenv-cli` and then type your password.
+
+### Step 2: Create a `.env` File
+
+Ensure you have a `.env` file in `/src/config/` directory. For example:
+
+```
+MY_PAT=your_personal_access_token_here
+```
+
+### Step 3: Run `npm install` with `dotenv`
+
+Now, when you run `npm install`, use `dotenv` to load the `.env` file:
+
+```
+dotenv -e ./src/config/.env -- npm install
+```
+
+### Update nodejs packages
+First make sure `dotenv` has been installed globally.
+Then use `npm-check-updates` to automate the process of checking and updating your dependencies:
+
+```bash
+dotenv -e ./src/config/.env -- npx npm-check-updates -u
+dotenv -e ./src/config/.env -- npm install
+```
+
+## Install private packages using `.npmrc` Manually
+As we are running npm to install packages locally, the `MY_PAT` (which is your PAT) needs to be set as an environment variable. Here’s how it works in different environments:
+
+1. Generate a personal access token (PAT) in GitHub
+2. Set the `MY_PAT` environment variable in your shell manually (or via a script):
+
+For Linux/macOS:
+
+```bash
+export MY_PAT=<your_personal_access_token>
+```
+
+For Windows (PowerShell):
+
+```powershell
+$env:MY_PAT="<your_personal_access_token>"
+```
+3. Run `npm install` after setting the environment variable.
+
 
 ## Install Heroku CLI
 Follow the instructions in this [link](https://devcenter.heroku.com/articles/heroku-cli#verify-your-installation) and install Heroku CLI. 
@@ -81,7 +157,7 @@ npm run generate-docs
 ```
 
 ## GitHub configuration
-`HEROKU_API_KEY` is the api key for accessing `mra-auth` application, and `MY_PAT` is my personal access token of GitHub for tagging releases. They have been particularly set in GitHub secrets.
+`HEROKU_API_KEY` is the api key for accessing `mra-auth` application, and `MY_PAT` is you personal access token of GitHub for tagging releases. They have been particularly set in GitHub secrets.
 
 ![](./images/figure4.png)
 
@@ -89,31 +165,4 @@ They are needed in the workflow codes that we generated for automatically taggin
 
 `main.yml` is run automatically when we push to main branch. However, after a seccessful push to Heroku, we must run the other workflow in GitHub manually. 
 ![](./images/figure5.png)
-
-## Update nodejs packages
-Use tools like npm-check-updates to automate the process of checking and updating your dependencies:
-
-```bash
-npx npm-check-updates -u
-npm install
-```
-
-## Install private packages using `.npmrc`
-As we are running npm to install packages locally, the `MY_PAT` (which is your PAT) needs to be set as an environment variable. Here’s how it works in different environments:
-
-1. Generate a personal access token (PAT) in GitHub
-2. Set the `MY_PAT` environment variable in your shell manually (or via a script):
-
-For Linux/macOS:
-
-```bash
-export MY_PAT=<your_personal_access_token>
-```
-
-For Windows (PowerShell):
-
-```powershell
-$env:MY_PAT="<your_personal_access_token>"
-```
-3. Run `npm install` after setting the environment variable.
 
