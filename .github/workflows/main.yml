@@ -58,7 +58,9 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-           
+      
+      - name: Authenticate to GitHub Packages
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.MY_PAT }}" > ~/.npmrc
 
       - name: Install dependencies
         run: npm install

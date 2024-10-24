@@ -1,7 +1,6 @@
 {
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": "explicit",
-      "source.fixAll.tslint": "explicit"
-    }
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.tslint": "explicit"
   }
-  
+}

@@ -37,7 +37,8 @@
     "sequelize": "^6.37.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "typeorm-adapter": "^1.7.0"
+    "typeorm-adapter": "^1.7.0",
+    "@reportcycle/mra-utils": "^1.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
