@@ -1,0 +1,126 @@
+name: Tag After CI Success
+
+on:
+  workflow_run:
+    workflows: ["Node.js CI"]
+    types:
+      - completed
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fetch the latest tag
+        id: get_tag
+        run: |
+          # Fetch tags from the repository
+          git fetch --tags
+          
+          # Check if any tags exist
+          TAG_COUNT=$(git tag -l | wc -l)
+          
+          if [ "$TAG_COUNT" -eq 0 ]; then
+            echo "No tags found, starting from v1.0.0"
+            echo "v1.0.0" > latest_version
+          else
+            # Get the latest tag
+            TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+            echo "Latest tag found: $TAG"
+            echo "$TAG" > latest_version
+          fi
+
+      - name: Extract version from package.json
+        id: get_package_version
+        run: |
+          # Extract the version from package.json
+          PACKAGE_VERSION=$(jq -r '.version' package.json)
+          echo "Version from package.json: $PACKAGE_VERSION"
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+
+      - name: Calculate new version based on tags and package.json
+        id: calculate_version
+        run: |
+          # Read the latest tag version
+          LATEST_VERSION=$(cat latest_version)
+
+          # Extract major, minor, and patch from latest tag
+          VERSION_REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)$"
+          if [[ $LATEST_VERSION =~ $VERSION_REGEX ]]; then
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            PATCH="${BASH_REMATCH[3]}"
+            # Increment the patch version
+            NEW_PATCH=$((PATCH + 1))
+            CALCULATED_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          else
+            CALCULATED_VERSION="1.0.0"
+          fi
+
+          echo "Calculated version based on tags: $CALCULATED_VERSION"
+          
+          # Compare package.json version with calculated version
+          PACKAGE_VERSION=${{ env.PACKAGE_VERSION }}
+          # Perform the version comparison
+          if [ "$(printf '%s\n' "$PACKAGE_VERSION" "$CALCULATED_VERSION" | sort -V | tail -n1)" = "$CALCULATED_VERSION" ]; then
+            # If the calculated version is greater, use the calculated version
+            NEW_VERSION="v$CALCULATED_VERSION"
+          else
+            # Otherwise, use the package.json version and add 'v' prefix
+            NEW_VERSION="v$PACKAGE_VERSION"
+          fi
+          echo "Final version to use: $NEW_VERSION"
+          echo "$NEW_VERSION" > new_version
+
+          # Export the new version so it can be used in the next step
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Tag the commit
+        id: tag_commit
+        run: |
+          NEW_VERSION=$(cat new_version)
+          echo "Attempting to tag with $NEW_VERSION"
+
+          # Check if the tag already exists
+          TAG_EXISTS=$(git tag -l "$NEW_VERSION")
+
+          while [ -n "$TAG_EXISTS" ]; do
+            # If the tag exists, increment the patch number
+            echo "Tag $NEW_VERSION already exists, incrementing patch version..."
+            VERSION_REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)$"
+            if [[ $NEW_VERSION =~ $VERSION_REGEX ]]; then
+              MAJOR="${BASH_REMATCH[1]}"
+              MINOR="${BASH_REMATCH[2]}"
+              PATCH="${BASH_REMATCH[3]}"
+              PATCH=$((PATCH + 1))
+              NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+            else
+              echo "Error parsing version."
+              exit 1
+            fi
+            echo "Trying new version: $NEW_VERSION"
+            TAG_EXISTS=$(git tag -l "$NEW_VERSION")
+          done
+
+          echo "Final tag to be used: $NEW_VERSION"
+          echo "$NEW_VERSION" > new_version
+
+      - name: Create the tag
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.MY_PAT }}
+          script: |
+            const newTag = process.env.NEW_VERSION;
+            console.log(`Creating tag: ${newTag}`);
+
+            // Create the tag with the final version
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${newTag}`,
+              sha: context.sha,
+            });
