@@ -1,5 +1,15 @@
 # mra-auth
 
+## Setup Instructions
+
+After cloning the repository, run the following command to set up the commit message template locally:
+
+```bash
+./setup.sh
+```
+
+This will configure Git to use the commit message template for this repository only.
+
 ## Install Heroku CLI
 Follow the instructions in this [link](https://devcenter.heroku.com/articles/heroku-cli#verify-your-installation) and install Heroku CLI. 
 

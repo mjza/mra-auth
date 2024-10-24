@@ -10,7 +10,7 @@ jobs:
   tag_after_deploy:
     # Set the job name dynamically using expressions
     name: >
-      Tagging after ${{ github.event.workflow_run.name }} - ${{ github.event.workflow_run.head_commit.message }}
+      Tagging after Commit : ${{ github.event.workflow_run.head_commit.message }}
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
