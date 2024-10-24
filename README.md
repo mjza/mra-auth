@@ -79,21 +79,21 @@ npm install
 ```
 
 ## Install private packages using `.npmrc`
-As we are running npm to install packages locally, the `GITHUB_TOKEN` (which is your PAT) needs to be set as an environment variable. Here’s how it works in different environments:
+As we are running npm to install packages locally, the `MY_PAT` (which is your PAT) needs to be set as an environment variable. Here’s how it works in different environments:
 
 1. Generate a personal access token (PAT) in GitHub
-2. Set the `GITHUB_TOKEN` environment variable in your shell manually (or via a script):
+2. Set the `MY_PAT` environment variable in your shell manually (or via a script):
 
 For Linux/macOS:
 
 ```bash
-export GITHUB_TOKEN=<your_personal_access_token>
+export MY_PAT=<your_personal_access_token>
 ```
 
 For Windows (PowerShell):
 
 ```powershell
-$env:GITHUB_TOKEN="<your_personal_access_token>"
+$env:MY_PAT="<your_personal_access_token>"
 ```
 3. Run `npm install` after setting the environment variable.
 

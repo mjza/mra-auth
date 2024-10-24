@@ -24,6 +24,7 @@ jobs:
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       X_DEVELOPMENT_TOKEN: ${{ secrets.X_DEVELOPMENT_TOKEN }}
+      MY_PAT: ${{ secrets.MY_PAT }}
       # Setting an environment variable with the value of a configuration variable
       BASE_URL: ${{ vars.BASE_URL }}
       PORT: ${{ vars.PORT }}
@@ -50,10 +51,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@reportcycle'
-          always-auth: true
-          token: ${{ secrets.MY_PAT }}
 
       - name: Cache node modules
         uses: actions/cache@v4
