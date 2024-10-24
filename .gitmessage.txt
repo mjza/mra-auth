@@ -6,3 +6,4 @@ Detailed description of the changes made, reasons, and any other relevant inform
 # [Feature]
 # [Bugfix]
 # [Documentation]
+# [Git]
