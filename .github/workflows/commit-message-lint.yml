@@ -18,7 +18,11 @@ jobs:
       - name: Install Commitlint
         run: npm install @commitlint/cli @commitlint/config-conventional
 
-      # Step 2: Lint Commit Messages
+      # Step 1: Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v4     
+
+      # Step 3: Lint Commit Messages
       - name: Lint Commit Messages
         run: |
           npx commitlint --from=${{ github.event.before }} --to=${{ github.sha }}
