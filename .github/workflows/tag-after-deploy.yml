@@ -7,7 +7,9 @@ on:
       - completed
 
 jobs:
-  tag:
+  tag_after_deploy:
+    # Set the job name dynamically using expressions
+    name: Tagging after ${{ github.event.workflow_run.name }}
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
