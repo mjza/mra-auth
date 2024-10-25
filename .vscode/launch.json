@@ -8,7 +8,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${file}" // Select a file and then Run `Launch Selected File`
+            "program": "${file}", // Select a file and then Run `Launch Selected File`
+            "envFile": "${workspaceFolder}/src/config/.env"
         },
         {
             "type": "node",
@@ -21,7 +22,8 @@
             "env": {
                 "NODE_ENV": "development"
             },
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/src/config/.env"
         },
         {
             "type": "node",
@@ -29,6 +31,7 @@
             "name": "Debug Jest Tests",
             "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
             "args": [
+                "--coverage",
                 "--runInBand", // Runs all tests in a single process, important for debugging
                 "--detectOpenHandles",
                 "--verbose",
@@ -43,7 +46,8 @@
             "skipFiles": [
                 "<node_internals>/**",
                 "node_modules/**"
-            ]
+            ],
+            "envFile": "${workspaceFolder}/src/config/.env"
         },
         {
             "type": "node",
@@ -69,7 +73,8 @@
             "skipFiles": [
                 "<node_internals>/**",
                 "node_modules/**"
-            ]
+            ],
+            "envFile": "${workspaceFolder}/src/config/.env"
         }
     ]
 }
