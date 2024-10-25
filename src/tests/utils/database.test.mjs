@@ -224,7 +224,7 @@ describe('Test DB functions', () => {
     describe('insertBlacklistToken, isTokenBlacklisted', () => {
         const mockTokenData = {
             token: generateRandomString(32),
-            expiry: Math.floor(Date.now() / 1000) + 2 // 2 seconds from now
+            expiry: Math.floor(Date.now() / 1000) + 1 // 1 seconds from now
         };
 
         describe('insertBlacklistToken', () => {
@@ -273,7 +273,7 @@ describe('Test DB functions', () => {
         });
 
         describe('isTokenBlacklisted', () => {
-            it('should return true if the token is in the blacklist', async () => {
+            it('should return true if the token is in the blacklist after 3 seconds', async () => {
                 await sleep(3000); // Sleep for 3 seconds
                 // Assuming the test token is already inserted from previous test
                 const isExpired = await isTokenBlacklisted(mockTokenData.token);
@@ -291,9 +291,7 @@ describe('Test DB functions', () => {
                 expect(await isTokenBlacklisted('   ')).toBeTruthy();  // Whitespace token
             });
 
-            it('should check by inserting new token the old one is deleted after 3 seconds', async () => {
-                await sleep(3000); // Sleep for 3 seconds
-
+            it('should check by inserting new token the old one is deleted', async () => {
                 const newMockTokenData = {
                     token: generateRandomString(32),
                     expiry: Math.floor(Date.now() / 1000) - 2 // 2 seconds in past from now
