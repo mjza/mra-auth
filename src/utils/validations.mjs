@@ -5,7 +5,8 @@ import pkg from 'jsonwebtoken';
 import { promisify } from 'util';
 import { getUserByUsername, getUserIdByUsername, isTokenBlacklisted } from './database.mjs';
 import { createEventLog, updateEventLog } from './logger.mjs';
-import { getCreptoConfig } from './miscellaneous.mjs';
+import { miscellaneous } from '@reportcycle/mra-utils';
+const { getCreptoConfig } = miscellaneous;
 const { verify } = pkg;
 
 /**

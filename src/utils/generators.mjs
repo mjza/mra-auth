@@ -1,7 +1,8 @@
 import { genSalt, hash } from 'bcrypt';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import pkg from 'jsonwebtoken';
-import { getCreptoConfig } from './miscellaneous.mjs';
+import { miscellaneous } from '@reportcycle/mra-utils';
+const { getCreptoConfig } = miscellaneous;
 const { sign, verify } = pkg;
 /**
  * Generates an encrypted activation/reset object containing the activation/reset code and redirect URL.
@@ -18,7 +19,8 @@ const generateEncryptedObject = (code, redirectURL) => {
         let encryptedObject = cipher.update(JSON.stringify({ code, redirectURL }), 'utf8', 'hex');
         encryptedObject += cipher.final('hex');
         return { token: iv.toString('hex'), data: encryptedObject };
-    } catch {
+    } catch(err) {
+        console.log(err);
         return { token: '', data: '' };
     }
 };

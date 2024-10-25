@@ -1,6 +1,7 @@
 import { activateUser, closeDBConnections, deleteAuditLog, deleteUserByUsername, generateResetToken, getAuditLogById, getDeactivatedNotSuspendedUsers, getUserByUserId, getUserByUsername, getUserByUsernameOrEmail, getUserIdByUsername, getUsernamesByEmail, insertAuditLog, insertBlacklistToken, insertUser, isActivationCodeValid, isActiveUser, isInactiveUser, isTokenBlacklisted, resetPassword, updateAuditLog, updateUserUpdatedAtToNow } from '../../utils/database.mjs';
 import { generateMockUserDB, generateRandomString } from '../../utils/generators.mjs';
-import { sleep } from '../../utils/miscellaneous.mjs';
+import { miscellaneous } from '@reportcycle/mra-utils';
+const { sleep } = miscellaneous;
 
 describe('Test DB functions', () => {
 
