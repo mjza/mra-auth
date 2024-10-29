@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const homeLink = document.getElementById('homeLink');
     if (homeLink) {
         // Create a new URL object based on the current location
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const homeUrl = `${currentUrl.protocol}//${domain}${currentUrl.port ? ':' + currentUrl.port : ''}/`;
 
         // Add click event to prevent going back
-        homeLink.addEventListener('click', function(event) {
+        homeLink.addEventListener('click', function (event) {
             event.preventDefault(); // Prevent default link behavior
             window.location.replace(homeUrl); // Replace the current location in the history
         });

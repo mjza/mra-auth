@@ -188,7 +188,7 @@ describe('Test validation functions', () => {
 
         test('should call next middleware when no JSON syntax error occurs', async () => {
             const nextSpy = jest.fn();  // Create a spy for next()
-        
+
             // Add a new route that uses the middleware and passes valid JSON
             app.post('/testNext', (req, res, next) => {
                 checkJSONBody(null, req, res, nextSpy); // Call the middleware without an error
@@ -196,18 +196,18 @@ describe('Test validation functions', () => {
             }, (_, res) => {
                 res.status(200).json({ message: 'Next middleware called' });
             });
-        
+
             // Trigger the route
             const response = await request(app)
                 .post('/testNext')
                 .set('Content-Type', 'application/json')
                 .send({ validJSON: true });
-        
+
             expect(nextSpy).toHaveBeenCalled();  // Ensure next() was called
             expect(response.status).toBe(200);  // Check that the response reaches the next route
             expect(response.body).toEqual({ message: 'Next middleware called' });
         });
-        
+
     });
 
     describe('checkRequestValidity', () => {

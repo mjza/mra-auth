@@ -24,7 +24,7 @@ import rateLimit from 'express-rate-limit';
 /**
  * Rate limit configuration for the general API usage.
  * Limits the number of requests an IP can make in a set time window.
- * 
+ *
  * @const
  * @type {rateLimit}
  * @property {number} windowMs - The time frame for calculating the number of requests in milliseconds (15 minutes).
@@ -41,7 +41,7 @@ const apiRequestLimiter = rateLimit({
             return developmentToken === process.env.X_DEVELOPMENT_TOKEN;
         }
         // Do not skip in production
-        return false; 
+        return false;
     }
 });
 
@@ -50,7 +50,7 @@ export { apiRequestLimiter };
 /**
  * Rate limit configuration for the authorization API usage.
  * Limits the number of requests an IP can make in a set time window.
- * 
+ *
  * @const
  * @type {rateLimit}
  * @property {number} windowMs - The time frame for calculating the number of requests in milliseconds (15 minutes).
@@ -67,7 +67,7 @@ const authorizationApiRequestLimiter = rateLimit({
             return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
         }
         // Do not skip in production
-        return false; 
+        return false;
     }
 });
 
@@ -97,7 +97,7 @@ export { authorizationApiRequestLimiter };
 /**
  * Rate limit configuration specifically for creating new accounts.
  * Limits the number of account creation attempts per IP in a set time window.
- * 
+ *
  * @const
  * @type {rateLimit}
  * @property {number} windowMs - The time frame for calculating the number of account creation requests in milliseconds (1 hour).
@@ -115,7 +115,7 @@ const registerAccountLimiter = rateLimit({
             return developmentToken === process.env.X_DEVELOPMENT_TOKEN;
         }
         // Do not skip in production
-        return false; 
+        return false;
     }
 });
 

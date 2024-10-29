@@ -1,7 +1,7 @@
-import { getUserByUsername, getTableByTableName } from '../utils/database.mjs';
+import { resetData, setData } from '../utils/customDataStore.mjs';
+import { getTableByTableName, getUserByUsername } from '../utils/database.mjs';
 import { checkOwnership } from './casbinOwnership.mjs';
 import { checkRelationship } from './casbinRelationship.mjs';
-import { resetData, setData } from '../utils/customDataStore.mjs';
 
 /**
  * Evaluates both dynamic conditions and static attributes.
@@ -52,7 +52,7 @@ async function customeEval(request, policy, userType) {
  * the request object and user ownership, specifically targeting owner, creator, and updator columns.
  * This function returns an object containing 'where' and 'set' conditions modified according to the
  * request action type and user identity, useful for queries needing authentication or ownership checks.
- * 
+ *
  * @param {Object} request - The request object, expected to contain an 'act' (action type) and 'attrs'
  *                           (attributes for the database operation) properties.
  * @param {string} condition - A condition indicating the context in which this function is invoked,
@@ -101,7 +101,7 @@ async function setConditions(request, condition, userId, table) {
 
 /**
  * Recursively compares two objects for deep equality.
- * 
+ *
  * @param {any} obj1 The first object to compare.
  * @param {any} obj2 The second object to compare.
  * @returns {boolean} True if both objects are deeply equal, false otherwise.
@@ -172,7 +172,7 @@ async function evalDynamicCondition(request, condition, userType, userId, table)
  * customDataStore object by setting 'where' and 'set' conditions. This function is specifically
  * designed to prepare the environment for database operations later in the request processing
  * pipeline by updating conditions dynamically based on the provided attributes.
- * 
+ *
  * @param {Object} attrs - The attributes of the request object for the database
  *                           operation which includes 'where' and 'set' properties.
  */

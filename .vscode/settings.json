@@ -1,6 +1,21 @@
 {
+  // Enable auto-fixing issues on save using ESLint and TSLint
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit",
-    "source.fixAll.tslint": "explicit"
-  }
+    "source.fixAll.eslint": "explicit", // Automatically fix all ESLint issues on save
+    "source.fixAll.tslint": "explicit", // Automatically fix all TSLint issues on save
+    "source.organizeImports": "explicit" // Organize imports on save (for TypeScript, JavaScript)
+  },
+  // Enable formatting on save to ensure consistent formatting
+  "editor.formatOnSave": true,
+  // Enable sorting of imports
+  "typescript.format.enable": true,
+  // Optional: Control editor tab size and indent style
+  "editor.tabSize": 2, // Use 2 spaces per indentation level
+  "editor.insertSpaces": true, // Insert spaces when pressing Tab
+  "files.eol": "\n", // Use LF as the end-of-line character
+  // Ensure trailing whitespace is trimmed and final newline is inserted
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  // Enable word wrap to improve readability of long code lines
+  "editor.wordWrap": "on"
 }

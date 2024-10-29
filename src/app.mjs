@@ -69,12 +69,12 @@ async function createApp() {
     // Initialize i18next middleware BEFORE defining routes
     app.use(handle(i18next));
 
-    // When the Express app is behind a reverse proxy, the X-Forwarded-For header is used to 
-    // identify the original IP address of the client connecting to the app through the proxy. 
-    // However, for security reasons, Express does not trust this header by default. It is needed 
-    // to explicitly enable it by setting trust proxy in the Express configuration. 
-    // Failing to do so can prevent middlewares like express-rate-limit from accurately 
-    // identifying users, leading to potential issues with rate limiting.    
+    // When the Express app is behind a reverse proxy, the X-Forwarded-For header is used to
+    // identify the original IP address of the client connecting to the app through the proxy.
+    // However, for security reasons, Express does not trust this header by default. It is needed
+    // to explicitly enable it by setting trust proxy in the Express configuration.
+    // Failing to do so can prevent middlewares like express-rate-limit from accurately
+    // identifying users, leading to potential issues with rate limiting.
     app.set('trust proxy', 1);
 
     // Built-in middleware for parsing JSON and URL-encoded bodies
@@ -108,7 +108,7 @@ async function createApp() {
     app.use(cors(corsOptions));
 
     // Basic Helmet usage
-    app.use(helmet()); // It sets up Helmet with its default configuration. Helmet, by default, includes a set of middlewares that set HTTP headers for basic security protections. 
+    app.use(helmet()); // It sets up Helmet with its default configuration. Helmet, by default, includes a set of middlewares that set HTTP headers for basic security protections.
 
     // Content Security Policy (CSP), which helps prevent attacks like Cross-Site Scripting (XSS) and data injection.
     app.use(
@@ -131,12 +131,12 @@ async function createApp() {
     app.use(casbinMiddleware);
 
     // Attach the app instance to the request object in the test environment.
-    // This is used in the `authorizeUser` function during testing to ensure that 
-    // authentication requests are sent to the same app instance rather than making 
-    // external HTTP calls. 
+    // This is used in the `authorizeUser` function during testing to ensure that
+    // authentication requests are sent to the same app instance rather than making
+    // external HTTP calls.
     // Please note that in tests we create a app for testing our routes.
-    // By using the internal app instance, we simulate the full request lifecycle 
-    // within the test suite, avoiding external dependencies and 
+    // By using the internal app instance, we simulate the full request lifecycle
+    // within the test suite, avoiding external dependencies and
     // ensuring consistency in testing.
     app.use(attachAppInstance(app));
 
@@ -275,12 +275,12 @@ async function closeApp() {
 
 /**
  * Middleware to attach the app instance to the request object in the test environment.
- * 
+ *
  * This middleware checks if the `NODE_ENV` environment variable is set to 'test' or 'local-test'.
  * If it is, the `app` instance is attached to the `req` object as `req.appInstance`.
  * This allows access to the app instance in route handlers and other middlewares
  * during testing.
- * 
+ *
  * @param {Object} app - The Express app instance to be attached.
  * @returns {Function} Middleware function that attaches the app instance to the request.
  */
@@ -296,11 +296,11 @@ const attachAppInstance = (app) => {
 
 /**
  * Middleware to remove the app instance from the request object.
- * 
+ *
  * This middleware checks if the `req.appInstance` exists and deletes it
  * from the `req` object. This can be used to clean up after tests where
  * the app instance is no longer needed, avoiding memory leaks or open handles.
- * 
+ *
  * @returns {Function} Middleware function that removes `appInstance` from the request.
  */
 const detachAppInstance = () => {

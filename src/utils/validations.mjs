@@ -1,3 +1,4 @@
+import { miscellaneous } from '@reportcycle/mra-utils';
 import axios from 'axios';
 import { validationResult } from 'express-validator';
 import { Agent } from 'https';
@@ -5,7 +6,6 @@ import pkg from 'jsonwebtoken';
 import { promisify } from 'util';
 import { getUserByUsername, getUserIdByUsername, isTokenBlacklisted } from './database.mjs';
 import { createEventLog, updateEventLog } from './logger.mjs';
-import { miscellaneous } from '@reportcycle/mra-utils';
 const { getCreptoConfig } = miscellaneous;
 const { verify } = pkg;
 
@@ -97,7 +97,7 @@ export { isValidUrl };
 const isValidEmail = (email) => {
     // Improved regular expression for more robust email validation
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?$/;
-    
+
     // Check if email contains consecutive dots in the domain part
     if (/\.\./.test(email.split('@')[1])) {
         return false;
@@ -234,7 +234,7 @@ export { authenticateToken };
  * Middleware to authenticate a JWT token present in the request header.
  * It verifies the token against a secret key, checks for token expiration or blacklisting in the database,
  * and conditionally adds the user information to the request object if the token is valid.
- * 
+ *
  * If the token is not provided, invalid, expired, or blacklisted, the function does not stop the request processing but
  * sets `req.user` to public user. This allows downstream
  * middleware or route handlers to make decisions based on the authentication status.

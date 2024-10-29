@@ -115,7 +115,7 @@ async function initCasbin() {
  * initiates the closure of its database connection. It's particularly useful
  * during the graceful shutdown of the application or in testing environments
  * where open database connections might prevent clean exits.
- * 
+ *
  * Note: This function is async and returns a promise, which resolves
  * once the adapter's connection has been successfully closed.
  * It should be awaited to ensure proper cleanup.
@@ -265,14 +265,14 @@ async function listRolesForUserInDomains(username) {
 
 /**
  * Determines the user type based on an array of role-domain pairs.
- * 
+ *
  * The function classifies users as 'internal', 'customer', 'external', or 'public' based on their roles and the domains those roles are associated with.
- * 
+ *
  * - 'internal': If the user has roles such as 'super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', or 'support' in domain 0.
  * - 'customer': If the user has any role in a domain greater than 0, or roles 'admin', 'admindata', 'officer', 'agent' in domain 0.
  * - 'external': If the user has only 'enduser' in domain 0 and no other qualifying roles for 'customer' or 'internal'.
  * - 'public': If the user has 'public' in domain 0 and no other qualifying roles for 'customer', 'internal', or 'external'.
- * 
+ *
  * The user type determination prioritizes 'internal', 'customer', and 'external' types over 'public'. If no specific conditions are met, the function returns null.
  *
  * @param {Object[]} rolesDomains - An array of objects, each with a 'role' (string) and 'domain' (number) property.
@@ -316,13 +316,13 @@ function getUserType(rolesDomains) {
 
 /**
  * Determines the user type within a specified domain based on their role.
- * 
+ *
  * This function classifies users as 'internal', 'customer', 'external', or 'public' by analyzing their role within the given domain:
  * - 'internal': User has roles typically associated with internal staff ('super', 'superdata', 'devhead', 'developer', 'saleshead', 'sales', 'support') in domain 0.
  * - 'customer': User has any role in a domain greater than 0, or specific roles ('admin', 'admindata', 'officer', 'agent') in domain 0, indicating they are a customer.
  * - 'external': User has the 'enduser' role in domain 0 without other roles that would classify them as 'customer' or 'internal'.
  * - 'public': User has the 'public' role in domain 0 without other roles that would classify them as 'customer', 'internal', or 'external'.
- * 
+ *
  * The function returns 'internal', 'customer', 'external', or 'public' based on the highest priority user type identified. If no specific conditions are met, it returns null.
  *
  * @param {string} role - The role identifier (strings) that the user has.
@@ -358,7 +358,7 @@ function getUserTypeInDomain(role, domain) {
  * Asynchronously adds a role to a user within a specific domain. This function relies on the global
  * `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's designed to be used in various contexts,
  * not limited to Express.js middleware or route handlers.
- * 
+ *
  * @param {string} username - The username of the user to whom the role will be added.
  * @param {string} role - The role to be added to the user.
  * @param {string} domain - The domain within which the role is to be added.
@@ -379,7 +379,7 @@ async function addRoleForUserInDomain(username, role, domain) {
  * Asynchronously removes a role from a user within a specific domain. This function depends on the global
  * `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's adaptable for use across various
  * contexts, extending beyond just Express.js middleware or route handlers.
- * 
+ *
  * @param {string} username - The username of the user from whom the role will be removed.
  * @param {string} role - The role to be removed from the user.
  * @param {string} domain - The domain within which the role is to be removed.
@@ -398,9 +398,9 @@ async function removeRoleForUserInDomain(username, role, domain) {
  * Asynchronously removes all roles from a user within a specific domain. This function depends on the global
  * `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's adaptable for use across various
  * contexts, extending beyond just Express.js middleware or route handlers.
- * 
+ *
  * @param {string} username - The username of the user from whom the role will be removed.
- * @param {string?} domain - The domain within which the role is to be removed. If pass null, it will remove user from all domains. 
+ * @param {string?} domain - The domain within which the role is to be removed. If pass null, it will remove user from all domains.
  * @returns {Promise<void>} A promise that resolves when the operation is complete. The promise will reject if an error occurs.
  */
 async function removeRolesForUserInDomain(username, domain) {
@@ -417,7 +417,7 @@ async function removeRolesForUserInDomain(username, domain) {
  * Asynchronously removes all roles from a user in all domains. This function depends on the global
  * `enforcerPromiseInstance` to obtain the Casbin enforcer instance. It's adaptable for use across various
  * contexts, extending beyond just Express.js middleware or route handlers.
- * 
+ *
  * @param {string} username - The username of the user from whom the role will be removed.
  * @returns {Promise<void>} A promise that resolves when the operation is complete. The promise will reject if an error occurs.
  */
@@ -432,7 +432,7 @@ async function removeRolesForUserInAllDomains(username) {
 
 /**
  * Adds a policy to the specified domain using the Casbin enforcer.
- * 
+ *
  * This function asynchronously adds a new access control policy to the Casbin enforcer,
  * which defines whether a subject can perform an action on an object within a specific domain,
  * considering optional conditions and attributes.
@@ -471,10 +471,10 @@ async function addPolicyInDomain(sub, dom, obj, act, cond = 'none', attrs = {}, 
  * Retrieves policies within a specific domain based on provided criteria.
  * This function asynchronously fetches policies from a Casbin enforcer,
  * filtering them based on subject, domain, object, action, condition, attributes, and effect.
- * 
+ *
  * Attributes are expected as a JSON object but are converted to a string representation
  * for the filtering process. All other parameters must be strings.
- * 
+ *
  * @param {string} sub - The subject (user/role) the policy applies to.
  * @param {string} dom - The domain/tenant to which the policy belongs.
  * @param {string} [obj=''] - Optional object/resource the policy pertains to.
@@ -528,8 +528,8 @@ async function getPoliciesInDomain(sub, dom, obj = '', act = '', cond = '', attr
  * Retrieves roles within a specific domain based on provided criteria.
  * This function asynchronously fetches roles from a Casbin enforcer,
  * filtering them based on subject, domain.
- * 
- * 
+ *
+ *
  * @param {string} sub - The rolename.
  * @param {string} dom - The domain to which the role belongs.
  * @returns {Promise<Array>} A promise that resolves to an array of filtered roles matching the criteria.
@@ -569,8 +569,8 @@ async function getRolesInDomain(sub = '', dom) {
  * Retrieves users related to a specific role in a domain based on provided criteria.
  * This function asynchronously fetches users from a Casbin enforcer,
  * filtering them based on role, domain.
- * 
- * 
+ *
+ *
  * @param {string} sub - The rolename.
  * @param {string} dom - The domain to which the role belongs.
  * @returns {Promise<Array>} A promise that resolves to an array of filtered roles matching the criteria.
@@ -597,10 +597,10 @@ async function getUsersForRoleInDomain(sub, dom) {
  * Remove policies within a specific domain based on provided criteria.
  * This function asynchronously removes policies from a Casbin enforcer,
  * filtering them based on subject, domain, object, action, condition, attributes, and effect.
- * 
+ *
  * Attributes are expected as a JSON object but are converted to a string representation
  * for the filtering process. All other parameters must be strings.
- * 
+ *
  * @param {string} sub - The subject (user/role) the policy applies to.
  * @param {string} dom - The domain/tenant to which the policy belongs.
  * @param {string} [obj=''] - Optional object/resource the policy pertains to.

@@ -1,11 +1,11 @@
-import './config/config.mjs'; // This line must be before the app.mjs import
 import { closeApp, createApp } from './app.mjs';
+import './config/config.mjs'; // This line must be before the app.mjs import
 
 /**
  * A reference to the HTTP server created by Express. This variable is used
  * to store the server instance returned by the `app.listen` method, allowing
  * for operations such as shutting down the server programmatically.
- * 
+ *
  * @type {http.Server|null}
  */
 let server = null;
@@ -16,7 +16,7 @@ let server = null;
  * configures the Express app with all the necessary routes, middleware, and any additional
  * setup required. Once the app is initialized, it listens on the port defined by the
  * `PORT` environment variable, defaulting to 3000 if not specified.
- * 
+ *
  * The server instance is globally accessible within the module that defines this function,
  * allowing for further actions such as graceful shutdown or integration with testing frameworks.
  *
@@ -44,7 +44,7 @@ startServer().catch(err => console.error('Error starting server:', err));
  * important for preventing data loss and ensuring that the application
  * can be restarted without issues. In case of an error during shutdown,
  * it logs the error and exits the process with a non-zero status code.
- * 
+ *
  * @async
  * @function gracefulShutdown
  * @returns {Promise<void>} A promise that resolves once all operations

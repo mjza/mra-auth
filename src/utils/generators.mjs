@@ -1,7 +1,7 @@
+import { miscellaneous } from '@reportcycle/mra-utils';
 import { genSalt, hash } from 'bcrypt';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import pkg from 'jsonwebtoken';
-import { miscellaneous } from '@reportcycle/mra-utils';
 const { getCreptoConfig } = miscellaneous;
 const { sign, verify } = pkg;
 /**
@@ -13,13 +13,13 @@ const { sign, verify } = pkg;
 const generateEncryptedObject = (code, redirectURL) => {
     try {
         const config = getCreptoConfig();
-        // Encrypt the activation object using a secret key        
+        // Encrypt the activation object using a secret key
         const iv = randomBytes(16);
         const cipher = createCipheriv(config.algorithm, config.secretKey, iv);
         let encryptedObject = cipher.update(JSON.stringify({ code, redirectURL }), 'utf8', 'hex');
         encryptedObject += cipher.final('hex');
         return { token: iv.toString('hex'), data: encryptedObject };
-    } catch(err) {
+    } catch (err) {
         console.log(err);
         return { token: '', data: '' };
     }
@@ -87,7 +87,7 @@ export { generateResetPasswordLink };
 
 /**
  * Generates an authentication token for a user.
- * 
+ *
  * @param {object} user - The user object containing user details.
  * @returns {string} A JWT token encoded with the user's information.
  *
@@ -109,10 +109,10 @@ export { generateAuthToken };
 
 /**
  * Extracts user data from a given JWT token.
- * 
+ *
  * @param {string} token - The JWT token to be decoded.
- * @returns {object} An object (i.e., { userId, username, email }) containing the userId, username, and email. 
- * 
+ * @returns {object} An object (i.e., { userId, username, email }) containing the userId, username, and email.
+ *
  * @example
  * const token = '...'; // JWT token
  * const userData = extractUserDataFromAuthToke(token);
@@ -131,7 +131,7 @@ export { extractUserDataFromAuthToke };
 
 /**
  * Decodes a JSON Web Token (JWT) and returns its payload as a JSON object.
- * 
+ *
  * This function splits the JWT into its constituent parts, decodes the Base64-encoded payload,
  * and then parses it into a JSON object. It's designed to handle the decoding process and
  * does not validate the token's signature. The function safely handles errors and returns
@@ -139,7 +139,7 @@ export { extractUserDataFromAuthToke };
  *
  * @param {string} token - The JWT string to be decoded.
  * @returns {object|null} The decoded payload as a JSON object, or `null` if decoding fails.
- * 
+ *
  * @example
  * // Typical usage
  * const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
@@ -164,7 +164,7 @@ export { parseJwt };
 
 /**
  * Generates a hash for a given password using bcrypt.
- * 
+ *
  * @param {string} password - The password to be hashed.
  * @returns {Promise<string>} A promise that resolves to the hashed password.
  */
@@ -197,7 +197,7 @@ export { generateRandomString };
  * Asynchronously generates a mock user object with hashed password.
  * The function generates a random username and uses it to create an email.
  * It also generates a password hash for a predefined password.
- * 
+ *
  * @returns {Promise<Object>} A promise that resolves to an object containing username, email, password, and passwordHash.
  */
 const generateMockUserDB = async () => {
@@ -216,7 +216,7 @@ export { generateMockUserDB };
  * Generates a mock user object for a user route.
  * This function creates a random username and uses it to construct an email.
  * It also sets a predefined password and a login redirect URL.
- * 
+ *
  * @returns {Object} An object containing username, email, password, and loginRedirectURL.
  */
 const generateMockUserRoute = () => {
@@ -230,4 +230,3 @@ const generateMockUserRoute = () => {
 };
 
 export { generateMockUserRoute };
-

@@ -1,6 +1,6 @@
 import request from 'supertest';
-import { insertUser, deleteUserByUsername, isActiveUser as _isActiveUser, getUserByUserId } from '../../../utils/database.mjs';
-import { generateMockUserDB, generateEncryptedObject } from '../../../utils/generators.mjs';
+import { isActiveUser as _isActiveUser, deleteUserByUsername, getUserByUserId, insertUser } from '../../../utils/database.mjs';
+import { generateEncryptedObject, generateMockUserDB } from '../../../utils/generators.mjs';
 
 describe('Test activate route', () => {
 
@@ -45,7 +45,7 @@ describe('Test activate route', () => {
       expect(isActiveUser).toBeTruthy();
     });
 
-    it('should activate a user and return 200 code', async () => {      
+    it('should activate a user and return 200 code', async () => {
       const res = await activate({
         username: testUser.username,
         token: activationObject.token,

@@ -30,7 +30,7 @@ jobs:
         id: install-heroku-cli
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
-      
+
       - name: Wake up Heroku App
         run: |
           echo "Waking up the app..."

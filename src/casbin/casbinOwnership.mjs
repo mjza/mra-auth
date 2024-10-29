@@ -26,7 +26,7 @@ async function checkOwnership(request, userType, userId, table) {
 
     const { act, attrs } = request;
     const { owner_column: ownerColumn } = table || { owner_column: null };
-    const { where, set } = attrs;  
+    const { where, set } = attrs;
 
     if (userType != 'internal') {
       if ('C' === act) {

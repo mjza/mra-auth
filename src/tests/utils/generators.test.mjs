@@ -170,7 +170,7 @@ describe('Generator Functions', () => {
             expect(extractedData.userId).toBe(user.userId);
             expect(extractedData.username).toBe(user.username);
             expect(extractedData.email).toBe(user.email);
-            expect(Number.isInteger(extractedData.iat)).toBe(true);            
+            expect(Number.isInteger(extractedData.iat)).toBe(true);
             expect(extractedData.iat).toBeGreaterThanOrEqual(0);
             expect(extractedData.iat).toBeLessThan(futureTimestamp);
             expect(Number.isInteger(extractedData.exp)).toBe(true);

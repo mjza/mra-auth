@@ -1,6 +1,6 @@
-import { CasbinRule, closeSequelize, col, fn, MraAuditLogsAuthentication, MraStatuses, MraSubscriptions, MraTables, MraTickets, MraTokenBlacklist, MraUserCustomers, MraUserDetails, MraUsers, Sequelize } from '../models/index.mjs';
 import { converters } from '@reportcycle/mra-utils';
-const { decrypt} = converters;
+import { CasbinRule, closeSequelize, col, fn, MraAuditLogsAuthentication, MraStatuses, MraSubscriptions, MraTables, MraTickets, MraTokenBlacklist, MraUserCustomers, MraUserDetails, MraUsers, Sequelize } from '../models/index.mjs';
+const { decrypt } = converters;
 
 /**
  * Maps the table name to the corresponding ORM model.
@@ -190,8 +190,8 @@ export { deleteAuditLog };
  *
  */
 async function getUserPrivatePictureUrl(userId) {
-  // Unfortunately, we cannot test this function in the microservice 
-  // as we have no insert mechanism here. 
+  // Unfortunately, we cannot test this function in the microservice
+  // as we have no insert mechanism here.
   if (isNaN(userId))
     return null;
 
@@ -594,20 +594,20 @@ const activateUser = async (user) => {
     }
   );
 
-  return updateCount > 0; // Returns true if at least one row was updated  
+  return updateCount > 0; // Returns true if at least one row was updated
 };
 
 export { activateUser };
 
 /**
  * Generates a reset token for a user and updates it in the database.
- * 
+ *
  * This function creates a new reset token, updates the specified user's record in the database,
  * and returns the updated user information including the reset token. It assumes that a reset token
  * generation logic is implemented elsewhere and passed to this function.
  *
  * @param {string} username - The username of the user for whom to generate and set a reset token.
- * @returns {Promise<Object|null>} A promise that resolves to the updated user object containing the 
+ * @returns {Promise<Object|null>} A promise that resolves to the updated user object containing the
  *                                 user_id, username, email, and reset_token. Returns null if no user is found.
  */
 const generateResetToken = async (username) => {
@@ -643,17 +643,17 @@ export { generateResetToken };
 
 /**
  * Resets a user's password in the database.
- * 
- * This function updates the password hash of a user in the database, provided that the reset token 
- * is valid and was created within the last 5 days. It also nullifies the reset token after successful 
+ *
+ * This function updates the password hash of a user in the database, provided that the reset token
+ * is valid and was created within the last 5 days. It also nullifies the reset token after successful
  * password reset to prevent reuse.
- * 
+ *
  * @param {Object} user - An object containing the user's details.
  * @param {string} user.username - The username of the user whose password is to be reset.
  * @param {string} user.resetToken - The reset token for password reset verification.
  * @param {string} user.passwordHash - The new password hash to set for the user.
- * @returns {Promise<boolean>} A promise that resolves to `true` if the password was successfully 
- *                             reset, or `false` if the reset operation failed (e.g., invalid token, 
+ * @returns {Promise<boolean>} A promise that resolves to `true` if the password was successfully
+ *                             reset, or `false` if the reset operation failed (e.g., invalid token,
  *                             token expired, or user not found).
  */
 const resetPassword = async (user) => {
@@ -683,8 +683,8 @@ const resetPassword = async (user) => {
     }
   );
 
-  // The `returning: true` option in a Sequelize `update` (or `create`, `destroy`) call is a feature specific 
-  // to PostgreSQL that instructs Sequelize to return the affected rows after the execution of the operation. 
+  // The `returning: true` option in a Sequelize `update` (or `create`, `destroy`) call is a feature specific
+  // to PostgreSQL that instructs Sequelize to return the affected rows after the execution of the operation.
   // In the context of an `UPDATE` operation, this means Sequelize will return the rows that were updated by the query.
 
   return updateCount > 0; // Returns true if at least one row was updated
@@ -739,14 +739,14 @@ export { getTableByTableName };
 
 /**
  * Retrieves valid relationship between a user and a customer from the database.
- * 
+ *
  * This function queries the MraUserCustomers table to find one relationship that meet the following criteria:
  * - The relationship is associated with the specified user ID and customer ID.
  * - Both the customer and user have accepted the relationship on or before the current UTC time.
  * - The relationship is valid from a date on or before the current UTC time.
  * - The 'valid_to' date is null, implying that the relationship is currently valid indefinitely.
  * - The 'quit_at' date is null, indicating that the relationship has not been terminated.
- * 
+ *
  * The function ensures that the first relationship meeting all these conditions is considered valid.
  * It returns one valid relationship as a plain objects, making it easier to work with
  * outside of Sequelize's model instance context.

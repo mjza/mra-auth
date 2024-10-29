@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { getUserByUsername, activateUser, deleteUserByUsername } from '../../../utils/database.mjs';
+import { activateUser, deleteUserByUsername, getUserByUsername } from '../../../utils/database.mjs';
 import { generateMockUserRoute } from '../../../utils/generators.mjs';
 
 describe('Test authorization endpoints', () => {

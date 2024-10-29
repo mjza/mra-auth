@@ -5,7 +5,7 @@ import { updateEventLog } from '../../utils/logger.mjs';
 
 /**
  * Sends an email using SendGrid's email service.
- * 
+ *
  * @async
  * @param {string} email - The recipient's email address.
  * @param {string} subject - The subject line of the email.
@@ -37,7 +37,7 @@ const _sendEmail = async (req, email, subject, htmlContent) => {
 /**
  * Sends a verification email to a new user.
  * The email content is generated using a HTML template file.
- * 
+ *
  * @async
  * @param {string} username - The username of the user.
  * @param {string} displayName - The displayName of the user.
@@ -78,7 +78,7 @@ const sendVerificationEmail = async (req, username, displayName, userEmail, acti
 /**
  * Sends List of usernames email to a user.
  * The email content is generated using a HTML template file.
- * 
+ *
  * @async
  * @param {array} users - The usernames associated to an email.
  * @param {string} userEmail - The email address of the user.
@@ -128,7 +128,7 @@ const sendEmailWithUsernames = async (req, users, userEmail) => {
 /**
  * Sends a verification email to a new user.
  * The email content is generated using a HTML template file.
- * 
+ *
  * @async
  * @param {string} username - The username of the user.
  * @param {string} displayName - The displayName of the user.

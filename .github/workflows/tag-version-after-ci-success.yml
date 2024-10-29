@@ -23,10 +23,10 @@ jobs:
         run: |
           # Fetch tags from the repository
           git fetch --tags
-      
+
           # Check if any versioned tags exist that match the format vX.Y.Z
           TAGS=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V)
-      
+
           if [ -z "$TAGS" ]; then
             echo "No tags found, starting from v1.0.0"
             echo "v1.0.0" > latest_version
@@ -65,7 +65,7 @@ jobs:
           fi
 
           echo "Calculated version based on tags: $CALCULATED_VERSION"
-          
+
           # Compare package.json version with calculated version
           PACKAGE_VERSION=${{ env.PACKAGE_VERSION }}
           # Perform the version comparison

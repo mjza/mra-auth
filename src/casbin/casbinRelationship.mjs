@@ -1,4 +1,4 @@
-import { getValidRelationshipByUserCustomer, getTableByTableName, getRowById } from '../utils/database.mjs';
+import { getRowById, getTableByTableName, getValidRelationshipByUserCustomer } from '../utils/database.mjs';
 
 /**
  * Evaluates dynamic conditions specified in the policy. This function determines if the specified
@@ -25,7 +25,7 @@ async function checkRelationship(request, userType, userId, table) {
 
     const { dom: domain } = request;
     const { act, attrs } = request;
-    const { where, set } = attrs;  
+    const { where, set } = attrs;
 
     const relationship = await getValidRelationshipByUserCustomer(userId, domain);
     if (!relationship) {

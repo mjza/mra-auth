@@ -1,6 +1,6 @@
+import { miscellaneous } from '@reportcycle/mra-utils';
 import { activateUser, closeDBConnections, deleteAuditLog, deleteUserByUsername, generateResetToken, getAuditLogById, getDeactivatedNotSuspendedUsers, getUserByUserId, getUserByUsername, getUserByUsernameOrEmail, getUserIdByUsername, getUsernamesByEmail, insertAuditLog, insertBlacklistToken, insertUser, isActivationCodeValid, isActiveUser, isInactiveUser, isTokenBlacklisted, resetPassword, updateAuditLog, updateUserUpdatedAtToNow } from '../../utils/database.mjs';
 import { generateMockUserDB, generateRandomString } from '../../utils/generators.mjs';
-import { miscellaneous } from '@reportcycle/mra-utils';
 const { sleep } = miscellaneous;
 
 describe('Test DB functions', () => {
@@ -273,7 +273,7 @@ describe('Test DB functions', () => {
         });
 
         describe('isTokenBlacklisted', () => {
-            it('should return true if the token is in the blacklist after 3 seconds', async () => {
+            it('should return true if the token is in the blacklist after 5 seconds', async () => {
                 await sleep(5000); // Sleep for 5 seconds
                 // Assuming the test token is already inserted from previous test
                 const isExpired = await isTokenBlacklisted(mockTokenData.token);
@@ -297,7 +297,7 @@ describe('Test DB functions', () => {
                     expiry: Math.floor(Date.now() / 1000) - 2 // 2 seconds in past from now
                 };
 
-                // must delete expired token immediately after inserting 
+                // must delete expired token immediately after inserting
                 const insertedToken = await insertBlacklistToken(newMockTokenData);
                 expect(insertedToken).toBeDefined();
                 // must also delete the privious token also
@@ -794,18 +794,18 @@ describe('Test DB functions', () => {
                 username: insertedUser.username,
                 suspended_at: new Date() // User is suspended
             });
-    
+
             const isActive = await isActiveUser(insertedUser.username);
             expect(isActive).toBeFalsy(); // Suspended users are not considered active
         });
-    
+
         it('should return false for a user who is deleted', async () => {
             // Mark the user as deleted
             await updateUser({
                 username: insertedUser.username,
                 deleted_at: new Date() // User is marked as deleted
             });
-    
+
             const isActive = await isActiveUser(insertedUser.username);
             expect(isActive).toBeFalsy(); // Deleted users are not considered active
         });
@@ -840,25 +840,25 @@ describe('Test DB functions', () => {
             const result = await isActivationCodeValid(userWithoutUsername);
             expect(result).toBeFalsy();
         });
-    
+
         it('should return false if activation code is missing', async () => {
             const userWithoutActivationCode = { username: insertedUser.username };
             const result = await isActivationCodeValid(userWithoutActivationCode);
             expect(result).toBeFalsy();
         });
-    
+
         it('should return false if username is empty or only whitespace', async () => {
             const userWithEmptyUsername = { username: '   ', activationCode: insertedUser.activation_code };
             const result = await isActivationCodeValid(userWithEmptyUsername);
             expect(result).toBeFalsy();
         });
-    
+
         it('should return false if activation code is empty or only whitespace', async () => {
             const userWithEmptyActivationCode = { username: insertedUser.username, activationCode: '   ' };
             const result = await isActivationCodeValid(userWithEmptyActivationCode);
             expect(result).toBeFalsy();
         });
-    
+
     });
 
     describe('updateUserUpdatedAtToNow', () => {

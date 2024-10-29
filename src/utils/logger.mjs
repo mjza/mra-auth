@@ -1,7 +1,7 @@
 import { converters } from '@reportcycle/mra-utils';
-const { convertRequestData } = converters;
 import { insertAuditLog, updateAuditLog } from './database.mjs';
 import { extractUserDataFromAuthToke } from './generators.mjs';
+const { convertRequestData } = converters;
 
 /**
  * Middleware function to create an audit log for each request.
@@ -40,12 +40,12 @@ const createEventLog = async (req) => {
         const ipAddress = req.ip || req.connection.remoteAddress; // Gets the IP address of the user
         // Get the token from the request header
         const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN 
+        const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
         const user = extractUserDataFromAuthToke(token);
         const log = { methodRoute, req: reqJson, ipAddress, userId: (user ? user.userId : null) };
         const res = await insertAuditLog(log);
         return res.log_id
-    } catch(err) {
+    } catch (err) {
         return 0;
     }
 };
@@ -62,13 +62,13 @@ export { createEventLog };
  */
 const updateEventLog = async (req, comments) => {
     try {
-        if (isNaN(req.logId) || req.logId <= 0){
+        if (isNaN(req.logId) || req.logId <= 0) {
             return null;
         }
         const log = { logId: req.logId, comments: typeof comments === 'string' ? comments : JSON.stringify(comments, Object.getOwnPropertyNames(comments), 4) };
         const res = await updateAuditLog(log);
         return res.comments;
-    } catch(err) {
+    } catch (err) {
         console.error(err);
         return null;
     }

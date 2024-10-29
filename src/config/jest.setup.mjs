@@ -1,5 +1,5 @@
-import './config.mjs';
 import { utils } from '@reportcycle/mra-utils';
+import './config.mjs';
 
 test('Environment variable should be loaded', () => {
     expect(process.env.DOC_USER).toBeDefined();
