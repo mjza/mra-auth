@@ -1,3 +1,4 @@
+import { validations } from '@reportcycle/mra-utils';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { json, static as serveStatic, urlencoded } from 'express';
@@ -12,7 +13,6 @@ import { serve, setup } from 'swagger-ui-express';
 import { casbinMiddleware, closeCasbinAdapter, setupCasbinMiddleware } from './casbin/casbinSingleton.mjs';
 import v1Routes from './routes/v1/routes.mjs';
 import { closeDBConnections } from './utils/database.mjs';
-import { validations } from '@reportcycle/mra-utils';
 const { checkJSONBody } = validations;
 
 /**
