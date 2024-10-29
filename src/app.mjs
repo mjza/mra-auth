@@ -12,7 +12,8 @@ import { serve, setup } from 'swagger-ui-express';
 import { casbinMiddleware, closeCasbinAdapter, setupCasbinMiddleware } from './casbin/casbinSingleton.mjs';
 import v1Routes from './routes/v1/routes.mjs';
 import { closeDBConnections } from './utils/database.mjs';
-import { checkJSONBody } from './utils/validations.mjs';
+import { validations } from '@reportcycle/mra-utils';
+const { checkJSONBody } = validations;
 
 /**
  * @typedef {Object} ExpressApp

@@ -1,9 +1,11 @@
+import { validations } from '@reportcycle/mra-utils';
 import { Router } from 'express';
 import { body, query } from 'express-validator';
+import { addPolicyInDomain, addRoleForUserInDomain, getPoliciesInDomain, getRolesInDomain, getUsersForRoleInDomain, getUserType, listRolesForUserInDomain, listRolesForUserInDomains, removePoliciesInDomain, removeRoleForUserInDomain } from '../../casbin/casbinSingleton.mjs';
 import { updateEventLog } from '../../utils/logger.mjs';
 import { apiRequestLimiter } from '../../utils/rateLimit.mjs';
-import { authenticateUser, authorizeUser, checkRequestValidity } from '../../utils/validations.mjs';
-import { listRolesForUserInDomain, listRolesForUserInDomains, getUserType, addRoleForUserInDomain, removeRoleForUserInDomain, addPolicyInDomain, getPoliciesInDomain, getRolesInDomain, getUsersForRoleInDomain, removePoliciesInDomain } from '../../casbin/casbinSingleton.mjs';
+import { authenticateUser, authorizeUser } from '../../utils/validations.mjs';
+const { checkRequestValidity } = validations;
 
 const router = Router();
 export default router;

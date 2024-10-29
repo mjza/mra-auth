@@ -1,11 +1,14 @@
+import { validations } from '@reportcycle/mra-utils';
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { generateResetToken, resetPassword } from '../../utils/database.mjs';
-import { generateResetPasswordLink, generateDecryptedObject, generatePasswordHash } from '../../utils/generators.mjs';
-import { apiRequestLimiter } from '../../utils/rateLimit.mjs';
-import { updateEventLog } from '../../utils/logger.mjs';
 import { sendResetPasswordEmail } from '../../emails/v1/emailService.mjs';
-import { userMustExist, testUrlAccessibility, checkRequestValidity } from '../../utils/validations.mjs';
+import { generateResetToken, resetPassword } from '../../utils/database.mjs';
+import { generateDecryptedObject, generatePasswordHash, generateResetPasswordLink } from '../../utils/generators.mjs';
+import { updateEventLog } from '../../utils/logger.mjs';
+import { apiRequestLimiter } from '../../utils/rateLimit.mjs';
+import { userMustExist } from '../../utils/validations.mjs';
+const { testUrlAccessibility, checkRequestValidity } = validations;
+
 
 const router = Router();
 export default router;
@@ -14,7 +17,7 @@ export default router;
  * @swagger
  * /v1/reset_token:
  *   post:
- *     summary: Request password reset token.  
+ *     summary: Request password reset token.
  *     description: Generates a password reset token and emails the reset link to the user emaill.
  *     tags: [6th]
  *     requestBody:
@@ -31,7 +34,7 @@ export default router;
  *                 type: string
  *                 default: "username1"
  *               passwordResetPageRedirectURL:
- *                 type: string   
+ *                 type: string
  *                 default: "http://localhost:3000/password_reset_page"
  *     responses:
  *       200:
@@ -47,7 +50,7 @@ export default router;
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  *       429:
- *         $ref: '#/components/responses/CreateApiRateLimitExceeded' 
+ *         $ref: '#/components/responses/CreateApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
@@ -124,7 +127,7 @@ router.post('/reset_token', apiRequestLimiter,
  *                 description: Username of the user that should be reset its password.
  *               token:
  *                 type: string
- *                 default: "dbd37705bffe72940295086c2277cb0e"                 
+ *                 default: "dbd37705bffe72940295086c2277cb0e"
  *                 description: A secret token.
  *               data:
  *                 type: string
@@ -157,7 +160,7 @@ router.post('/reset_token', apiRequestLimiter,
  *                   type: string
  *                   example: Could not reset password.
  *       429:
- *         $ref: '#/components/responses/ApiRateLimitExceeded' 
+ *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */

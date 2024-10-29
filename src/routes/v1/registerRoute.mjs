@@ -1,3 +1,4 @@
+import { validations } from '@reportcycle/mra-utils';
 import { Router } from 'express';
 import { body, query } from 'express-validator';
 import { addRoleForUserInDomain, getUserType, listRolesForUserInDomains, removeRolesForUserInAllDomains } from '../../casbin/casbinSingleton.mjs';
@@ -6,7 +7,8 @@ import { deleteUserByUsername, getDeactivatedNotSuspendedUsers, getUserIdByUsern
 import { generateActivationLink, generatePasswordHash } from '../../utils/generators.mjs';
 import { updateEventLog } from '../../utils/logger.mjs';
 import { apiRequestLimiter, registerAccountLimiter } from '../../utils/rateLimit.mjs';
-import { authenticateToken, authorizeUser, checkRequestValidity, isValidEmail, testUrlAccessibility, userMustNotExist } from '../../utils/validations.mjs';
+import { authenticateToken, authorizeUser, userMustNotExist } from '../../utils/validations.mjs';
+const { checkRequestValidity, isValidEmail, testUrlAccessibility, } = validations;
 
 const router = Router();
 export default router;
@@ -43,7 +45,7 @@ export default router;
  *                 type: string
  *                 default: "Password1$"
  *               loginRedirectURL:
- *                 type: string   
+ *                 type: string
  *                 default: "http://example.com/"
  *     responses:
  *       201:
@@ -62,7 +64,7 @@ export default router;
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  *       429:
- *         $ref: '#/components/responses/CreateApiRateLimitExceeded' 
+ *         $ref: '#/components/responses/CreateApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
@@ -144,7 +146,7 @@ router.post('/register', registerAccountLimiter,
       .bail()
       .custom(async (value, { req }) => {
         const res = await testUrlAccessibility(value);
-        if(res === false){
+        if (res === false) {
           throw new Error(req.t('The login redirect URL is not a valid URL.'));
         }
         return true;
@@ -209,7 +211,7 @@ router.post('/register', registerAccountLimiter,
  *                 description: Username or Email of the user
  *                 example: "username1 or test@example.com"
  *               loginRedirectURL:
- *                 type: string   
+ *                 type: string
  *                 default: "http://localhost:3000/login"
  *     responses:
  *       200:
@@ -225,7 +227,7 @@ router.post('/register', registerAccountLimiter,
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  *       429:
- *         $ref: '#/components/responses/CreateApiRateLimitExceeded' 
+ *         $ref: '#/components/responses/CreateApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
@@ -240,7 +242,7 @@ router.post('/resend-activation', registerAccountLimiter,
       .bail()
       .custom((value, { req }) => {
         if (value.includes('@')) {
-          // Validate as email          
+          // Validate as email
           if (!isValidEmail(value)) {
             throw new Error(req.t('Invalid email address.'));
           }
@@ -272,7 +274,7 @@ router.post('/resend-activation', registerAccountLimiter,
       .bail()
       .custom(async (value, { req }) => {
         const res = await testUrlAccessibility(value);
-        if(res === false)
+        if (res === false)
           throw new Error(req.t('The login redirect URL is not a valid URL.'));
       }),
   ],

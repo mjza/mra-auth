@@ -15,7 +15,7 @@
   "author": "Mahdi Jaberzadeh Ansari",
   "license": "Copyright 2023-2024 ReportCycle Inc.",
   "dependencies": {
-    "@reportcycle/mra-utils": "^1.2.4",
+    "@reportcycle/mra-utils": "^1.2.6",
     "@sendgrid/mail": "^8.1.4",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",

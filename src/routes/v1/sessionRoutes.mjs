@@ -1,11 +1,13 @@
-import { Router } from 'express';
-import { getUserByUsernameOrEmail, getUserPrivatePictureUrl, insertBlacklistToken } from '../../utils/database.mjs';
+import { validations } from '@reportcycle/mra-utils';
 import { compare } from 'bcrypt';
+import { Router } from 'express';
 import { body } from 'express-validator';
+import { getUserByUsernameOrEmail, getUserPrivatePictureUrl, insertBlacklistToken } from '../../utils/database.mjs';
 import { generateAuthToken, parseJwt } from '../../utils/generators.mjs';
-import { apiRequestLimiter } from '../../utils/rateLimit.mjs';
 import { updateEventLog } from '../../utils/logger.mjs';
-import { authenticateToken, checkRequestValidity, isValidEmail } from '../../utils/validations.mjs';
+import { apiRequestLimiter } from '../../utils/rateLimit.mjs';
+import { authenticateToken } from '../../utils/validations.mjs';
+const { checkRequestValidity, isValidEmail } = validations;
 
 const router = Router();
 export default router;
@@ -78,7 +80,7 @@ export default router;
  *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
- * 
+ *
  */
 router.post('/login', apiRequestLimiter,
   [
@@ -91,7 +93,7 @@ router.post('/login', apiRequestLimiter,
       .bail()
       .custom((value, { req }) => {
         if (value.includes('@')) {
-          // Validate as email          
+          // Validate as email
           if (!isValidEmail(value)) {
             throw new Error(req.t('Invalid email address.'));
           }
@@ -242,7 +244,7 @@ router.post('/logout', apiRequestLimiter,
  *           application/json:
  *             schema:
  *               type: object
- *               properties:                 
+ *               properties:
  *                 userId:
  *                   type: integer
  *                 username:
@@ -315,7 +317,7 @@ router.post('/refresh_token', apiRequestLimiter,
     try {
       // Verify the current token
       const authHeader = req.headers['authorization'];
-      const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN  
+      const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
       const tokenData = parseJwt(token);
 

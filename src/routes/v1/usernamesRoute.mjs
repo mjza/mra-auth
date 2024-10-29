@@ -4,7 +4,8 @@ import { sendEmailWithUsernames } from '../../emails/v1/emailService.mjs';
 import { getUsernamesByEmail } from '../../utils/database.mjs';
 import { apiRequestLimiter } from '../../utils/rateLimit.mjs';
 import { updateEventLog } from '../../utils/logger.mjs';
-import { checkRequestValidity, isValidEmail } from '../../utils/validations.mjs';
+import { validations } from '@reportcycle/mra-utils';
+const { checkRequestValidity, isValidEmail } = validations;
 
 const router = Router();
 export default router;
@@ -37,7 +38,7 @@ export default router;
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  *       429:
- *         $ref: '#/components/responses/ApiRateLimitExceeded' 
+ *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */

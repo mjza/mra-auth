@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { query, body } from 'express-validator';
 import { isActivationCodeValid as _isActivationCodeValid, activateUser, isActiveUser as _isActiveUser } from '../../utils/database.mjs';
-import { userMustExist, isValidUrl, checkRequestValidity } from '../../utils/validations.mjs';
+import { userMustExist } from '../../utils/validations.mjs';
 import { apiRequestLimiter } from '../../utils/rateLimit.mjs';
 import { generateDecryptedObject } from '../../utils/generators.mjs';
 import { updateEventLog } from '../../utils/logger.mjs';
+import { validations } from '@reportcycle/mra-utils';
+const { isValidUrl, checkRequestValidity } = validations;
 
 const router = Router();
 export default router;
@@ -63,7 +65,7 @@ export default router;
  *         description: Redirect to the loginRedirectURL if it was provided in the time of registration
  *         headers:
  *           Location:
- *             description: The URL to the loginRedirectURL 
+ *             description: The URL to the loginRedirectURL
  *             schema:
  *               type: string
  *       400:
@@ -79,7 +81,7 @@ export default router;
  *                   type: string
  *                   example: Invalid activation link has been provided.
  *       429:
- *         $ref: '#/components/responses/ApiRateLimitExceeded' 
+ *         $ref: '#/components/responses/ApiRateLimitExceeded'
  *       500:
  *         $ref: '#/components/responses/ServerInternalError'
  */
@@ -133,7 +135,7 @@ router.get('/activate', apiRequestLimiter,
         result = await activateUser(user);
       var isActiveUser = await _isActiveUser(username);
 
-      // Database operation and response handling 
+      // Database operation and response handling
       if (isActiveUser === true || result === true) {
         // Check if redirectURL is not empty and is a valid URL
         if (redirectURL && isValidUrl(redirectURL)) {
@@ -259,7 +261,7 @@ router.post('/activate-by-code', apiRequestLimiter,
         result = await activateUser(user);
       const isActiveUser = await _isActiveUser(username);
 
-      // Database operation and response handling 
+      // Database operation and response handling
       if (isActiveUser === true || result === true) {
         return res.status(200).json({ message: req.t('Account is activated successfully.') });
       } else if (isActivationCodeValid === false) {
