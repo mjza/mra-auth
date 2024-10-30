@@ -1,13 +1,31 @@
 import express from 'express';
+import i18next from 'i18next';
+import Backend from 'i18next-fs-backend';
+import { LanguageDetector, handle } from 'i18next-http-middleware';
+import { join } from 'path';
 import request from 'supertest';
 import { apiRequestLimiter, authorizationApiRequestLimiter, registerAccountLimiter } from '../../utils/rateLimit.mjs';
 
 describe('Rate Limiters', () => {
     let app;
 
+    beforeAll(async () => {
+        await i18next
+            .use(Backend)
+            .use(LanguageDetector) // Add language detection
+            .init({
+                fallbackLng: 'en',
+                preload: ['en'],
+                backend: {
+                    loadPath: join(process.cwd(), '/src/locales/{{lng}}.json'),
+                },
+            });
+    });
+
     beforeEach(() => {
         app = express();
         app.use(express.json()); // Middleware to parse JSON bodies
+        app.use(handle(i18next)); // Add i18next middleware to Express app
     });
 
     describe('apiRequestLimiter', () => {
