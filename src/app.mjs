@@ -98,7 +98,6 @@ async function createApp() {
 
     const corsOptions = {
         origin: function (origin, callback) {
-            console.log('Request origin:', origin);
             if (!origin || allowedOrigins.indexOf(origin) !== -1) {
                 callback(null, true);
             } else {
@@ -107,7 +106,7 @@ async function createApp() {
         },
         optionsSuccessStatus: 200,
         methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-        allowedHeaders: ["Content-Type", "Authorization"],
+        allowedHeaders: ["Content-Type", "Authorization", "X_DEVELOPMENT_TOKEN"],
         credentials: true
     };
     app.use(cors(corsOptions));
